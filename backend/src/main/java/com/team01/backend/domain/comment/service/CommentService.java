@@ -4,6 +4,8 @@ import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.comment.repository.CommentRepository;
+import com.team01.backend.domain.post.entity.Post;
+import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;

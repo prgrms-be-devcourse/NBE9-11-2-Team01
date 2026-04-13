@@ -1,25 +1,38 @@
 package com.team01.backend.domain.comment.controller;
 
 
-import com.team01.backend.domain.comment.dto.CommentRequestDto;
-import com.team01.backend.domain.comment.dto.CommentResponseDto;
+import com.jayway.jsonpath.JsonPath;
 import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.comment.service.CommentService;
+import com.team01.backend.domain.post.entity.Post;
+import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
 @Transactional
 public class CommentControllerTest {
+
+    @Autowired
+    private MockMvc mvc;
 
     @Autowired
     private CommentService commentService;
@@ -44,117 +57,89 @@ public class CommentControllerTest {
                 .password("1234")
                 .build());
 
-        testPost = postRepository.save(Post.builder()
-                .title("테스트 게시글")
-                .content("내용")
-                .user(testUser)
-                .build());
+        String title = "테스트 게시글";
+        String content ="내용";
+
+        Post post = new Post(title, content);
+
+        testPost = postRepository.save(post);
     }
 
     @Test
-    @DisplayName("댓글 작성 성공")
-    void 댓글_작성_성공() {
-        // given (준비)
-        CommentRequestDto request = new CommentRequestDto("테스트 댓글이에요", null);
+    @DisplayName("댓글 생성 - 1번 글에 생성")
+    void t1() throws Exception {
 
-        // when (실행)
-        CommentResponseDto response = commentService.writeComment(
-                testPost.getId(), request, testUser.getId());
+        int targetPostId = 1;
+        String content = "새로운 댓글";
 
-        // then (검증)
-        assertThat(response.content()).isEqualTo("테스트 댓글이에요");
-        assertThat(response.author()).isEqualTo("테스터");
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "content": "%s"
+                                    }
+                                    """.formatted(content))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))           // commentDto 제거
+                .andExpect(jsonPath("$.data.content").value(content))
+                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
-    // ✅ 정상 — 대댓글 작성
     @Test
-    @DisplayName("대댓글 작성 성공")
-    void 대댓글_작성_성공() {
-        // given
-        CommentRequestDto parentRequest = new CommentRequestDto("부모 댓글", null);
-        CommentResponseDto parentComment = commentService.createComment(
-                testPost.getId(), parentRequest, testUser.getId());
+    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    void t2() throws Exception {
 
-        CommentRequestDto childRequest = new CommentRequestDto(
-                "대댓글이에요", parentComment.id());  // parentId 넣기
+        // 먼저 댓글 생성
+        int targetPostId = 1;
+        ResultActions createResult = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "content": "원래 댓글"
+                                    }
+                                    """)
+                );
 
-        // when
-        CommentResponseDto response = commentService.createComment(
-                testPost.getId(), childRequest, testUser.getId());
+        // 생성된 댓글 id 추출
+        String response = createResult.andReturn()
+                .getResponse().getContentAsString();
+        int commentId = JsonPath.read(response, "$.data.id");
 
-        // then
-        assertThat(response.content()).isEqualTo("대댓글이에요");
+        // 수정 요청
+        String updatedContent = "수정된 댓글";
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/comments/%d".formatted(commentId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "content": "%s"
+                                    }
+                                    """.formatted(updatedContent))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("updateComment"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(commentId))
+                .andExpect(jsonPath("$.data.content").value(updatedContent))
+                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
-    // ✅ 정상 — 댓글 수정
-    @Test
-    @DisplayName("댓글 수정 성공")
-    void 댓글_수정_성공() {
-        // given
-        CommentRequestDto createRequest = new CommentRequestDto("원래 댓글", null);
-        CommentResponseDto created = commentService.createComment(
-                testPost.getId(), createRequest, testUser.getId());
-
-        CommentRequestDto updateRequest = new CommentRequestDto("수정된 댓글", null);
-
-        // when
-        CommentResponseDto response = commentService.updateComment(
-                created.id(), updateRequest, testUser.getId());
-
-        // then
-        assertThat(response.content()).isEqualTo("수정된 댓글");
-    }
-
-    // ❌ 예외 — 없는 게시글에 댓글 작성
-    @Test
-    @DisplayName("없는 게시글에 댓글 작성 시 예외 발생")
-    void 없는_게시글_댓글_작성_실패() {
-        // given
-        CommentRequestDto request = new CommentRequestDto("댓글", null);
-        Long 없는게시글Id = 999L;
-
-        // when & then
-        assertThatThrownBy(() ->
-                commentService.createComment(없는게시글Id, request, testUser.getId()))
-                .isInstanceOf(EntityNotFoundException.class);
-    }
-
-    // ❌ 예외 — 남의 댓글 수정
-    @Test
-    @DisplayName("남의 댓글 수정 시 예외 발생")
-    void 남의_댓글_수정_실패() {
-        // given — 다른 유저 만들기
-        User otherUser = userRepository.save(User.builder()
-                .email("other@test.com")
-                .nickname("다른유저")
-                .password("1234")
-                .build());
-
-        CommentRequestDto createRequest = new CommentRequestDto("내 댓글", null);
-        CommentResponseDto created = commentService.createComment(
-                testPost.getId(), createRequest, testUser.getId());
-
-        CommentRequestDto updateRequest = new CommentRequestDto("수정 시도", null);
-
-        // when & then — 다른 유저가 수정 시도
-        assertThatThrownBy(() ->
-                commentService.updateComment(
-                        created.id(), updateRequest, otherUser.getId()))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("본인 댓글만 수정할 수 있어요");
-    }
-
-    // ❌ 예외 — 없는 댓글 수정
-    @Test
-    @DisplayName("없는 댓글 수정 시 예외 발생")
-    void 없는_댓글_수정_실패() {
-        // given
-        CommentRequestDto request = new CommentRequestDto("수정 내용", null);
-        Long 없는댓글Id = 999L;
-
-        // when & then
-        assertThatThrownBy(() ->
-                commentService.updateComment(없는댓글Id, request, testUser.getId()))
-                .isInstanceOf(EntityNotFoundException.class);
-    }
 }

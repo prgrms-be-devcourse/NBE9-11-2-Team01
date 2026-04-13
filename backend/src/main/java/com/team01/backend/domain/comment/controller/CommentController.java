@@ -21,7 +21,7 @@ public class CommentController {
     private final CommentService commentService;
     private final UserRepository userRepository;
 
-    @PostMapping("/post/{postId}/comments")
+    @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(
             @PathVariable Long postId,
             @Valid @RequestBody CommentRequestDto reqDto){
