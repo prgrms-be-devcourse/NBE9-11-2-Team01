@@ -1,6 +1,5 @@
 package com.team01.backend.domain.comment.entity;
 
-import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
