@@ -1,4 +1,4 @@
-package com.team01.domain.comment.entity;
+package com.team01.backend.domain.comment.entity;
 
 import com.team01.backend.global.entity.BaseEntity;
 import jakarta.persistence.*;
