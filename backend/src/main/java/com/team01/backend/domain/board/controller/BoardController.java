@@ -5,6 +5,7 @@ import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +21,10 @@ public class BoardController {
     private final BoardService boardService;
 
     record BoardCreateReqBody(
-            @NotNull String name,
+            @NotNull
+            @Size(min = 2)
+            String name,
+            @Size(min = 5)
             @NotNull String description
     ){};
 
