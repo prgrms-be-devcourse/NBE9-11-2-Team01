@@ -36,6 +36,11 @@ public class CommentService {
         if(reqDto.parentId() != null){
             parent = commentRepository.findById(reqDto.parentId())
                     .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
+
+            // 답글의 대댓글 방지
+            if (parent.getParent() != null) {
+                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다");
+            }
         }
 
         Comment comment = new Comment(post, loginUser, reqDto.content(), parent);

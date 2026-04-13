@@ -96,8 +96,147 @@ public class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    @DisplayName("댓글 생성 - 내용이 없을 시 예외")
     void t2() throws Exception {
+
+        int targetPostId = 1;
+        String content = "";
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "content": "%s"
+                                    }
+                                    """.formatted(content))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))  // 에러 코드
+                .andExpect(jsonPath("$.message").exists()); // 에러 메시지 존재
+    }
+
+    @Test
+    @DisplayName("대댓글 생성 - 1번 댓글에 대댓글 작성")
+    void t3() throws Exception {
+
+        // 1. 먼저 부모 댓글 생성
+        String createResponse = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(1))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "부모 댓글"
+                                }
+                                """)
+                )
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        // 2. 부모 댓글 id 추출
+        int parentId = JsonPath.read(createResponse, "$.data.id");
+
+        // 3. 대댓글 작성
+        String childContent = "대댓글이에요";
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(1))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "%s",
+                                    "parentId": %d
+                                }
+                                """.formatted(childContent, parentId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.content").value(childContent))
+                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.createdAt").exists());
+    }
+
+    @Test
+    @DisplayName("대댓글 생성 실패 - 대댓글에 답글 달기 불가")
+    void t4() throws Exception {
+
+        // 1. 부모 댓글 생성
+        String parentResponse = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(1))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "부모 댓글"
+                                }
+                                """)
+                )
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        int parentId = JsonPath.read(parentResponse, "$.data.id");
+
+        // 2. 대댓글 생성
+        String childResponse = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(1))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "대댓글",
+                                    "parentId": %d
+                                }
+                                """.formatted(parentId))
+                )
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        int childId = JsonPath.read(childResponse, "$.data.id");
+
+        // 3. 대댓글의 대댓글 시도 → 실패해야 함
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/api/v1/posts/%d/comments".formatted(1))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "대댓글의 대댓글",
+                                    "parentId": %d
+                                }
+                                """.formatted(childId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isBadRequest())             // 400
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다"));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    void t5() throws Exception {
 
         // 먼저 댓글 생성
         int targetPostId = 1;

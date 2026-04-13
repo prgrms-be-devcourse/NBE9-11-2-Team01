@@ -8,7 +8,7 @@ public record CommentResponseDto(
         Long id,
         String content,
         String author,
-        int liked,
+        int likeCount,
         LocalDateTime createdAt
 ) {
     // Comment 엔티티를 받아서 record 만드는 정적 팩토리 메서드
