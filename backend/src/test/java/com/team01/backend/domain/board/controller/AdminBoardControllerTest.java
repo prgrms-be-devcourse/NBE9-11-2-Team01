@@ -153,4 +153,26 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
                 .andExpect(jsonPath("$.message",startsWith("입력값이 올바르지 않습니다.")));
     }
+    @Test
+    @DisplayName("게시판 수정 테스트 - 없는 id")
+    void u3() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/admin/board/6")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"name6",
+                                            "description":"description 6"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("updateBoard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
+    }
 }

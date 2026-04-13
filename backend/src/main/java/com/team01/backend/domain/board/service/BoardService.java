@@ -5,6 +5,8 @@ import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +18,7 @@ public class BoardService {
     private final BoardRepository boardRepository;
 
     // 게시판 생성, dto 형식으로 반환
+    @Transactional
     public BoardCreateResponseDto createBoard(String name, String description){
         Board board = new Board(name, description);
         boardRepository.save(board);
@@ -31,8 +34,9 @@ public class BoardService {
     }
 
     // 게시판 수정, dto 형식으로 반환
+    @Transactional
     public BoardUpdateResponseDto updateBoard(Long id, String name, String description) {
-        Board board = boardRepository.findById(id).get();
+        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new);
         board.update(name, description);
         boardRepository.save(board);
         return new BoardUpdateResponseDto(board);
