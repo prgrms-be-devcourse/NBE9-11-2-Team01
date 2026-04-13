@@ -20,7 +20,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-public class BoardControllerTest {
+public class AdminBoardControllerTest {
     @Autowired
     private MockMvc mvc;
 
@@ -42,7 +42,7 @@ public class BoardControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(handler().handlerType(BoardController.class))
+                .andExpect(handler().handlerType(AdminBoardController.class))
                 .andExpect(handler().methodName("createBoard"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true));
@@ -70,7 +70,7 @@ public class BoardControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(handler().handlerType(BoardController.class))
+                .andExpect(handler().handlerType(AdminBoardController.class))
                 .andExpect(handler().methodName("createBoard"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
@@ -94,7 +94,7 @@ public class BoardControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(handler().handlerType(BoardController.class))
+                .andExpect(handler().handlerType(AdminBoardController.class))
                 .andExpect(handler().methodName("createBoard"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
