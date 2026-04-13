@@ -1,4 +1,6 @@
 package com.team01.backend.domain.comment.dto;
 
-public class CommentRequestDto {
-}
+public record CommentRequestDto (
+        String content,
+        Long parentId
+        ){ }
