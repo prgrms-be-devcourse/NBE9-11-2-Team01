@@ -44,9 +44,9 @@ public class BoardControllerTest {
     }
 
     @Test
-    @DisplayName("게시판 목록 조회 - 빈 배열 반환")
+    @DisplayName("게시판 목록 조회 - 초기 데이터 반환")
     void t2() throws Exception {
-        // given: DB에 게시판 없음
+        // given: BaseInitData에 의해 기본 게시판 3개가 생성됨
 
         // when
         ResultActions resultActions = mvc
@@ -60,6 +60,6 @@ public class BoardControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(jsonPath("$.data.length()").value(3));
     }
 }
