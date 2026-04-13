@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -111,7 +112,7 @@ public class AdminBoardControllerTest {
         int targetId = 1;
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/admin/board/%s".formatted(targetId))
+                        put("/api/v1/admin/board/%s".formatted(targetId))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -135,7 +136,7 @@ public class AdminBoardControllerTest {
     void u2() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/admin/board/2")
+                        put("/api/v1/admin/board/2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {

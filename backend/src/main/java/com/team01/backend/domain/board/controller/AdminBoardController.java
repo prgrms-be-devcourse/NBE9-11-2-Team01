@@ -50,7 +50,7 @@ public class AdminBoardController {
     ){};
 
     // 게시판 수정, reqBody에서 문제가 있다면(null, size) globalExceptionHandler에서 처리됨
-    @PostMapping("/{boardId}")
+    @PutMapping("/{boardId}")
     ResponseEntity<ApiResponse<BoardUpdateResponseDto>> updateBoard(
             @PathVariable Long boardId,
             @RequestBody @Valid BoardUpdateReqBody reqBody
