@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class BoardService {
     private final BoardRepository boardRepository;
+
+    // 게시판 생성, dto 형식으로 반환
     public BoardCreateResponseDto createBoard(String name, String description){
         Board board = new Board(name, description);
         boardRepository.save(board);

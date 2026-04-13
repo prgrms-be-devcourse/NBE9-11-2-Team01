@@ -20,14 +20,17 @@ public class BoardController {
 
     private final BoardService boardService;
 
+    // 게시판 생성 request
     record BoardCreateReqBody(
             @NotNull
             @Size(min = 2)
             String name,
+
             @Size(min = 5)
             @NotNull String description
     ){};
 
+    // 게시판 생성, reqBody에서 문제가 있다면(null, size) globalExceptionHandler에서 처리됨
     @PostMapping
     ResponseEntity<ApiResponse<BoardCreateResponseDto>> createBoard(
             @RequestBody @Valid BoardCreateReqBody reqBody
