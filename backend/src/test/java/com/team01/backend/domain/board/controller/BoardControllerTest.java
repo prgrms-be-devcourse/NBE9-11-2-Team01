@@ -31,7 +31,7 @@ public class BoardControllerTest {
 
         // when
         ResultActions resultActions = mvc
-                .perform(get("/board"))
+                .perform(get("/boards"))
                 .andDo(print());
 
         // then
@@ -50,7 +50,7 @@ public class BoardControllerTest {
 
         // when
         ResultActions resultActions = mvc
-                .perform(get("/board"))
+                .perform(get("/boards"))
                 .andDo(print());
 
         // then
