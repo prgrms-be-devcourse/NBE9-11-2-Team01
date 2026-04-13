@@ -1,6 +1,7 @@
 package com.team01.backend.global.initData;
 
 import com.team01.backend.domain.board.service.BoardService;
+import com.team01.backend.domain.post.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -18,11 +19,14 @@ public class BaseInitData {
     private BaseInitData self;
     @Autowired
     private BoardService boardService;
+    @Autowired
+    private PostService postService;
 
     @Bean
     public ApplicationRunner initData() {
         return args -> {
             self.setBoard();
+            self.setPost();
         };
     }
 
@@ -37,4 +41,15 @@ public class BaseInitData {
         boardService.createBoard("name3", "description3");
     }
 
+    // 게시글 생성
+    @Transactional
+    public void setPost(){
+        if(postService.count() > 0){
+            return;
+        }
+        // 1번 게시판에 글 3개
+        postService.write("게시글 1", "내용 1");
+        postService.write("게시글 2", "내용 2");
+        postService.write("게시글 3", "내용 3");
+    }
 }
