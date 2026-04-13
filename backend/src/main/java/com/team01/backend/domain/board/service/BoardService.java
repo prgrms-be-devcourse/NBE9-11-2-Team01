@@ -1,6 +1,7 @@
 package com.team01.backend.domain.board.service;
 
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
+import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
@@ -27,5 +28,18 @@ public class BoardService {
                 .stream()
                 .map(BoardResponse::from)
                 .toList();
+    }
+
+    // 게시판 수정, dto 형식으로 반환
+    public BoardUpdateResponseDto updateBoard(Long id, String name, String description) {
+        Board board = boardRepository.findById(id).get();
+        board.update(name, description);
+        boardRepository.save(board);
+        return new BoardUpdateResponseDto(board);
+    }
+
+    // board 수 반환
+    public long count() {
+        return boardRepository.count();
     }
 }
