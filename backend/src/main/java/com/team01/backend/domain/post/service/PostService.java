@@ -1,9 +1,12 @@
 package com.team01.backend.domain.post.service;
 
+import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,13 @@ public class PostService {
 
     public long count() {
         return postRepository.count();
+    }
+
+    public List<PostResponseDto> getPostsByBoardId(Long boardId) {
+        return postRepository.findByBoardIdAndIsDeletedFalse(boardId)
+                .stream()
+                .map(PostResponseDto::new)
+                .toList();
     }
 
 }
