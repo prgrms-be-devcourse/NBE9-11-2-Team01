@@ -1,10 +1,13 @@
 package com.team01.backend.domain.board.service;
 
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
+import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -16,5 +19,13 @@ public class BoardService {
         Board board = new Board(name, description);
         boardRepository.save(board);
         return new BoardCreateResponseDto(board);
+    }
+
+    // 게시판 목록 조회
+    public List<BoardResponse> getAllBoards() {
+        return boardRepository.findAll()
+                .stream()
+                .map(BoardResponse::from)
+                .toList();
     }
 }
