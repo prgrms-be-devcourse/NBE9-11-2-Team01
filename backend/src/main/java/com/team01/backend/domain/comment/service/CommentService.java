@@ -49,6 +49,12 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
+        //삭제된 댓글을 수정할 수 없음.
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없어요");
+        }
+
+        // userId를 비교하여 본인 인증 -> 추후 시큐리티 사용시 변경 필요
         if(!comment.getUser().getId().equals(loginUser.getId())){
             throw new IllegalArgumentException("본인 댓글만 수정할 수 있습니다.");
         }

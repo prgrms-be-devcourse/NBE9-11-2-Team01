@@ -8,13 +8,11 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api/v1")
 public class CommentController {
 
     private final CommentService commentService;
@@ -30,5 +28,17 @@ public class CommentController {
                 postId, reqDto, user);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ofSuccess(resDto));
+    }
+
+    @PutMapping("/comments/{commentId}")
+    public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
+            @PathVariable Long commentId,
+            @Valid @RequestBody CommentRequestDto requestDto) {
+
+        User user = new User();
+        CommentResponseDto response = commentService.updateComment(
+                commentId, requestDto, user);
+
+        return ResponseEntity.ok(ApiResponse.ofSuccess(response));
     }
 }
