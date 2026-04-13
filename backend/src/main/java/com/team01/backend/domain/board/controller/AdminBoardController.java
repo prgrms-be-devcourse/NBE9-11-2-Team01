@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/admin/board")
-public class BoardController {
+public class AdminBoardController {
 
     private final BoardService boardService;
 
