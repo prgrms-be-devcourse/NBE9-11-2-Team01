@@ -12,8 +12,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -175,4 +174,41 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
     }
+
+    @Test
+    @DisplayName("게시판 삭제 테스트")
+    void d1() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/admin/board/3")
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("deleteBoard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+    }
+    @Test
+    @DisplayName("게시판 삭제 테스트 - 없는 id")
+    void d2() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/api/v1/admin/board/6")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"name6",
+                                            "description":"description 6"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("deleteBoard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
+    }
+
 }

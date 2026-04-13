@@ -46,4 +46,11 @@ public class BoardService {
     public long count() {
         return boardRepository.count();
     }
+
+    // 게시판 삭제
+    @Transactional
+    public void deleteBoard(Long id) {
+        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new); // 없는 id 예외 처리
+        boardRepository.delete(board);
+    }
 }
