@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -48,7 +49,7 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         resultActions
-                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.id").value(4))
                 .andExpect(jsonPath("$.data.name").value("게시판 이름 1"))
                 .andExpect(jsonPath("$.data.description").value("게시판 설명 1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
@@ -102,5 +103,76 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.message",startsWith("입력값이 올바르지 않습니다.")))
                 .andExpect(jsonPath("$.message",containsString("name: size")))
                 .andExpect(jsonPath("$.message",containsString("description: size")));
+    }
+
+    // 게시판 수정 테스트
+    @Test
+    @DisplayName("게시판 수정 테스트")
+    void u1() throws Exception{
+        int targetId = 1;
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/admin/board/%s".formatted(targetId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name": "name 1 modified",
+                                            "description":"description1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("updateBoard"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.name").value("name 1 modified"))
+                .andExpect(jsonPath("$.data.description").value("description1"))
+                .andExpect(jsonPath("$.data.modifiedAt").exists());
+    }
+    @Test
+    @DisplayName("게시판 수정 테스트 - null")
+    void u2() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/admin/board/2")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":null,
+                                            "description":"게시판 설명 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("updateBoard"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message",startsWith("입력값이 올바르지 않습니다.")));
+    }
+    @Test
+    @DisplayName("게시판 수정 테스트 - 없는 id")
+    void u3() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/api/v1/admin/board/6")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"name6",
+                                            "description":"description 6"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("updateBoard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
     }
 }
