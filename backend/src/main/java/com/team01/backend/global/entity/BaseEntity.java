@@ -10,10 +10,7 @@ import jakarta.persistence.PreUpdate;
 import java.time.LocalDateTime;
 import lombok.Getter;
 
-/**
- * ERD 공통 필드: {@code id}, {@code createdAt}, {@code modifiedAt}.
- * JPA Auditing 없이 {@link PrePersist}/{@link PreUpdate}로 시각 필드를 채운다.
- */
+
 @Getter
 @MappedSuperclass
 public abstract class BaseEntity {

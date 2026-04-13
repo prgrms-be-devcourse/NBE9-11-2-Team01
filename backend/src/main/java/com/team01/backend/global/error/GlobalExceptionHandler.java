@@ -1,5 +1,6 @@
 package com.team01.backend.global.error;
 
+
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.Objects;
@@ -25,7 +26,7 @@ public class GlobalExceptionHandler {
                                         err.getField()
                                                 + ": "
                                                 + Objects.requireNonNullElse(
-                                                        err.getDefaultMessage(), "(사유 없음)"))
+                                                err.getDefaultMessage(), "(사유 없음)"))
                         .collect(Collectors.joining(" / "));
         String message =
                 detail.isEmpty()
@@ -59,5 +60,11 @@ public class GlobalExceptionHandler {
                         ApiResponse.ofFailure(
                                 "INTERNAL_ERROR",
                                 "일시적인 오류가 발생했습니다. 잠시 후 다시 시도해 주세요."));
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.ofFailure("INVALID_JSON", "잘못된 형식의 JSON 데이터입니다."));
     }
 }

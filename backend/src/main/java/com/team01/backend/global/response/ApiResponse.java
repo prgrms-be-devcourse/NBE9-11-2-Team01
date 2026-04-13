@@ -1,5 +1,6 @@
 package com.team01.backend.global.response;
 
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -30,4 +31,5 @@ public record ApiResponse<T>(boolean success, String code, String message, T dat
     public static <T> ApiResponse<T> ofFailure(String code, String message, T data) {
         return new ApiResponse<>(false, code, message, data);
     }
+
 }
