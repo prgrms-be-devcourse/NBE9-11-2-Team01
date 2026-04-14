@@ -99,7 +99,7 @@ public class PostController {
     }
 
     // 글 수정 api
-    @PutMapping("posts/{id}")
+    @PutMapping("/posts/{id}")
     public ResponseEntity<ApiResponse<PostModifyResBody>> modify(
             @PathVariable("id") Long id,
             @RequestBody @Valid PostModifyReqBody reqBody
