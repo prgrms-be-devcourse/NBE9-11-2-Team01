@@ -1,8 +1,14 @@
 package com.team01.backend.global.initData;
 
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.board.service.BoardService;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.category.service.CategoryService;
 import com.team01.backend.domain.comment.service.CommentService;
+import com.team01.backend.domain.post.entity.Post;
+import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
@@ -29,6 +35,12 @@ public class BaseInitData {
     private CommentService commentService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PostRepository postRepository;
+    @Autowired
+    private CategoryRepository categoryRepository;
+    @Autowired
+    private BoardRepository boardRepository;
 
     @Autowired
     private CategoryService categoryService;
@@ -57,13 +69,21 @@ public class BaseInitData {
     // 게시글 생성
     @Transactional
     public void setPost(){
-        if(postService.count() > 0){
-            return;
-        }
-        // 1번 게시판에 글 3개
-        postService.write("게시글 1", "내용 1");
-        postService.write("게시글 2", "내용 2");
-        postService.write("게시글 3", "내용 3");
+        if(postRepository.count() > 0) return;
+
+        Board board = boardRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Board not found"));
+        Category category = categoryRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+
+        Post post1 = new Post("게시글 1", "내용 1", board, category);
+        postRepository.save(post1);
+
+        Post post2 = new Post("게시글 2", "내용 2", board, category);
+        postRepository.save(post2);
+
+        Post post3 = new Post("게시글 3", "내용 3", board, category);
+        postRepository.save(post3);
     }
 
     @Transactional

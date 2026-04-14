@@ -119,4 +119,73 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
     }
 
+    @Test
+    @DisplayName("카테고리 수정 테스트")
+    void u1() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.put("/admin/categories/1")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"카테고리 1 - 수정"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("updateCategory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.boardId").value(1))
+                .andExpect(jsonPath("$.data.name").value("카테고리 1 - 수정"))
+                .andExpect(jsonPath("$.data.modifiedAt").exists());
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 테스트 - null")
+    void u2() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.put("/admin/categories/2")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("updateCategory"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message",startsWith("입력값이 올바르지 않습니다.")));
+    }
+    @Test
+    @DisplayName("카테고리 수정 테스트 - 없는 id")
+    void u3() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.put("/admin/categories/21")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"카테고리 21"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("updateCategory"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
+    }
+
 }

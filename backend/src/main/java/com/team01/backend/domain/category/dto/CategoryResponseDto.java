@@ -8,14 +8,16 @@ public record CategoryResponseDto(
         long id,
         long boardId,
         String name,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime modifiedAt
 ) {
     public CategoryResponseDto(Category category){
         this(
             category.getId(),
             category.getBoardId(),
             category.getName(),
-            category.getCreatedAt()
+            category.getCreatedAt(),
+            category.getModifiedAt()
         );
     }
 }
