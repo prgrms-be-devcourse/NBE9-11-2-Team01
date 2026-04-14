@@ -49,4 +49,17 @@ public class Post extends BaseEntity {
         this.title = title;
         this.content = content;
     }
+
+    // 유저 정보 생기면 사용
+//    public void checkModify(User actor) {
+//
+//        if (!this.getAuthor().equals(actor)) {
+//            throw new IllegalArgumentException("수정 권한이 없습니다.");
+//        }
+//    }
+
+    public void update(String title, String content) {
+        this.title = title;
+        this.content = content;
+    }
 }
