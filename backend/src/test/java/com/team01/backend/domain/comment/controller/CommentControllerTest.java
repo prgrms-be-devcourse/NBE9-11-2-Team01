@@ -83,7 +83,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
-                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.author").value("유저"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -237,7 +237,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(childContent))
-                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.author").value("유저"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -344,7 +344,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(commentId))
                 .andExpect(jsonPath("$.data.content").value(updatedContent))
-                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.author").value("유저"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 

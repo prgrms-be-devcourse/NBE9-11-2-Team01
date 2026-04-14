@@ -3,6 +3,8 @@ package com.team01.backend.global.initData;
 import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.service.PostService;
+import com.team01.backend.domain.user.entity.User;
+import com.team01.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -24,6 +26,8 @@ public class BaseInitData {
     private PostService postService;
     @Autowired
     private CommentService commentService;
+    @Autowired
+    private UserRepository userRepository;
 
 
     @Bean
@@ -62,18 +66,25 @@ public class BaseInitData {
     public void setComment() {
         if (commentService.count() > 0) return;
 
+        // 임시 유저 생성
+        User tempUser = userRepository.save(User.builder()
+                .email("init@init.com")
+                .nickname("유저")
+                .password("1234")
+                .build());
+
         // 일반 댓글 — parentId 자리에 null
-        commentService.writeInitComment(1L, "첫 번째 댓글입니다", null);
-        commentService.writeInitComment(1L, "두 번째 댓글입니다", null);
-        commentService.writeInitComment(1L, "세 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, tempUser,"첫 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, tempUser,"두 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, tempUser,"세 번째 댓글입니다", null);
 
         // 대댓글 — parentId 자리에 id 값
-        commentService.writeInitComment(1L, "첫 번째 대댓글입니다", 1L);
-        commentService.writeInitComment(1L, "두 번째 대댓글입니다", 2L);
+        commentService.writeInitComment(1L, tempUser,"첫 번째 대댓글입니다", 1L);
+        commentService.writeInitComment(1L, tempUser,"두 번째 대댓글입니다", 2L);
 
-        commentService.writeInitComment(2L, "첫 번째 댓글입니다", null);
-        commentService.writeInitComment(2L, "두 번째 댓글입니다", null);
+        commentService.writeInitComment(2L, tempUser,"첫 번째 댓글입니다", null);
+        commentService.writeInitComment(2L, tempUser,"두 번째 댓글입니다", null);
 
-        commentService.writeInitComment(2L, "첫 번째 대댓글입니다", 6L);
+        commentService.writeInitComment(2L, tempUser,"첫 번째 대댓글입니다", 6L);
     }
 }
