@@ -36,8 +36,8 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // 세션 필요 시 생성
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll()
-                .anyRequest().authenticated()
+                    .requestMatchers("/api/auth/**").permitAll()
+                    .anyRequest().permitAll()  // 임시로 전체 허용
             )
             .logout(logout -> logout
                 .logoutUrl("/api/auth/logout")

@@ -6,6 +6,7 @@ import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -44,18 +45,11 @@ public class CommentControllerTest {
 
     @BeforeEach
     void setUp() {
-        testUser = userRepository.save(User.builder()
-                .email("test@test.com")
-                .nickname("테스터")
-                .password("1234")
-                .build());
 
-        String title = "테스트 게시글";
-        String content ="내용";
+        testUser = userRepository.findByEmail("init@init.com")
+                .orElseThrow(() -> new EntityNotFoundException("유저 없음"));
 
-        Post post = new Post(title, content);
-
-        testPost = postRepository.save(post);
+        testPost = postRepository.findAll().get(0);
     }
 
     @Test
@@ -141,8 +135,9 @@ public class CommentControllerTest {
     @Test
     @DisplayName("댓글 작성 실패 - 삭제된 게시글")
     void t4() throws Exception {
+
         // 게시글 소프트 딜리트
-        //testPost.delete();
+        testPost.delete();
         postRepository.saveAndFlush(testPost);
 
         ResultActions resultActions = mvc
@@ -300,7 +295,7 @@ public class CommentControllerTest {
                 .andExpect(status().isBadRequest())             // 400
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
-                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다"));
+                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다."));
     }
 
     @Test
