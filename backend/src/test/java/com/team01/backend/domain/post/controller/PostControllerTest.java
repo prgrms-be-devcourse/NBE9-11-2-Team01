@@ -68,46 +68,6 @@ public class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시글 상세 조회 - 성공")
-    void t8() throws Exception {
-        // given: BaseInitData에서 생성된 게시글 사용 (id=1)
-
-        // when
-        ResultActions resultActions = mvc
-                .perform(get("/posts/1"))
-                .andDo(print());
-
-        // then
-        resultActions
-                .andExpect(handler().handlerType(PostController.class))
-                .andExpect(handler().methodName("getPostById"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.title").exists())
-                .andExpect(jsonPath("$.data.content").exists())
-                .andExpect(jsonPath("$.data.likeCount").exists())
-                .andExpect(jsonPath("$.data.createdAt").exists())
-                .andExpect(jsonPath("$.data.modifiedAt").exists());
-    }
-
-    @Test
-    @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
-    void t9() throws Exception {
-        // when
-        ResultActions resultActions = mvc
-                .perform(get("/posts/999"))
-                .andDo(print());
-
-        // then
-        resultActions
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
-    }
-
-
-    @Test
     @DisplayName("글 작성")
     void t3() throws Exception {
         String title = "제목입니다.";
@@ -262,5 +222,44 @@ public class PostControllerTest {
 
         assertThat(post.getTitle()).isEqualTo(title);
         assertThat(post.getContent()).isEqualTo(content);
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 - 성공")
+    void t8() throws Exception {
+        // given: BaseInitData에서 생성된 게시글 사용 (id=1)
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/posts/1"))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostById"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.title").exists())
+                .andExpect(jsonPath("$.data.content").exists())
+                .andExpect(jsonPath("$.data.likeCount").exists())
+                .andExpect(jsonPath("$.data.createdAt").exists())
+                .andExpect(jsonPath("$.data.modifiedAt").exists());
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
+    void t9() throws Exception {
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/posts/999"))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
 }
