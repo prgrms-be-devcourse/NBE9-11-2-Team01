@@ -47,6 +47,13 @@ public class Comment extends BaseEntity {
         this.parent = parent;
     }
 
+    // 초기 데이터용 생성자 추가
+    public Comment(Post post, String content, Comment parent) {
+        this.post = post;
+        this.content = content;
+        this.parent = parent;  // null이면 일반 댓글, 값 있으면 대댓글
+    }
+
     // 댓글 수정할 때 쓰는 메서드
     public void update(String content) {
         this.content = content;

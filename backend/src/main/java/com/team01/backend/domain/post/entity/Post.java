@@ -41,6 +41,10 @@ public class Post extends BaseEntity {
 //        this.content = content;
 //    }
 
+//    public void delete() {       Comment테스트
+//        this.isDeleted = true;
+//    }
+
     public Post(String title, String content) {
         this.title = title;
         this.content = content;
