@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public record PostDetailResponseDto(
         Long id,
         Long boardId,
+        // TODO: categoryId 추가 예정
         String title,
         String content,
         int likeCount,
