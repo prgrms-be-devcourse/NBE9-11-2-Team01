@@ -30,20 +30,24 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. CSRF 보호 해제 (REST API 환경)
+            // 1. CSRF 보호 해제
             .csrf(csrf -> csrf.disable())
             
-            // 2. 세션 정책 설정 (필요 시 생성)
+            // 2. 세션 정책 설정
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
             )
             
-            // 3. 접근 권한 제어 (오류 수정 핵심 구간)
+            // 3. 접근 권한 제어
             .authorizeHttpRequests(auth -> auth
-                // 클래스 명시 없이 문자열 패턴만 사용
-                // Spring Security가 내부적으로 최적의 매처를 자동으로 할당
-                .requestMatchers("/api/auth/**").permitAll() 
-                .anyRequest().authenticated()
+                .requestMatchers("/api/auth/**").permitAll() // 인증 관련 경로는 기본 허용
+                .anyRequest().permitAll() // 나머지 모든 요청도 인증 없이 허용
+            )
+            
+            .logout(logout -> logout
+                .logoutUrl("/api/auth/logout")
+                .invalidateHttpSession(true)
+                .deleteCookies("JSESSIONID")
             );
 
         return http.build();
