@@ -4,7 +4,6 @@ import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.domain.category.service.CategoryService;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.service.PostService;
-import com.team01.backend.domain.user.entity.Role;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -37,22 +36,12 @@ public class BaseInitData {
     @Bean
     public ApplicationRunner initData() {
         return args -> {
-            self.setUser();
             self.setBoard();
             self.setCategory();
             self.setPost();
             self.setComment();
         };
     }
-
-    //유저 데이터 생성
-    @Transactional
-    public void setUser(){
-        User adminUser = new User("admin@gmail.com", "1234", "admin", "", Role.ADMIN);
-        User user1 = new User("user1@gmail.com", "1234", "user1", "", Role.USER);
-        User user2 = new User("user2@gmail.com", "1234", "user2", "", Role.USER);
-    }
-
 
     // 게시판 생성
     @Transactional

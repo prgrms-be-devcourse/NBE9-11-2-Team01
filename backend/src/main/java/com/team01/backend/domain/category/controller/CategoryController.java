@@ -22,7 +22,7 @@ public class CategoryController {
             Long boardId,
 
             @NotNull(message = "이름이 없습니다")
-            @Size(min=2, message = "게시판 이름은 2자 이상이어야 합니다")
+            @Size(min=2, message = "카테고리 이름은 2자 이상이어야 합니다")
             String name
     ){}
 
@@ -37,7 +37,7 @@ public class CategoryController {
 
     record CategoryUpdateReq(
             @NotNull(message = "이름이 없습니다")
-            @Size(min=2, message = "게시판 이름은 2자 이상이어야 합니다")
+            @Size(min=2, message = "카테고리 이름은 2자 이상이어야 합니다")
             String name
     ){}
 
