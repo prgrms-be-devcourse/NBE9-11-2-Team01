@@ -1,5 +1,6 @@
 package com.team01.backend.domain.post.service;
 
+import com.team01.backend.domain.post.dto.PostDetailResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
@@ -35,6 +36,13 @@ public class PostService {
                 .stream()
                 .map(PostResponseDto::new)
                 .toList();
+    }
+
+    public PostDetailResponseDto getPostById(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+
+        return new PostDetailResponseDto(post);
     }
 
 }
