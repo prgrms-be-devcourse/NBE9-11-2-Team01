@@ -33,7 +33,8 @@ public class CategoryControllerTest {
                                 .content("""
                                         {
                                             "boardId": 1,
-                                            "name":"카테고리 1"                                        }
+                                            "name":"카테고리 4"
+                                       }
                                         """)
                 )
                 .andDo(print());
@@ -42,9 +43,9 @@ public class CategoryControllerTest {
                 .andExpect(handler().methodName("createCategory"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))
+                .andExpect(jsonPath("$.data.id").value(6))
                 .andExpect(jsonPath("$.data.boardId").value(1))
-                .andExpect(jsonPath("$.data.name").value("카테고리 1"))
+                .andExpect(jsonPath("$.data.name").value("카테고리 4"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -80,7 +81,7 @@ public class CategoryControllerTest {
                                 .content("""
                                         {
                                             "boardId": 1,
-                                            "name":"2"
+                                            "name":"6"
                                         }
                                         """)
                 )
