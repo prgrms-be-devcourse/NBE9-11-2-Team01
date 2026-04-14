@@ -11,7 +11,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +28,7 @@ public class PostController {
         List<PostResponseDto> posts = postService.getPostsByBoardId(boardId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
+
 
     record PostWriteReqBody(
             @Size(min = 2, message = "제목은 2자 이상이어야 합니다.")
@@ -87,7 +87,6 @@ public class PostController {
 
     // 글 수정 api
     @PutMapping("posts/{id}")
-    @Transactional
     public ResponseEntity<ApiResponse<PostModifyResBody>> modify(
             @PathVariable("id") Long id,
             @RequestBody @Valid PostModifyReqBody reqBody
