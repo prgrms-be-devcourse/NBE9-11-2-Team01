@@ -61,5 +61,12 @@ public class AdminBoardController {
         ));
     }
 
-
+    // 게시판 삭제, id만 받아서 삭제
+    @DeleteMapping("/{boardId}")
+    ResponseEntity<ApiResponse> deleteBoard(
+            @PathVariable Long boardId
+    ){
+        boardService.deleteBoard(boardId);
+        return ResponseEntity.ok(ApiResponse.ofSuccessWithoutBody());
+    }
 }
