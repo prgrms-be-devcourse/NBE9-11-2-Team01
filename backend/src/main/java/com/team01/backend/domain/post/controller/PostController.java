@@ -12,6 +12,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -99,20 +100,20 @@ public class PostController {
     }
 
     // 글 수정 api
-    @PutMapping("/posts/{id}")
+    @PutMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostModifyResBody>> modify(
-            @PathVariable("id") Long id,
+            @PathVariable("postId") Long postId,
             @RequestBody @Valid PostModifyReqBody reqBody
     ) {
         // 유저 정보 생기면 사용
 //        User actor = rq.getActor();
 //
-//        Post post = postService.findById(id).get();
+//        Post post = postService.findById(postId).get();
 //        post.checkModify(actor);
 //
-//        postService.modify(id, reqBody.title, reqBody.content);
+//        postService.modify(postId, reqBody.title, reqBody.content);
 
-        Post post = postService.modify(id, reqBody.title(), reqBody.content());
+        Post post = postService.modify(postId, reqBody.title(), reqBody.content());
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(
@@ -120,6 +121,24 @@ public class PostController {
                                 new PostDto(post)
                         )
                 )
+        );
+    }
+
+    // 글 삭제 api
+    @DeleteMapping("/posts/{postId}")
+    @Transactional
+    public ResponseEntity<ApiResponse<Void>> delete(
+            @PathVariable("postId") Long postId
+    ) {
+        // 유저 인증처리 생기면 사용
+//        User actor = rq.getActor();
+//        postService.delete(postId, actor);
+
+
+        postService.delete(postId);
+
+        return ResponseEntity.ok(
+                ApiResponse.ofSuccess(null)
         );
     }
 }

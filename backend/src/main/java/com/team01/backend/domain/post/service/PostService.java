@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.util.List;
 import java.util.Optional;
 
@@ -74,6 +73,18 @@ public class PostService {
 
         return post;
 
+    }
+
+    @Transactional
+    public void delete(Long postId /*, User actor*/) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
+
+        if (post.isDeleted()) {
+            throw new IllegalArgumentException("이미 삭제된 게시물입니다.");
+        }
+
+        post.delete(/*actor*/);
     }
 
 }

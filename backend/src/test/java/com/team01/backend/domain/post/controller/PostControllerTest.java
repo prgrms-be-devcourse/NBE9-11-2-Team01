@@ -262,4 +262,27 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
+
+
+    @Test
+    @DisplayName("글 삭제 성공")
+    void t10() throws Exception {
+//        Post post = postRepository.findById(1L).get();
+//        Long targetId = post.getId();
+
+        Post post = postService.write("테스트 제목", "테스트 내용");
+        Long targetId = post.getId();
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/posts/%d".formatted(targetId)))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Post deletedPost = postRepository.findById(targetId).get();
+        assertThat(deletedPost.isDeleted()).isTrue();
+    }
 }

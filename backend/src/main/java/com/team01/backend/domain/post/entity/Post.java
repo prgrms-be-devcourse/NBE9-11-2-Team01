@@ -34,7 +34,7 @@ public class Post extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     private Category category;
 
-    private boolean isDeleted;
+    private boolean isDeleted = false;
 
 //    @OneToMany(mappedBy = "post",
 //            cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
@@ -58,6 +58,13 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
+    public Post(String title, String content, Board board, Category category) {
+        this.title = title;
+        this.content = content;
+        this.board = board;
+        this.category = category;
+    }
+
     // 유저 정보 생기면 사용
 //    public void checkModify(User actor) {
 //
@@ -71,10 +78,10 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
-    public Post(String title, String content, Board board, Category category) {
-        this.title = title;
-        this.content = content;
-        this.board = board;
-        this.category = category;
+    public void delete(/*User actor*/) {
+//        checkModify(actor);
+
+        this.isDeleted = true;
+
     }
 }
