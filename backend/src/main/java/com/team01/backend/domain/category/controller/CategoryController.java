@@ -8,10 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/admin/categories")
@@ -37,4 +34,23 @@ public class CategoryController {
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(categoryResponseDto));
     }
+
+    record CategoryUpdateReq(
+            @NotNull(message = "이름이 없습니다")
+            @Size(min=2, message = "게시판 이름은 2자 이상이어야 합니다")
+            String name
+    ){}
+
+    @PutMapping("/{categoryId}")
+    ResponseEntity<ApiResponse<CategoryResponseDto>>updateCategory(
+            @PathVariable long categoryId,
+            @RequestBody @Valid CategoryUpdateReq req
+    ){
+        // 카테고리가 있는 게시판은 변경하지 않고, 이름만 수정
+        CategoryResponseDto categoryResponseDto = categoryService.update(categoryId, req.name);
+
+        return ResponseEntity.ok(ApiResponse.ofSuccess(categoryResponseDto));
+    }
+
+
 }

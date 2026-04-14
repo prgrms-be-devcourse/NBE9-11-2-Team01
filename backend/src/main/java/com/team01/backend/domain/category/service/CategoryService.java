@@ -31,4 +31,13 @@ public class CategoryService {
     public long count() {
         return categoryRepository.count();
     }
+
+    @Transactional
+    public CategoryResponseDto update(long categoryId, String name) {
+        Category category = categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new);
+        category.update(name);
+        categoryRepository.save(category);
+
+        return new CategoryResponseDto(category);
+    }
 }
