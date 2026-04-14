@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/board")
+@RequestMapping("/admin/boards")
 public class AdminBoardController {
 
     private final BoardService boardService;
