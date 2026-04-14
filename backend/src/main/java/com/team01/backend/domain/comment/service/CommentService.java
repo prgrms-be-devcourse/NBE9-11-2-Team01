@@ -26,7 +26,7 @@ public class CommentService {
 
     // 초기 데이터용
     @Transactional
-    public void writeInitComment(Long postId, String content, Long parentId) {
+    public void writeInitComment(Long postId, User tempUser, String content,  Long parentId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없어요"));
 
@@ -37,7 +37,7 @@ public class CommentService {
                     .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없어요"));
         }
 
-        commentRepository.save(new Comment(post, content, parent));
+        commentRepository.save(new Comment(post, tempUser, content,  parent));
     }
 
     //-----------------------------------------------------------------------------------------------------------------
