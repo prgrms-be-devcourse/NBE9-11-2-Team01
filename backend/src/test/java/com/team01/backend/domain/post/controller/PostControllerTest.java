@@ -1,4 +1,4 @@
-package com.team01.backend.domain.board.controller;
+package com.team01.backend.domain.post.controller;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,48 +18,41 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 @AutoConfigureMockMvc
 @Transactional
-public class BoardControllerTest {
+public class PostControllerTest {
 
     @Autowired
     private MockMvc mvc;
 
     @Test
-    @DisplayName("게시판 목록 조회 - 성공")
+    @DisplayName("게시판별 글 목록 조회 - 성공")
     void t1() throws Exception {
-        // given: 테스트 데이터가 이미 있다고 가정
-        // (또는 @BeforeEach로 데이터 삽입)
+        // given: BaseInitData에서 생성된 데이터 사용
 
         // when
         ResultActions resultActions = mvc
-                .perform(get("/boards"))
+                .perform(get("/boards/1/posts"))
                 .andDo(print());
 
         // then
         resultActions
-                .andExpect(handler().handlerType(BoardController.class))
-                .andExpect(handler().methodName("getAllBoards"))
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray());
     }
 
     @Test
-    @DisplayName("게시판 목록 조회 - 초기 데이터 반환")
+    @DisplayName("게시판별 글 목록 조회 - 빈 배열")
     void t2() throws Exception {
-        // given: BaseInitData에 의해 기본 게시판 3개가 생성됨
-
         // when
         ResultActions resultActions = mvc
-                .perform(get("/boards"))
+                .perform(get("/boards/999/posts"))
                 .andDo(print());
 
         // then
         resultActions
-                .andExpect(handler().handlerType(BoardController.class))
-                .andExpect(handler().methodName("getAllBoards"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data.length()").value(3));
+                .andExpect(jsonPath("$.data").isEmpty());
     }
 }
