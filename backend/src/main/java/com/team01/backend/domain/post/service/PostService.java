@@ -1,9 +1,14 @@
 package com.team01.backend.domain.post.service;
 
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,9 +50,19 @@ public class PostService {
 
     public PostDetailResponseDto getPostById(Long postId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 게시글입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
-        return new PostDetailResponseDto(post);
+        Board board = post.getBoard();
+        if (board == null) {
+            throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
+        }
+
+        Category category = post.getCategory();
+        if (category == null) {
+            throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
+        }
+
+        return PostDetailResponseDto.of(post, board, category);
     }
 
     public Optional<Post> findById(Long id) {return postRepository.findById(id);}
