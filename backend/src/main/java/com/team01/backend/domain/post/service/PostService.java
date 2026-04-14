@@ -6,7 +6,10 @@ import com.team01.backend.domain.post.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+
 import java.util.List;
+import java.util.Optional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,16 @@ public class PostService {
                 .stream()
                 .map(PostResponseDto::new)
                 .toList();
+    }
+
+    public Optional<Post> findById(Long id) {return postRepository.findById(id);}
+
+    public Post modify(Long id, String title, String content) {
+        Post post = postRepository.findById(id).get();
+        post.update(title, content);
+
+        return post;
+
     }
 
 }
