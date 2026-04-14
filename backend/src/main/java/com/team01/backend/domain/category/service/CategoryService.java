@@ -7,6 +7,7 @@ import com.team01.backend.domain.category.repository.CategoryRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -15,6 +16,7 @@ public class CategoryService {
     private final CategoryRepository categoryRepository;
     private final BoardService boardService;
 
+    @Transactional
     public CategoryResponseDto create(Long boardId, String name) {
 
         if(!boardService.existsById(boardId)){ //boardId에 해당하는 게시판이 없다면 예외처리
@@ -24,5 +26,9 @@ public class CategoryService {
         Category category = new Category(boardId, name);
         categoryRepository.save(category);
         return new CategoryResponseDto(category);
+    }
+
+    public long count() {
+        return categoryRepository.count();
     }
 }
