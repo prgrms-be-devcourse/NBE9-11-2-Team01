@@ -1,5 +1,6 @@
 package com.team01.backend.domain.comment.controller;
 
+import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
@@ -13,12 +14,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
 
     private final CommentService commentService;
     private final UserRepository userRepository;
+
+    // COMMENT-02 댓글(답글) 조회
+    @GetMapping("/posts/{postId}/comments")
+    public ResponseEntity<ApiResponse<List<CommentReadResponseDto>>> getComments(@PathVariable Long postId) {
+        List<CommentReadResponseDto> list = commentService.getCommentsByPostId(postId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(list));
+    }
 
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(

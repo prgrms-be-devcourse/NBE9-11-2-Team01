@@ -1,5 +1,6 @@
 package com.team01.backend.domain.comment.service;
 
+import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
@@ -11,6 +12,11 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +35,9 @@ public class CommentService {
     public void writeInitComment(Long postId, User tempUser, String content,  Long parentId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없어요"));
+        if (post.isDeleted()) {
+            throw new EntityNotFoundException("게시글을 찾을 수 없어요");
+        }
 
         // parentId 있으면 부모 댓글 찾기, 없으면 null
         Comment parent = null;
@@ -41,6 +50,34 @@ public class CommentService {
     }
 
     //-----------------------------------------------------------------------------------------------------------------
+
+    // COMMENT-02 댓글(답글) 조회
+    @Transactional(readOnly = true)
+    public List<CommentReadResponseDto> getCommentsByPostId(Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+        if (post.isDeleted()) {
+            throw new EntityNotFoundException("게시글을 찾을 수 없습니다.");
+        }
+
+        List<Comment> roots = commentRepository
+                .findByPost_IdAndParentIsNullAndIsDeletedFalseOrderByCreatedAtAsc(postId);
+        if (roots.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> rootIds = roots.stream().map(Comment::getId).toList();
+        List<Comment> allReplies =
+                commentRepository.findByParent_IdInAndIsDeletedFalseOrderByCreatedAtAsc(rootIds);
+        Map<Long, List<Comment>> repliesByParentId =
+                allReplies.stream().collect(Collectors.groupingBy(c -> c.getParent().getId()));
+        repliesByParentId.values().forEach(list -> list.sort(Comparator.comparing(Comment::getCreatedAt)));
+
+        return roots.stream()
+                .map(root -> CommentReadResponseDto.from(
+                        root, repliesByParentId.getOrDefault(root.getId(), List.of())))
+                .toList();
+    }
 
     @Transactional
     public CommentResponseDto writeComment(Long postId, CommentRequestDto reqDto, User loginUser){
