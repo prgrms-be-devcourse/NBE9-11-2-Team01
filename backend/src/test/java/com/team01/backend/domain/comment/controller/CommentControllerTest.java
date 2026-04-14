@@ -42,6 +42,7 @@ public class CommentControllerTest {
 
     private User testUser;
     private Post testPost;
+    private Post testPost2;
 
     @BeforeEach
     void setUp() {
@@ -50,6 +51,7 @@ public class CommentControllerTest {
                 .orElseThrow(() -> new EntityNotFoundException("유저 없음"));
 
         testPost = postRepository.findAll().get(0);
+        testPost2 = postRepository.findAll().get(1);
     }
 
     @Test
@@ -299,8 +301,48 @@ public class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    @DisplayName("댓글 작성 실패 - 다른 게시글의 댓글에 대댓글 작성")
     void t8() throws Exception {
+
+        // 1번 게시글에 댓글 생성
+        String createResponse = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "1번 게시글 댓글"
+                                }
+                                """)
+                )
+                .andReturn().getResponse().getContentAsString();
+
+        int parentId = JsonPath.read(createResponse, "$.data.id");
+
+        // 다른 게시글(2번)에 위 댓글을 부모로 대댓글 시도
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost2.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "잘못된 대댓글",
+                                    "parentId": %d
+                                }
+                                """.formatted(parentId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("잘못된 게시글의 댓글입니다."));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    void t9() throws Exception {
 
         ResultActions createResult = mvc
                 .perform(

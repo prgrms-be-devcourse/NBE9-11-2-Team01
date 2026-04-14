@@ -90,9 +90,6 @@ public class BaseInitData {
         commentService.writeInitComment(2L, tempUser,"첫 번째 댓글입니다", null);
         commentService.writeInitComment(2L, tempUser,"두 번째 댓글입니다", null);
 
-        commentService.writeInitComment(2L, tempUser,"첫 번째 댓글입니다", null);
-        commentService.writeInitComment(2L, tempUser,"두 번째 댓글입니다", null);
-
         commentService.writeInitComment(2L, tempUser,"첫 번째 대댓글입니다", 6L);
     }
     @Transactional
