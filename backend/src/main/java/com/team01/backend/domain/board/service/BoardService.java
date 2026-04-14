@@ -53,4 +53,8 @@ public class BoardService {
         Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new); // 없는 id 예외 처리
         boardRepository.delete(board);
     }
+
+    public boolean existsById(Long id) {
+        return boardRepository.existsById(id);
+    }
 }

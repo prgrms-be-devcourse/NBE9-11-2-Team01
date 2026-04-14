@@ -94,4 +94,28 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.message",startsWith("입력값이 올바르지 않습니다.")));
     }
 
+    @Test
+    @DisplayName("카테고리 생성 테스트 - 없는 게시판에 등록")
+    void c4() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.post("/admin/categories")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "boardId": 11,
+                                            "name":"category 2"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("createCategory"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
+    }
+
 }
