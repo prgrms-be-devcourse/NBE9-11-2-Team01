@@ -10,8 +10,5 @@ import lombok.AllArgsConstructor;
 public class LoginRequest {
     private String email;
     private String password;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> ce107cdc8936de4556fc5c5a454b0e832de7364a
+

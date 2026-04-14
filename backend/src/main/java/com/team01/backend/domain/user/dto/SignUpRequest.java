@@ -13,8 +13,5 @@ public class SignUpRequest {
     private String email;
     private String password;
     private String nickname;
-<<<<<<< HEAD
     private String profileImage; // 필드 추가
-=======
->>>>>>> ce107cdc8936de4556fc5c5a454b0e832de7364a
 }
