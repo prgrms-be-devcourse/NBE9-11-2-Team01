@@ -1,5 +1,7 @@
 package com.team01.backend.global.initData;
 
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.domain.category.entity.Category;
 import com.team01.backend.domain.category.repository.CategoryRepository;
@@ -37,6 +39,8 @@ public class BaseInitData {
     private PostRepository postRepository;
     @Autowired
     private CategoryRepository categoryRepository;
+    @Autowired
+    private BoardRepository boardRepository;
 
     @Autowired
     private CategoryService categoryService;
@@ -67,21 +71,19 @@ public class BaseInitData {
     public void setPost(){
         if(postRepository.count() > 0) return;
 
-        // Category 조회
+        Board board = boardRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Board not found"));
         Category category = categoryRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        // TODO : commit 후에 주석 해제
-        // Post 생성 후 설정
-        Post post1 = new Post("게시글 1", "내용 1");
-        //post1.setBoardId(1L);  // ← boardId 설정 필요
-        //post1.setCategory(category);  // ← category 설정 필요
+        Post post1 = new Post("게시글 1", "내용 1", board, category);
         postRepository.save(post1);
 
-        Post post2 = new Post("게시글 2", "내용 2");
-        //post2.setBoardId(1L);
-        //post2.setCategory(category);
+        Post post2 = new Post("게시글 2", "내용 2", board, category);
         postRepository.save(post2);
+
+        Post post3 = new Post("게시글 3", "내용 3", board, category);
+        postRepository.save(post3);
     }
 
     @Transactional

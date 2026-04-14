@@ -6,11 +6,10 @@ import com.team01.backend.domain.post.entity.Post;
 
 import java.time.LocalDateTime;
 
-// TODO : commit 후에 주석 해제
 public record PostDetailResponseDto(
         Long id,
         BoardInfo board,
-        //CategoryInfo category,
+        CategoryInfo category,
         String title,
         String content,
         int likeCount,
@@ -21,14 +20,13 @@ public record PostDetailResponseDto(
     public record BoardInfo(Long id, String name) {}
 
     // 중첩 record: Category에서 필요한 것만
-    //public record CategoryInfo(Long id, String name) {}
+    public record CategoryInfo(Long id, String name) {}
 
-    // TODO : category 파라미터로 넘겨줘야 함
-    public static PostDetailResponseDto of(Post post, Board board) {
+    public static PostDetailResponseDto of(Post post, Board board, Category category) {
         return new PostDetailResponseDto(
                 post.getId(),
                 new BoardInfo(board.getId(), board.getName()),
-                //new CategoryInfo(category.getId(), category.getName()),
+                new CategoryInfo(category.getId(), category.getName()),
                 post.getTitle(),
                 post.getContent(),
                 post.getLikeCount(),

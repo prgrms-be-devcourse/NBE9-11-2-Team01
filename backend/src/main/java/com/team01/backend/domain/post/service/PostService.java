@@ -24,7 +24,6 @@ import java.util.Optional;
 public class PostService {
 
     private final PostRepository postRepository;
-    private final BoardRepository boardRepository;
 
 //    @Transactional
 //    public Post write(User author, String title, String content) {
@@ -53,16 +52,17 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
-        Board board = boardRepository.findById(post.getBoardId())
-                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
+        Board board = post.getBoard();
+        if (board == null) {
+            throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
+        }
 
-        // TODO : commit 후에 주석 해제, return에 category 담아야 함
-        //Category category = post.getCategory();
-        //if (category == null) {
-        //    throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
-        //}
+        Category category = post.getCategory();
+        if (category == null) {
+            throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
+        }
 
-        return PostDetailResponseDto.of(post, board);
+        return PostDetailResponseDto.of(post, board, category);
     }
 
     public Optional<Post> findById(Long id) {return postRepository.findById(id);}
