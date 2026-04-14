@@ -30,7 +30,7 @@ public class AdminBoardControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/admin/board")
+                        post("/admin/boards")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -59,7 +59,7 @@ public class AdminBoardControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/admin/board")
+                        post("/admin/boards")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -83,7 +83,7 @@ public class AdminBoardControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/admin/board")
+                        post("/admin/boards")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -111,7 +111,7 @@ public class AdminBoardControllerTest {
         int targetId = 1;
         ResultActions resultActions = mvc
                 .perform(
-                        put("/api/v1/admin/board/%s".formatted(targetId))
+                        put("/admin/boards/%s".formatted(targetId))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -135,7 +135,7 @@ public class AdminBoardControllerTest {
     void u2() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
-                        put("/api/v1/admin/board/2")
+                        put("/admin/boards/2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -157,7 +157,7 @@ public class AdminBoardControllerTest {
     void u3() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
-                        put("/api/v1/admin/board/6")
+                        put("/admin/boards/6")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -180,7 +180,7 @@ public class AdminBoardControllerTest {
     void d1() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
-                        delete("/api/v1/admin/board/3")
+                        delete("/admin/boards/3")
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -193,7 +193,7 @@ public class AdminBoardControllerTest {
     void d2() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
-                        delete("/api/v1/admin/board/6")
+                        delete("/admin/boards/6")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
