@@ -2,8 +2,6 @@ package com.team01.backend.domain.comment.controller;
 
 
 import com.jayway.jsonpath.JsonPath;
-import com.team01.backend.domain.comment.repository.CommentRepository;
-import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
@@ -35,16 +33,11 @@ public class CommentControllerTest {
     private MockMvc mvc;
 
     @Autowired
-    private CommentService commentService;
-
-    @Autowired
     private PostRepository postRepository;
 
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private CommentRepository commentRepository;
 
     private User testUser;
     private Post testPost;
@@ -69,12 +62,11 @@ public class CommentControllerTest {
     @DisplayName("댓글 생성 - 1번 글에 생성")
     void t1() throws Exception {
 
-        int targetPostId = 1;
         String content = "새로운 댓글";
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -89,7 +81,7 @@ public class CommentControllerTest {
                 .andExpect(handler().methodName("writeComment"))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.id").value(1))           // commentDto 제거
+                .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
                 .andExpect(jsonPath("$.data.author").value("테스터"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
@@ -99,18 +91,15 @@ public class CommentControllerTest {
     @DisplayName("댓글 생성 - 내용이 없을 시 예외")
     void t2() throws Exception {
 
-        int targetPostId = 1;
-        String content = "";
-
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
-                                        "content": "%s"
+                                        "content": ""
                                     }
-                                    """.formatted(content))
+                                    """)
                 )
                 .andDo(print());
 
@@ -124,13 +113,93 @@ public class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("대댓글 생성 - 1번 댓글에 대댓글 작성")
+    @DisplayName("댓글 작성 실패 - 없는 게시글")
     void t3() throws Exception {
+
+        Long postId = 999L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(postId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "댓글 내용"
+                                }
+                                """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isNotFound())               // 404
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 실패 - 삭제된 게시글")
+    void t4() throws Exception {
+        // 게시글 소프트 딜리트
+        //testPost.delete();
+        postRepository.saveAndFlush(testPost);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "content": "댓글 내용"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isBadRequest())             // 400
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 실패 - 500자 초과")
+    void t5() throws Exception {
+
+        // 501자 문자열 생성
+        String longContent = "a".repeat(501);
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "%s"
+                                }
+                                """.formatted(longContent))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(CommentController.class))
+                .andExpect(handler().methodName("writeComment"))
+                .andExpect(status().isBadRequest())             // 400
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    @DisplayName("대댓글 생성 - 1번 댓글에 대댓글 작성")
+    void t6() throws Exception {
 
         // 1. 먼저 부모 댓글 생성
         String createResponse = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(1))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -150,7 +219,7 @@ public class CommentControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(1))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -174,12 +243,12 @@ public class CommentControllerTest {
 
     @Test
     @DisplayName("대댓글 생성 실패 - 대댓글에 답글 달기 불가")
-    void t4() throws Exception {
+    void t7() throws Exception {
 
         // 1. 부모 댓글 생성
         String parentResponse = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(1))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -196,7 +265,7 @@ public class CommentControllerTest {
         // 2. 대댓글 생성
         String childResponse = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(1))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -214,7 +283,7 @@ public class CommentControllerTest {
         // 3. 대댓글의 대댓글 시도 → 실패해야 함
         ResultActions resultActions = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(1))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                 {
@@ -236,13 +305,11 @@ public class CommentControllerTest {
 
     @Test
     @DisplayName("댓글 수정 - 1번 댓글 수정")
-    void t5() throws Exception {
+    void t8() throws Exception {
 
-        // 먼저 댓글 생성
-        int targetPostId = 1;
         ResultActions createResult = mvc
                 .perform(
-                        post("/api/v1/posts/%d/comments".formatted(targetPostId))
+                        post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -260,7 +327,7 @@ public class CommentControllerTest {
         String updatedContent = "수정된 댓글";
         ResultActions resultActions = mvc
                 .perform(
-                        put("/api/v1/comments/%d".formatted(commentId))
+                        put("/comments/%d".formatted(commentId))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {

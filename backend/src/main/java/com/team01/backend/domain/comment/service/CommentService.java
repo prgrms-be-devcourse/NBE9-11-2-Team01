@@ -19,6 +19,29 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
 
+    // 댓글 수 조회
+    public long count() {
+        return commentRepository.count();
+    }
+
+    // 초기 데이터용
+    @Transactional
+    public void writeInitComment(Long postId, String content, Long parentId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없어요"));
+
+        // parentId 있으면 부모 댓글 찾기, 없으면 null
+        Comment parent = null;
+        if (parentId != null) {
+            parent = commentRepository.findById(parentId)
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없어요"));
+        }
+
+        commentRepository.save(new Comment(post, content, parent));
+    }
+
+    //-----------------------------------------------------------------------------------------------------------------
+
     @Transactional
     public CommentResponseDto writeComment(Long postId, CommentRequestDto reqDto, User loginUser){
 
