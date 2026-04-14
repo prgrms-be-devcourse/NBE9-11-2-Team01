@@ -1,6 +1,8 @@
 package com.team01.backend.global.initData;
 
 import com.team01.backend.domain.board.service.BoardService;
+import com.team01.backend.domain.category.service.CategoryService;
+import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;

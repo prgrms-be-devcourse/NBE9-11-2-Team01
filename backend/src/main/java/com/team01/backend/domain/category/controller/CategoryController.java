@@ -3,7 +3,6 @@ package com.team01.backend.domain.category.controller;
 import com.team01.backend.domain.category.dto.CategoryResponseDto;
 import com.team01.backend.domain.category.service.CategoryService;
 import com.team01.backend.global.response.ApiResponse;
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -30,7 +29,6 @@ public class CategoryController {
             String name
     ){}
 
-    @Transactional
     @PostMapping
     ResponseEntity<ApiResponse<CategoryResponseDto>>createCategory(
             @RequestBody @Valid CategoryCreateReq req
