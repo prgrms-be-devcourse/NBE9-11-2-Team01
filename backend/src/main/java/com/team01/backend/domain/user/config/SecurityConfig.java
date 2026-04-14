@@ -22,6 +22,7 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // [중요] 컨트롤러에서 수동 로그인을 처리하기 위해 반드시 빈으로 등록해야 하네
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
