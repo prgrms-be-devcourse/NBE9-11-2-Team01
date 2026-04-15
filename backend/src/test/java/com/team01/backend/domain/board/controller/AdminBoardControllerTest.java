@@ -255,11 +255,10 @@ public class AdminBoardControllerTest {
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
-                .andExpect(handler().methodName(""))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
-                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
+                .andExpect(handler().methodName("getBoards"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[2]").exists());
     }
 
 }
