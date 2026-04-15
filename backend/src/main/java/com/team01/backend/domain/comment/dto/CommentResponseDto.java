@@ -9,7 +9,8 @@ public record CommentResponseDto(
         String content,
         String author,
         int likeCount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime modifyAt
 ) {
     // Comment 엔티티를 받아서 record 만드는 정적 팩토리 메서드
     public static CommentResponseDto from(Comment comment) {
@@ -18,7 +19,8 @@ public record CommentResponseDto(
                 comment.getContent(),
                 comment.getUser().getNickname(),
                 comment.getLikeCount(),
-                comment.getCreatedAt()
+                comment.getCreatedAt(),
+                comment.getModifiedAt()
         );
     }
 }
