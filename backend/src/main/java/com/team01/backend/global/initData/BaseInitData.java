@@ -64,6 +64,10 @@ public class BaseInitData {
         boardService.createBoard("name1", "description1");
         boardService.createBoard("name2", "description2");
         boardService.createBoard("name3", "description3");
+
+        //4번 게시판 삭제
+        boardService.createBoard("name4", "description4");
+        boardService.deleteBoard(4L);
     }
 
     // 게시글 생성

@@ -6,6 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Getter
@@ -18,9 +19,13 @@ public class Board extends BaseEntity {
     @Column(length = 200)
     private String description;
 
+    @Setter
+    private boolean isDeleted;
+
     public Board(String name, String description){
         this.name = name;
         this.description = description;
+        this.isDeleted = false;
     }
 
     public void update(String name, String description) { // 게시판 수정
