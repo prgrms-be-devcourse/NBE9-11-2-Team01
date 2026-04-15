@@ -8,9 +8,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Entity
 @Table(name = "comments")
 @Getter
@@ -31,9 +28,6 @@ public class Comment extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Comment parent;       // 대댓글이면 부모 댓글, 일반 댓글이면 null
-
-    @OneToMany(mappedBy = "parent")
-    private List<Comment> children = new ArrayList<>();
 
     private boolean isDeleted = false;
 

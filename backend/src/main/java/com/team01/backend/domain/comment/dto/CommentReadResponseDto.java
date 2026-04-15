@@ -14,6 +14,7 @@ public record CommentReadResponseDto(
         String author,
         int likeCount,
         LocalDateTime createdAt,
+        LocalDateTime modifiedAt,
         List<CommentReadResponseDto> replies
 ) {
     // COMMENT-02 댓글(답글) 조회 — 루트 + 답글 엔티티 목록 → 트리 DTO
@@ -29,6 +30,7 @@ public record CommentReadResponseDto(
                 root.getUser().getNickname(),
                 root.getLikeCount(),
                 root.getCreatedAt(),
+                root.getModifiedAt(),
                 replyDtos
         );
     }
@@ -41,6 +43,7 @@ public record CommentReadResponseDto(
                 reply.getUser().getNickname(),
                 reply.getLikeCount(),
                 reply.getCreatedAt(),
+                reply.getModifiedAt(),
                 List.of()
         );
     }

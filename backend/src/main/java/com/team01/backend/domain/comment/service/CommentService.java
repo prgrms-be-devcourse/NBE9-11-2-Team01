@@ -43,7 +43,7 @@ public class CommentService {
         Comment parent = null;
         if (parentId != null) {
             parent = commentRepository.findById(parentId)
-                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없어요"));
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
         }
 
         commentRepository.save(new Comment(post, tempUser, content,  parent));
@@ -84,7 +84,7 @@ public class CommentService {
 
         // 게시글 존재 확인
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 업습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 삭제된 게시글 확인 -> code:400
         if(post.isDeleted()){
@@ -97,9 +97,13 @@ public class CommentService {
             parent = commentRepository.findById(reqDto.parentId())
                     .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
 
+            if (!parent.getPost().getId().equals(postId)) {
+                throw new IllegalArgumentException("잘못된 게시글의 댓글입니다.");
+            }
+
             // 답글의 대댓글 방지
             if (parent.getParent() != null) {
-                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다");
+                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다.");
             }
         }
 
@@ -119,7 +123,7 @@ public class CommentService {
 
         //삭제된 댓글을 수정할 수 없음.
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없어요");
+            throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없습니다.");
         }
 
         // userId를 비교하여 본인 인증 -> 추후 시큐리티 사용시 변경 필요
@@ -129,6 +133,8 @@ public class CommentService {
 
         comment.update(reqDto.content());
 
-        return CommentResponseDto.from(comment);
+        Comment saved = commentRepository.saveAndFlush(comment);
+
+        return CommentResponseDto.from(saved);
     }
 }
