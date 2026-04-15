@@ -12,8 +12,8 @@ public record PostDto (
     String boardName,
     Long categoryId,
     String categoryName,
-//    Long authorId,
-//    String authorName,
+    Long authorId,
+    String authorNickname,
     LocalDateTime createdAt,
     LocalDateTime modifiedAt
 ){
@@ -26,8 +26,8 @@ public record PostDto (
                 post.getBoard().getName(),
                 post.getCategory().getId(),
                 post.getCategory().getName(),
-//                post.getAuthor().getId(),
-//                post.getAuthor().getName(),
+                post.getAuthor().getId(),
+                post.getAuthor().getNickname(),
                 post.getCreatedAt(),
                 post.getModifiedAt()
         );
