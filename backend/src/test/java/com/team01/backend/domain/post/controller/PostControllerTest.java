@@ -54,17 +54,16 @@ public class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시판별 글 목록 조회 - 빈 배열")
+    @DisplayName("게시판별 글 목록 조회 - 존재하지 않는 게시판")
     void t2() throws Exception {
-        // when
         ResultActions resultActions = mvc
                 .perform(get("/boards/999/posts"))
                 .andDo(print());
 
-        // then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
     @Test
@@ -255,6 +254,8 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.title").exists())
                 .andExpect(jsonPath("$.data.content").exists())
+                .andExpect(jsonPath("$.data.author").exists())
+                .andExpect(jsonPath("$.data.comments").isArray())
                 .andExpect(jsonPath("$.data.likeCount").exists())
                 .andExpect(jsonPath("$.data.createdAt").exists())
                 .andExpect(jsonPath("$.data.modifiedAt").exists());
@@ -296,5 +297,41 @@ public class PostControllerTest {
 
         Post deletedPost = postRepository.findById(targetId).get();
         assertThat(deletedPost.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 - 삭제된 게시글")
+    void t11() throws Exception {
+        // given
+        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
+        postService.delete(post.getId());
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/posts/%d".formatted(post.getId())))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("게시판별 글 목록 조회 - 삭제된 게시판")
+    void t12() throws Exception {
+        // given: BaseInitData에서 4번 게시판이 삭제된 상태
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/boards/4/posts"))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 }

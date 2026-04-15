@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 public record PostResponseDto(
         Long id,
         String title,
+        String author,
         int likeCount,
         LocalDateTime createdAt
 ) {
@@ -14,6 +15,7 @@ public record PostResponseDto(
         this(
                 post.getId(),
                 post.getTitle(),
+                post.getAuthor().getNickname(),
                 post.getLikeCount(),
                 post.getCreatedAt()
         );

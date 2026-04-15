@@ -4,6 +4,8 @@ import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
 import com.team01.backend.domain.category.repository.CategoryRepository;
+import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
+import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
@@ -25,6 +27,7 @@ import java.util.Optional;
 public class PostService {
 
     private final PostRepository postRepository;
+    private final CommentService commentService;
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CategoryRepository categoryRepository;
@@ -58,6 +61,9 @@ public class PostService {
     }
 
     public List<PostResponseDto> getPostsByBoardId(Long boardId) {
+        boardRepository.findByIdAndIsDeletedFalse(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
+
         return postRepository.findByBoardIdAndIsDeletedFalse(boardId)
                 .stream()
                 .map(PostResponseDto::new)
@@ -68,8 +74,12 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
+        if (post.isDeleted()) {
+            throw new EntityNotFoundException("존재하지 않는 게시글입니다.");
+        }
+
         Board board = post.getBoard();
-        if (board == null) {
+        if (board == null || board.isDeleted()) {
             throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
         }
 
@@ -78,7 +88,9 @@ public class PostService {
             throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
         }
 
-        return PostDetailResponseDto.of(post, board, category);
+        List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
+
+        return PostDetailResponseDto.of(post, board, category, comments);
     }
 
     public Optional<Post> findById(Long id) {return postRepository.findById(id);}
