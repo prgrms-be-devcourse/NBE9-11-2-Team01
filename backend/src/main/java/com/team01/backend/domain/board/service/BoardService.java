@@ -27,7 +27,7 @@ public class BoardService {
 
     // 게시판 목록 조회
     public List<BoardResponse> getAllBoards() {
-        return boardRepository.findAll()
+        return boardRepository.findAllByIsDeletedFalse()
                 .stream()
                 .map(BoardResponse::from)
                 .toList();
@@ -36,7 +36,7 @@ public class BoardService {
     // 게시판 수정, dto 형식으로 반환
     @Transactional
     public BoardUpdateResponseDto updateBoard(Long id, String name, String description) {
-        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        Board board = boardRepository.findByIdAndIsDeletedFalse(id).orElseThrow(EntityNotFoundException::new);
         board.update(name, description);
         boardRepository.save(board);
         return new BoardUpdateResponseDto(board);
