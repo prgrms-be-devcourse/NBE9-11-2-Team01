@@ -64,6 +64,10 @@ public class BaseInitData {
         boardService.createBoard("name1", "description1");
         boardService.createBoard("name2", "description2");
         boardService.createBoard("name3", "description3");
+
+        //4번 게시판 삭제
+        boardService.createBoard("name4", "description4");
+        boardService.deleteBoard(4L);
     }
 
     // 게시글 생성
@@ -97,6 +101,7 @@ public class BaseInitData {
                 .password("1234")
                 .build());
 
+        // 일반 댓글 — parentId 자리에 null
         // 일반 댓글 — parentId 자리에 null
         commentService.writeInitComment(1L, tempUser,"첫 번째 댓글입니다", null);
         commentService.writeInitComment(1L, tempUser,"두 번째 댓글입니다", null);
