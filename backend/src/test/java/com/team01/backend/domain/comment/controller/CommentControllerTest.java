@@ -2,10 +2,15 @@ package com.team01.backend.domain.comment.controller;
 
 
 import com.jayway.jsonpath.JsonPath;
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -38,24 +43,42 @@ public class CommentControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BoardRepository boardRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
 
     private User testUser;
     private Post testPost;
+    private Post testPost2;
 
     @BeforeEach
     void setUp() {
+
         testUser = userRepository.save(User.builder()
-                .email("test@test.com")
-                .nickname("테스터")
-                .password("1234")
-                .build());
+        .email("test@test.com")
+        .nickname("테스터")
+        .password("1234")
+        .build());
+
+        testPost = postRepository.findAll().get(0);
+        testPost2 = postRepository.findAll().get(1);
+
+        // 게시판 생성
+        Board testBoard = boardRepository.save(new Board("자유게시판", "자유롭게 글을 쓰는 곳"));
+
+        // 카테고리 생성
+        Category testCategory = categoryRepository.save(new Category(testBoard.getId(), "일반"));
 
         String title = "테스트 게시글";
         String content ="내용";
 
-        Post post = new Post(title, content);
+        Post post = new Post(testUser, title, content, testBoard, testCategory);
 
         testPost = postRepository.save(post);
+
     }
 
     @Test
@@ -83,7 +106,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -141,8 +164,9 @@ public class CommentControllerTest {
     @Test
     @DisplayName("댓글 작성 실패 - 삭제된 게시글")
     void t4() throws Exception {
+
         // 게시글 소프트 딜리트
-        //testPost.delete();
+        testPost.delete();
         postRepository.saveAndFlush(testPost);
 
         ResultActions resultActions = mvc
@@ -237,7 +261,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(childContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -300,12 +324,52 @@ public class CommentControllerTest {
                 .andExpect(status().isBadRequest())             // 400
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
-                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다"));
+                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다."));
+    }
+
+    @Test
+    @DisplayName("댓글 작성 실패 - 다른 게시글의 댓글에 대댓글 작성")
+    void t8() throws Exception {
+
+        // 1번 게시글에 댓글 생성
+        String createResponse = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "1번 게시글 댓글"
+                                }
+                                """)
+                )
+                .andReturn().getResponse().getContentAsString();
+
+        int parentId = JsonPath.read(createResponse, "$.data.id");
+
+        // 다른 게시글(2번)에 위 댓글을 부모로 대댓글 시도
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost2.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "잘못된 대댓글",
+                                    "parentId": %d
+                                }
+                                """.formatted(parentId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("잘못된 게시글의 댓글입니다."));
     }
 
     @Test
     @DisplayName("댓글 수정 - 1번 댓글 수정")
-    void t8() throws Exception {
+    void t9() throws Exception {
 
         ResultActions createResult = mvc
                 .perform(
@@ -344,7 +408,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(commentId))
                 .andExpect(jsonPath("$.data.content").value(updatedContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
