@@ -1,8 +1,8 @@
 package com.team01.backend.domain.board.service;
 
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
-import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.dto.BoardResponse;
+import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +20,10 @@ public class BoardService {
     // 게시판 생성, dto 형식으로 반환
     @Transactional
     public BoardCreateResponseDto createBoard(String name, String description){
+        // 삭제되지 않은 게시판 중 중복이 있는지 확인
+        if(boardRepository.existsByNameAndIsDeletedFalse(name)){
+            throw new IllegalArgumentException("중복된 이름입니다");
+        }
         Board board = new Board(name, description);
         boardRepository.save(board);
         return new BoardCreateResponseDto(board);
@@ -27,7 +31,7 @@ public class BoardService {
 
     // 게시판 목록 조회
     public List<BoardResponse> getAllBoards() {
-        return boardRepository.findAll()
+        return boardRepository.findAllByIsDeletedFalse()
                 .stream()
                 .map(BoardResponse::from)
                 .toList();
@@ -36,7 +40,7 @@ public class BoardService {
     // 게시판 수정, dto 형식으로 반환
     @Transactional
     public BoardUpdateResponseDto updateBoard(Long id, String name, String description) {
-        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+        Board board = boardRepository.findByIdAndIsDeletedFalse(id).orElseThrow(EntityNotFoundException::new);
         board.update(name, description);
         boardRepository.save(board);
         return new BoardUpdateResponseDto(board);
@@ -50,8 +54,9 @@ public class BoardService {
     // 게시판 삭제
     @Transactional
     public void deleteBoard(Long id) {
-        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new); // 없는 id 예외 처리
-        boardRepository.delete(board);
+        Board board = boardRepository.findByIdAndIsDeletedFalse(id).orElseThrow(EntityNotFoundException::new); // 없는 id, 삭제된 게시판 예외 처리
+        board.setDeleted(true); // soft delete
+        boardRepository.save(board);
     }
 
     public boolean existsById(Long id) {
