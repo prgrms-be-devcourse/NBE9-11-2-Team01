@@ -2,6 +2,10 @@ package com.team01.backend.domain.comment.controller;
 
 
 import com.jayway.jsonpath.JsonPath;
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.comment.dto.CommentDeleteResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.comment.repository.CommentRepository;
@@ -48,6 +52,12 @@ public class CommentControllerTest {
     private UserRepository userRepository;
 
     @Autowired
+    private BoardRepository boardRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
     private CommentRepository commentRepository;
 
     @Autowired
@@ -55,6 +65,7 @@ public class CommentControllerTest {
 
     private User testUser;
     private Post testPost;
+    private Post testPost2;
 
     @BeforeEach
     void setUp() {
@@ -64,12 +75,11 @@ public class CommentControllerTest {
                 .password("1234")
                 .build());
 
-        String title = "테스트 게시글";
-        String content ="내용";
+        Board testBoard = boardRepository.save(new Board("자유게시판", "자유롭게 글을 쓰는 곳"));
+        Category testCategory = categoryRepository.save(new Category(testBoard.getId(), "일반"));
 
-        Post post = new Post(title, content);
-
-        testPost = postRepository.save(post);
+        testPost = postRepository.save(new Post(testUser, "테스트 게시글", "내용", testBoard, testCategory));
+        testPost2 = postRepository.save(new Post(testUser, "테스트 게시글2", "내용2", testBoard, testCategory));
     }
 
     @Test
@@ -97,7 +107,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -250,7 +260,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(childContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -317,8 +327,46 @@ public class CommentControllerTest {
     }
 
     @Test
-    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    @DisplayName("댓글 작성 실패 - 다른 게시글의 댓글에 대댓글 작성")
     void t8() throws Exception {
+
+        String createResponse = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "1번 게시글 댓글"
+                                }
+                                """)
+                )
+                .andReturn().getResponse().getContentAsString();
+
+        int parentId = JsonPath.read(createResponse, "$.data.id");
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/posts/%d/comments".formatted(testPost2.getId()))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                {
+                                    "content": "잘못된 대댓글",
+                                    "parentId": %d
+                                }
+                                """.formatted(parentId))
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("잘못된 게시글의 댓글입니다."));
+    }
+
+    @Test
+    @DisplayName("댓글 수정 - 1번 댓글 수정")
+    void t9() throws Exception {
 
         ResultActions createResult = mvc
                 .perform(
@@ -357,7 +405,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(commentId))
                 .andExpect(jsonPath("$.data.content").value(updatedContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -545,9 +593,9 @@ public class CommentControllerTest {
         mvc.perform(delete("/comments/%d".formatted(commentId))).andExpect(status().isOk());
 
         mvc.perform(delete("/comments/%d".formatted(commentId)))
-                .andExpect(status().isConflict())
+                .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
                 .andExpect(jsonPath("$.message").value("이미 삭제된 댓글입니다."));
     }
 

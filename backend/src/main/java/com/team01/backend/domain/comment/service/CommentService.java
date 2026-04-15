@@ -9,7 +9,6 @@ import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
-import com.team01.backend.global.error.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -87,7 +86,7 @@ public class CommentService {
 
         // 게시글 존재 확인
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 업습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 삭제된 게시글 확인 -> code:400
         if(post.isDeleted()){
@@ -99,6 +98,11 @@ public class CommentService {
         if(reqDto.parentId() != null){
             parent = commentRepository.findById(reqDto.parentId())
                     .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
+
+            // 부모 댓글은 같은 게시글에 속해야 함
+            if (!parent.getPost().getId().equals(postId)) {
+                throw new IllegalArgumentException("잘못된 게시글의 댓글입니다.");
+            }
 
             if (parent.isDeleted()) {
                 throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
@@ -149,14 +153,14 @@ public class CommentService {
     @Transactional
     public CommentDeleteResponseDto deleteComment(Long commentId, User loginUser) {
         if (loginUser == null) {
-            throw new UnauthorizedException("로그인이 필요합니다.");
+            throw new AccessDeniedException("로그인이 필요합니다.");
         }
 
         Comment comment = commentRepository.findByIdWithPost(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
 
         if (comment.isDeleted()) {
-            throw new IllegalStateException("이미 삭제된 댓글입니다.");
+            throw new IllegalArgumentException("이미 삭제된 댓글입니다.");
         }
 
         if (comment.getPost().isDeleted()) {
