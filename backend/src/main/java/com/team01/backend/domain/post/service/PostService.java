@@ -53,6 +53,10 @@ public class PostService {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
+        if (post.isDeleted()) {
+            throw new EntityNotFoundException("존재하지 않는 게시글입니다.");
+        }
+
         Board board = post.getBoard();
         if (board == null) {
             throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
