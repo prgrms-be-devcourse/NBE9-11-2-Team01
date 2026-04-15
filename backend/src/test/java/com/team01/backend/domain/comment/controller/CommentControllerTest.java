@@ -2,6 +2,10 @@ package com.team01.backend.domain.comment.controller;
 
 
 import com.jayway.jsonpath.JsonPath;
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
@@ -39,6 +43,12 @@ public class CommentControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BoardRepository boardRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
 
     private User testUser;
     private Post testPost;
@@ -47,11 +57,28 @@ public class CommentControllerTest {
     @BeforeEach
     void setUp() {
 
-        testUser = userRepository.findByEmail("init@init.com")
-                .orElseThrow(() -> new EntityNotFoundException("유저 없음"));
+        testUser = userRepository.save(User.builder()
+        .email("test@test.com")
+        .nickname("테스터")
+        .password("1234")
+        .build());
 
         testPost = postRepository.findAll().get(0);
         testPost2 = postRepository.findAll().get(1);
+
+        // 게시판 생성
+        Board testBoard = boardRepository.save(new Board("자유게시판", "자유롭게 글을 쓰는 곳"));
+
+        // 카테고리 생성
+        Category testCategory = categoryRepository.save(new Category(testBoard.getId(), "일반"));
+
+        String title = "테스트 게시글";
+        String content ="내용";
+
+        Post post = new Post(testUser, title, content, testBoard, testCategory);
+
+        testPost = postRepository.save(post);
+
     }
 
     @Test
@@ -79,7 +106,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -234,7 +261,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(childContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
@@ -381,7 +408,7 @@ public class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(commentId))
                 .andExpect(jsonPath("$.data.content").value(updatedContent))
-                .andExpect(jsonPath("$.data.author").value("유저"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
