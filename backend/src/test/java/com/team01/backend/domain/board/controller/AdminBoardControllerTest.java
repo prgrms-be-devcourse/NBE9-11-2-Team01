@@ -104,6 +104,32 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.message",containsString("description: size")));
     }
 
+    @Test
+    @DisplayName("게시판 생성 테스트 - 중복된 이름")
+    void t4() throws  Exception{
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/admin/boards")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name": "name1",
+                                            "description":"description 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("createBoard"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message",startsWith("중복된 이름입니다")));
+    }
+
     // 게시판 수정 테스트
     @Test
     @DisplayName("게시판 수정 테스트")
