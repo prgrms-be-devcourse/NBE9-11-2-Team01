@@ -58,4 +58,9 @@ public class Comment extends BaseEntity {
     public void update(String content) {
         this.content = content;
     }
+
+    /** 소프트 삭제는 {@code isDeleted}만 변경. 호출부는 COMMENT-04 댓글 삭제. */
+    public void softDelete() {
+        this.isDeleted = true;
+    }
 }

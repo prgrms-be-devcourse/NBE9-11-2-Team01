@@ -1,5 +1,6 @@
 package com.team01.backend.domain.comment.service;
 
+import com.team01.backend.domain.comment.dto.CommentDeleteResponseDto;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
@@ -8,8 +9,10 @@ import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
+import com.team01.backend.global.error.UnauthorizedException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -61,14 +64,14 @@ public class CommentService {
         }
 
         List<Comment> roots = commentRepository
-                .findByPost_IdAndParentIsNullAndIsDeletedFalseOrderByCreatedAtAsc(postId);
+                .findByPost_IdAndParentIsNullOrderByCreatedAtAsc(postId);
         if (roots.isEmpty()) {
             return List.of();
         }
 
         List<Long> rootIds = roots.stream().map(Comment::getId).toList();
         List<Comment> allReplies =
-                commentRepository.findByParent_IdInAndIsDeletedFalseOrderByCreatedAtAsc(rootIds);
+                commentRepository.findByParent_IdInOrderByCreatedAtAsc(rootIds);
         Map<Long, List<Comment>> repliesByParentId =
                 allReplies.stream().collect(Collectors.groupingBy(c -> c.getParent().getId()));
         repliesByParentId.values().forEach(list -> list.sort(Comparator.comparing(Comment::getCreatedAt)));
@@ -96,6 +99,10 @@ public class CommentService {
         if(reqDto.parentId() != null){
             parent = commentRepository.findById(reqDto.parentId())
                     .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
+
+            if (parent.isDeleted()) {
+                throw new IllegalArgumentException("삭제된 댓글에는 답글을 달 수 없습니다.");
+            }
 
             // 답글의 대댓글 방지
             if (parent.getParent() != null) {
@@ -130,5 +137,37 @@ public class CommentService {
         comment.update(reqDto.content());
 
         return CommentResponseDto.from(comment);
+    }
+
+    /*
+     * ============================================================================================================
+     * COMMENT-04 댓글(답글) 삭제 — 소프트 딜리트(isDeleted), 본인만 삭제
+     * 검증 순서: 존재 → 댓글 삭제 여부 → 게시글 삭제 여부 → 작성자 권한
+     * (인가 실패는 IllegalArgumentException이 아닌 AccessDeniedException)
+     * ============================================================================================================
+     */
+    @Transactional
+    public CommentDeleteResponseDto deleteComment(Long commentId, User loginUser) {
+        if (loginUser == null) {
+            throw new UnauthorizedException("로그인이 필요합니다.");
+        }
+
+        Comment comment = commentRepository.findByIdWithPost(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+
+        if (comment.isDeleted()) {
+            throw new IllegalStateException("이미 삭제된 댓글입니다.");
+        }
+
+        if (comment.getPost().isDeleted()) {
+            throw new EntityNotFoundException("게시글을 찾을 수 없습니다.");
+        }
+
+        if (!comment.getUser().getId().equals(loginUser.getId())) {
+            throw new AccessDeniedException("본인 댓글만 삭제할 수 있습니다.");
+        }
+
+        comment.softDelete();
+        return CommentDeleteResponseDto.of(commentId);
     }
 }
