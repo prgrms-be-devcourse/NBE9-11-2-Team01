@@ -52,9 +52,8 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data[0].author").exists())
-                .andExpect(jsonPath("$.data[0].category").exists())
-                .andExpect(jsonPath("$.data[0].category.id").exists())
-                .andExpect(jsonPath("$.data[0].category.name").exists());
+                .andExpect(jsonPath("$.data[0].categoryId").exists())
+                .andExpect(jsonPath("$.data[0].categoryName").exists());
     }
 
     @Test
