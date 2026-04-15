@@ -1,7 +1,12 @@
 package com.team01.backend.domain.post.entity;
 
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.category.entity.Category;
 import com.team01.backend.global.entity.BaseEntity;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +20,9 @@ public class Post extends BaseEntity {
     private String title;
     private String content;
 
-    private Long boardId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "board_id")
+    private Board board;
 
     // DB에는 authorId 컬럼이 자동으로 생성됨
 //    @ManyToOne(fetch = FetchType.LAZY)
@@ -24,8 +31,8 @@ public class Post extends BaseEntity {
     private int likeCount;
 
     // 그러면 boardId도 사용 가능?
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private Category category;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private Category category;
 
     private boolean isDeleted;
 
@@ -61,5 +68,12 @@ public class Post extends BaseEntity {
     public void update(String title, String content) {
         this.title = title;
         this.content = content;
+    }
+
+    public Post(String title, String content, Board board, Category category) {
+        this.title = title;
+        this.content = content;
+        this.board = board;
+        this.category = category;
     }
 }
