@@ -50,7 +50,11 @@ public class PostControllerTest {
                 .andExpect(handler().methodName("getPostsByBoardId"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].author").exists())
+                .andExpect(jsonPath("$.data[0].category").exists())
+                .andExpect(jsonPath("$.data[0].category.id").exists())
+                .andExpect(jsonPath("$.data[0].category.name").exists());
     }
 
     @Test
