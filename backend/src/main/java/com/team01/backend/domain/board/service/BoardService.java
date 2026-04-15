@@ -1,8 +1,8 @@
 package com.team01.backend.domain.board.service;
 
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
-import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.dto.BoardResponse;
+import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -20,6 +20,10 @@ public class BoardService {
     // 게시판 생성, dto 형식으로 반환
     @Transactional
     public BoardCreateResponseDto createBoard(String name, String description){
+        // 삭제되지 않은 게시판 중 중복이 있는지 확인
+        if(boardRepository.existsByNameAndIsDeletedFalse(name)){
+            throw new IllegalArgumentException("중복된 이름입니다");
+        }
         Board board = new Board(name, description);
         boardRepository.save(board);
         return new BoardCreateResponseDto(board);
