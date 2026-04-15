@@ -13,5 +13,6 @@ public class SignUpRequest {
     private String email;
     private String password;
     private String nickname;
-    private String profileImage; // 필드 추가
+    private String profileImage;
+    private String adminToken; // [추가] 관리자 권한 획득을 위한 토큰
 }
