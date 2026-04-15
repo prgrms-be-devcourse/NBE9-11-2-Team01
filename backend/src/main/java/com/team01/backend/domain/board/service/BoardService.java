@@ -50,8 +50,9 @@ public class BoardService {
     // 게시판 삭제
     @Transactional
     public void deleteBoard(Long id) {
-        Board board = boardRepository.findById(id).orElseThrow(EntityNotFoundException::new); // 없는 id 예외 처리
-        boardRepository.delete(board);
+        Board board = boardRepository.findByIdAndIsDeletedFalse(id).orElseThrow(EntityNotFoundException::new); // 없는 id, 삭제된 게시판 예외 처리
+        board.setDeleted(true); // soft delete
+        boardRepository.save(board);
     }
 
     public boolean existsById(Long id) {

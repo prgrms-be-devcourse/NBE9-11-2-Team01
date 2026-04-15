@@ -48,7 +48,7 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.success").value(true));
 
         resultActions
-                .andExpect(jsonPath("$.data.id").value(4))
+                .andExpect(jsonPath("$.data.id").value(5))
                 .andExpect(jsonPath("$.data.name").value("게시판 이름 1"))
                 .andExpect(jsonPath("$.data.description").value("게시판 설명 1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
@@ -194,13 +194,21 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/6")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                        {
-                                            "name":"name6",
-                                            "description":"description 6"
-                                        }
-                                        """)
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("deleteBoard"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
+    }
+    @Test
+    @DisplayName("게시판 삭제 테스트 - 삭제된 게시판")
+    void d3() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/admin/boards/4")
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
