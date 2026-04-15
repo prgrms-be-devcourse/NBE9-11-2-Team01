@@ -95,13 +95,13 @@ public class BaseInitData {
         Category category = categoryRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        Post post1 = new Post(author1, "게시글 1", "내용 1", board, category);
+        Post post1 = new Post(author1, "첫 번째 게시글입니다.", "내용 1", board, category);
         postRepository.save(post1);
 
-        Post post2 = new Post(author2, "게시글 2", "내용 2", board, category);
+        Post post2 = new Post(author2, "두 번째 게시글입니다.", "내용 2", board, category);
         postRepository.save(post2);
 
-        Post post3 = new Post(author2, "게시글 3", "내용 3", board, category);
+        Post post3 = new Post(author2, "세 번째 게시글입니다.", "내용 3", board, category);
         postRepository.save(post3);
     }
 
