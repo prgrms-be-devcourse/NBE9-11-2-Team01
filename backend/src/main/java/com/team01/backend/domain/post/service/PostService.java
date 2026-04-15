@@ -61,6 +61,9 @@ public class PostService {
     }
 
     public List<PostResponseDto> getPostsByBoardId(Long boardId) {
+        boardRepository.findByIdAndIsDeletedFalse(boardId)
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
+
         return postRepository.findByBoardIdAndIsDeletedFalse(boardId)
                 .stream()
                 .map(PostResponseDto::new)
@@ -76,7 +79,7 @@ public class PostService {
         }
 
         Board board = post.getBoard();
-        if (board == null) {
+        if (board == null || board.isDeleted()) {
             throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
         }
 
