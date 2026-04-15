@@ -2,14 +2,16 @@ package com.team01.backend.domain.post.entity;
 
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.comment.entity.Comment;
+import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.global.entity.BaseEntity;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -25,22 +27,22 @@ public class Post extends BaseEntity {
     private Board board;
 
     // DB에는 authorId 컬럼이 자동으로 생성됨
-//    @ManyToOne(fetch = FetchType.LAZY)
-//    private User author;
+    @ManyToOne(fetch = FetchType.LAZY)
+    private User author;
 
     private int likeCount;
 
-    // 그러면 boardId도 사용 가능?
     @ManyToOne(fetch = FetchType.LAZY)
     private Category category;
 
-    private boolean isDeleted;
+    private boolean isDeleted = false;
 
-//    @OneToMany(mappedBy = "post",
-//            cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
-//            fetch = FetchType.LAZY,
-//            orphanRemoval = false)  // (소프트 딜리트) : service 에서 delete 로직 짤 때 상태값만 바꾸고, 부모 리스트와의 관계를 끊는 코드를 직접 작성
-//    private List<Comment> comments = new ArrayList<>();
+    @OneToMany(mappedBy = "post",
+            cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+            fetch = FetchType.LAZY,
+            orphanRemoval = false)  // (소프트 딜리트) : service 에서 delete 로직 짤 때 상태값만 바꾸고, 부모 리스트와의 관계를 끊는 코드를 직접 작성
+    private List<Comment> comments = new ArrayList<>();
+
 
 //    public Post(User author, String title, String content) {
 //        this.author = author;
@@ -48,17 +50,25 @@ public class Post extends BaseEntity {
 //        this.content = content;
 //    }
 
-    //Comment테스트
-    public void delete() {
-        this.isDeleted = true;
-    }
+//    //Comment테스트
+//    public void delete() {
+//        this.isDeleted = true;
+//    }
 
-    public Post(String title, String content) {
+//    public void delete() {       /*Comment테스트*/
+//        this.isDeleted = true;
+//    }
+
+
+    public Post(User author, String title, String content, Board board, Category category) {
         this.title = title;
         this.content = content;
+        this.board = board;
+        this.author = author;
+        this.category = category;
     }
 
-    // 유저 정보 생기면 사용
+    // 유저 인증 로직 생기면 사용
 //    public void checkModify(User actor) {
 //
 //        if (!this.getAuthor().equals(actor)) {
@@ -71,10 +81,10 @@ public class Post extends BaseEntity {
         this.content = content;
     }
 
-    public Post(String title, String content, Board board, Category category) {
-        this.title = title;
-        this.content = content;
-        this.board = board;
-        this.category = category;
+    public void delete(/*User actor*/) {
+//        checkModify(actor);
+
+        this.isDeleted = true;
+
     }
 }

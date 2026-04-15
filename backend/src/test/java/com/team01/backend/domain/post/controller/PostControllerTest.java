@@ -54,17 +54,16 @@ public class PostControllerTest {
     }
 
     @Test
-    @DisplayName("게시판별 글 목록 조회 - 빈 배열")
+    @DisplayName("게시판별 글 목록 조회 - 존재하지 않는 게시판")
     void t2() throws Exception {
-        // when
         ResultActions resultActions = mvc
                 .perform(get("/boards/999/posts"))
                 .andDo(print());
 
-        // then
         resultActions
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data").isEmpty());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
     @Test
@@ -72,6 +71,8 @@ public class PostControllerTest {
     void t3() throws Exception {
         String title = "제목입니다.";
         String content = "내용입니다.";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
         ResultActions resultActions = mvc
                 .perform(
@@ -80,9 +81,11 @@ public class PostControllerTest {
                                 .content("""
                                         {
                                             "title": "%s",
-                                            "content": "%s"
+                                            "content": "%s",
+                                            "boardId" : %d,
+                                            "categoryId" : %d
                                         }
-                                        """.formatted(title, content))
+                                        """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -104,6 +107,8 @@ public class PostControllerTest {
 
         String title = "";
         String content = "내용입니다.";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
 
         ResultActions resultActions = mvc
@@ -113,9 +118,11 @@ public class PostControllerTest {
                                 .content("""
                                     {
                                         "title": "%s",
-                                        "content": "%s"
+                                        "content": "%s",
+                                        "boardId": %d,
+                                        "categoryId": %d
                                     }
-                                    """.formatted(title, content))
+                                    """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -133,6 +140,8 @@ public class PostControllerTest {
     void t5() throws Exception {
         String title = "제목입니다.";
         String content = "";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
         ResultActions resultActions = mvc
                 .perform(
@@ -142,9 +151,11 @@ public class PostControllerTest {
                                         """
                                         {
                                             "title": "%s",
-                                            "content": "%s"
+                                            "content": "%s",
+                                            "boardId": %d,
+                                            "categoryId": %d
                                         }
-                                        """.formatted(title, content))
+                                        """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -243,6 +254,8 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.id").value(1))
                 .andExpect(jsonPath("$.data.title").exists())
                 .andExpect(jsonPath("$.data.content").exists())
+                .andExpect(jsonPath("$.data.author").exists())
+                .andExpect(jsonPath("$.data.comments").isArray())
                 .andExpect(jsonPath("$.data.likeCount").exists())
                 .andExpect(jsonPath("$.data.createdAt").exists())
                 .andExpect(jsonPath("$.data.modifiedAt").exists());
@@ -258,8 +271,67 @@ public class PostControllerTest {
 
         // then
         resultActions
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+
+    @Test
+    @DisplayName("글 삭제 성공")
+    void t10() throws Exception {
+//        Post post = postRepository.findById(1L).get();
+//        Long targetId = post.getId();
+
+        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
+        Long targetId = post.getId();
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/posts/%d".formatted(targetId)))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Post deletedPost = postRepository.findById(targetId).get();
+        assertThat(deletedPost.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 - 삭제된 게시글")
+    void t11() throws Exception {
+        // given
+        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
+        postService.delete(post.getId());
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/posts/%d".formatted(post.getId())))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("게시판별 글 목록 조회 - 삭제된 게시판")
+    void t12() throws Exception {
+        // given: BaseInitData에서 4번 게시판이 삭제된 상태
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/boards/4/posts"))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 }
