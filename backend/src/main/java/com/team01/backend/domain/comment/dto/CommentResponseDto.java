@@ -10,7 +10,7 @@ public record CommentResponseDto(
         String author,
         int likeCount,
         LocalDateTime createdAt,
-        LocalDateTime modifyAt
+        LocalDateTime modifiedAt
 ) {
     // Comment 엔티티를 받아서 record 만드는 정적 팩토리 메서드
     public static CommentResponseDto from(Comment comment) {
