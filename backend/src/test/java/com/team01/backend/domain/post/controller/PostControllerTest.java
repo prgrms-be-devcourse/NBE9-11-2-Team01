@@ -72,6 +72,8 @@ public class PostControllerTest {
     void t3() throws Exception {
         String title = "제목입니다.";
         String content = "내용입니다.";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
         ResultActions resultActions = mvc
                 .perform(
@@ -80,9 +82,11 @@ public class PostControllerTest {
                                 .content("""
                                         {
                                             "title": "%s",
-                                            "content": "%s"
+                                            "content": "%s",
+                                            "boardId" : %d,
+                                            "categoryId" : %d
                                         }
-                                        """.formatted(title, content))
+                                        """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -104,6 +108,8 @@ public class PostControllerTest {
 
         String title = "";
         String content = "내용입니다.";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
 
         ResultActions resultActions = mvc
@@ -113,9 +119,11 @@ public class PostControllerTest {
                                 .content("""
                                     {
                                         "title": "%s",
-                                        "content": "%s"
+                                        "content": "%s",
+                                        "boardId": %d,
+                                        "categoryId": %d
                                     }
-                                    """.formatted(title, content))
+                                    """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -133,6 +141,8 @@ public class PostControllerTest {
     void t5() throws Exception {
         String title = "제목입니다.";
         String content = "";
+        Long boardId = 1L;
+        Long categoryId = 1L;
 
         ResultActions resultActions = mvc
                 .perform(
@@ -142,9 +152,11 @@ public class PostControllerTest {
                                         """
                                         {
                                             "title": "%s",
-                                            "content": "%s"
+                                            "content": "%s",
+                                            "boardId": %d,
+                                            "categoryId": %d
                                         }
-                                        """.formatted(title, content))
+                                        """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
@@ -258,9 +270,9 @@ public class PostControllerTest {
 
         // then
         resultActions
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
 
 
@@ -270,7 +282,7 @@ public class PostControllerTest {
 //        Post post = postRepository.findById(1L).get();
 //        Long targetId = post.getId();
 
-        Post post = postService.write("테스트 제목", "테스트 내용");
+        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
         Long targetId = post.getId();
 
         ResultActions resultActions = mvc

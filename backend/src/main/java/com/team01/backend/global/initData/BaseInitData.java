@@ -48,11 +48,23 @@ public class BaseInitData {
     @Bean
     public ApplicationRunner initData() {
         return args -> {
+            self.setMember();
             self.setBoard();
             self.setCategory();
             self.setPost();
             self.setComment();
         };
+    }
+
+    // 유저 데이터 생성
+    @Transactional
+    public void setMember() {
+
+        if (userRepository.count() > 0) return;
+
+        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password("1234").build());
+        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password("1234").build());
+
     }
 
     // 게시판 생성
@@ -71,18 +83,21 @@ public class BaseInitData {
     public void setPost(){
         if(postRepository.count() > 0) return;
 
+        User author1 = userRepository.findByEmail("user1@test.com").orElseThrow();
+        User author2 = userRepository.findByEmail("user2@test.com").orElseThrow();
+
         Board board = boardRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Board not found"));
         Category category = categoryRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        Post post1 = new Post("게시글 1", "내용 1", board, category);
+        Post post1 = new Post(author1, "게시글 1", "내용 1", board, category);
         postRepository.save(post1);
 
-        Post post2 = new Post("게시글 2", "내용 2", board, category);
+        Post post2 = new Post(author2, "게시글 2", "내용 2", board, category);
         postRepository.save(post2);
 
-        Post post3 = new Post("게시글 3", "내용 3", board, category);
+        Post post3 = new Post(author2, "게시글 3", "내용 3", board, category);
         postRepository.save(post3);
     }
 

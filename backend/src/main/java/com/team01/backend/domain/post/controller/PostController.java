@@ -9,6 +9,7 @@ import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -51,7 +52,13 @@ public class PostController {
 
             @Size(min = 2, message = "내용은 2자 이상이어야 합니다.")
             @NotBlank(message = "내용은 공백일 수 없습니다.")
-            String content
+            String content,
+
+            @NotNull(message = "게시판 선택은 필수입니다.")
+            Long boardId,
+
+            @NotNull(message = "카테고리 선택은 필수입니다.")
+            Long categoryId
     ){
     }
 
@@ -69,7 +76,12 @@ public class PostController {
         // User actor = rq.getActor();
 
         //Post post = postService.write(actor, reqBody.title, reqBody.content);
-        Post post = postService.write(reqBody.title, reqBody.content);
+        Post post = postService.write(
+                reqBody.title,
+                reqBody.content,
+                reqBody.boardId,
+                reqBody.categoryId
+        );
 
         long postsCount = postService.count();
 
