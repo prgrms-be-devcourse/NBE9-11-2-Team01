@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/admin/categories")
 @RequiredArgsConstructor
@@ -52,5 +54,11 @@ public class CategoryController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(categoryResponseDto));
     }
 
+
+    @GetMapping
+    ResponseEntity<ApiResponse<List<CategoryResponseDto>>>viewCategory(){
+        List<CategoryResponseDto> categories = categoryService.list();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(categories));
+    }
 
 }
