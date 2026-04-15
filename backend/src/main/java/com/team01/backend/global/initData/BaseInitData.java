@@ -102,6 +102,7 @@ public class BaseInitData {
                 .build());
 
         // 일반 댓글 — parentId 자리에 null
+        // 일반 댓글 — parentId 자리에 null
         commentService.writeInitComment(1L, tempUser,"첫 번째 댓글입니다", null);
         commentService.writeInitComment(1L, tempUser,"두 번째 댓글입니다", null);
         commentService.writeInitComment(1L, tempUser,"세 번째 댓글입니다", null);

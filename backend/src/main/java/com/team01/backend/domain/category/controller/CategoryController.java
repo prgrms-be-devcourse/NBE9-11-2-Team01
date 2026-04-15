@@ -1,5 +1,6 @@
 package com.team01.backend.domain.category.controller;
 
+import com.team01.backend.domain.category.dto.CategoryCreateResponseDto;
 import com.team01.backend.domain.category.dto.CategoryResponseDto;
 import com.team01.backend.domain.category.service.CategoryService;
 import com.team01.backend.global.response.ApiResponse;
@@ -9,6 +10,8 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin/categories")
@@ -27,12 +30,12 @@ public class CategoryController {
     ){}
 
     @PostMapping
-    ResponseEntity<ApiResponse<CategoryResponseDto>>createCategory(
+    ResponseEntity<ApiResponse<CategoryCreateResponseDto>>createCategory(
             @RequestBody @Valid CategoryCreateReq req
     ){
-        CategoryResponseDto categoryResponseDto = categoryService.create(req.boardId, req.name);
+        CategoryCreateResponseDto categoryCreateResponseDto = categoryService.create(req.boardId, req.name);
 
-        return ResponseEntity.ok(ApiResponse.ofSuccess(categoryResponseDto));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(categoryCreateResponseDto));
     }
 
     record CategoryUpdateReq(
@@ -42,15 +45,21 @@ public class CategoryController {
     ){}
 
     @PutMapping("/{categoryId}")
-    ResponseEntity<ApiResponse<CategoryResponseDto>>updateCategory(
+    ResponseEntity<ApiResponse<CategoryCreateResponseDto>>updateCategory(
             @PathVariable long categoryId,
             @RequestBody @Valid CategoryUpdateReq req
     ){
         // 카테고리가 있는 게시판은 변경하지 않고, 이름만 수정
-        CategoryResponseDto categoryResponseDto = categoryService.update(categoryId, req.name);
+        CategoryCreateResponseDto categoryResponseDto = categoryService.update(categoryId, req.name);
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(categoryResponseDto));
     }
 
+
+    @GetMapping
+    ResponseEntity<ApiResponse<List<CategoryResponseDto>>>viewCategory(){
+        List<CategoryResponseDto> categories = categoryService.list();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(categories));
+    }
 
 }

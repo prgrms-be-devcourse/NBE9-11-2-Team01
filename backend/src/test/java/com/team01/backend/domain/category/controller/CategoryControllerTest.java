@@ -187,5 +187,20 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
     }
-
+    @Test
+    @DisplayName("카테고리 조회 테스트")
+    void v1() throws  Exception{
+        //
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.get("/admin/categories")
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("viewCategory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[4]").exists());
+    }
 }
