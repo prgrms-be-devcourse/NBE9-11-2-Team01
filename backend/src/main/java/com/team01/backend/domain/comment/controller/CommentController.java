@@ -1,5 +1,6 @@
 package com.team01.backend.domain.comment.controller;
 
+import com.team01.backend.domain.comment.dto.CommentDeleteResponseDto;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
@@ -59,5 +60,18 @@ public class CommentController {
                 commentId, requestDto, user);
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(response));
+    }
+
+
+        // COMMENT-04 댓글(답글) 삭제 — DELETE, 소프트 딜리트(서비스에서 isDeleted 처리)
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<ApiResponse<CommentDeleteResponseDto>> deleteComment(@PathVariable Long commentId) {
+
+        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
+        User user = userRepository.findById(1L)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+
+        CommentDeleteResponseDto body = commentService.deleteComment(commentId, user);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(body));
     }
 }
