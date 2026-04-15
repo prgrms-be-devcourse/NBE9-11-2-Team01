@@ -17,7 +17,7 @@ public class AuthService {
 
     @Transactional
     public void signUp(SignUpRequest request) {
-        // [규격 준수] 기존 GlobalExceptionHandler가 처리하는 IllegalArgumentException 처리
+        // [규격 준수] GlobalExceptionHandler가 처리하는 IllegalArgumentException 활용
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
