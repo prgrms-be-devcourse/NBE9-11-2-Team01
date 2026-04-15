@@ -1,6 +1,7 @@
 package com.team01.backend.domain.board.controller;
 
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
+import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.global.response.ApiResponse;
@@ -10,6 +11,8 @@ import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -68,5 +71,12 @@ public class AdminBoardController {
     ){
         boardService.deleteBoard(boardId);
         return ResponseEntity.ok(ApiResponse.ofSuccessWithoutBody());
+    }
+
+    // 게시판 다건 조회
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<BoardResponse>>> getBoards() {
+        List<BoardResponse> boards = boardService.getAllBoards();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(boards));
     }
 }

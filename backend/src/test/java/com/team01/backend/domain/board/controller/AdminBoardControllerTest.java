@@ -245,4 +245,20 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다.")));
     }
 
+
+    @Test
+    @DisplayName("게시판 다건 조회 테스트")
+    void v1() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/admin/boards")
+                )
+                .andDo(print());
+        resultActions.andExpect(handler().handlerType(AdminBoardController.class))
+                .andExpect(handler().methodName("getBoards"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[2]").exists());
+    }
+
 }
