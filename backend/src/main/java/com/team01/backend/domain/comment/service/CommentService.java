@@ -133,6 +133,8 @@ public class CommentService {
 
         comment.update(reqDto.content());
 
-        return CommentResponseDto.from(comment);
+        Comment saved = commentRepository.saveAndFlush(comment);
+
+        return CommentResponseDto.from(saved);
     }
 }
