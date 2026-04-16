@@ -8,6 +8,7 @@ import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
+import com.team01.backend.domain.post.dto.PostSummaryDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
@@ -137,7 +138,7 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public List<PostResponseDto> getPostsByBoardAndCategory(Long boardId, Long categoryId) {
+    public List<PostSummaryDto> getPostsByBoardAndCategory(Long boardId, Long categoryId) {
         // 1. 카테고리가 해당 게시판 소속인지 검증 (데이터 무결성)
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
@@ -150,7 +151,7 @@ public class PostService {
         List<Post> posts = postRepository.findAllByBoardIdAndCategoryId(boardId, categoryId);
 
         return posts.stream()
-                .map(PostResponseDto::new)
+                .map(PostSummaryDto::new)
                 .toList();
     }
 }

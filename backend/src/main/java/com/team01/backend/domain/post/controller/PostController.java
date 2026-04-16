@@ -3,6 +3,7 @@ package com.team01.backend.domain.post.controller;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
 import com.team01.backend.domain.post.dto.PostDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
+import com.team01.backend.domain.post.dto.PostSummaryDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
@@ -32,11 +33,11 @@ public class PostController {
 
     // 게시판별, 카테고리별 글 목록 조회
     @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
-    public ResponseEntity<ApiResponse<List<PostResponseDto>>> getPostsByCategory(
+    public ResponseEntity<ApiResponse<List<PostSummaryDto>>> getPostsByCategory(
             @PathVariable("boardId") Long boardId,
             @PathVariable("categoryId") Long categoryId
     ) {
-        List<PostResponseDto> posts = postService.getPostsByBoardAndCategory(boardId, categoryId);
+        List<PostSummaryDto> posts = postService.getPostsByBoardAndCategory(boardId, categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
