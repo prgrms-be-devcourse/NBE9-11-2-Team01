@@ -9,7 +9,6 @@ public record PostPageResponseDto(
         int currentPage,
         int totalPages,
         long totalElements,
-        int size,
         boolean hasNext
 ) {
     public static PostPageResponseDto from(Page<PostResponseDto> page) {
@@ -18,7 +17,6 @@ public record PostPageResponseDto(
                 page.getNumber() + 1,
                 page.getTotalPages(),
                 page.getTotalElements(),
-                page.getSize(),
                 page.hasNext()
         );
     }
