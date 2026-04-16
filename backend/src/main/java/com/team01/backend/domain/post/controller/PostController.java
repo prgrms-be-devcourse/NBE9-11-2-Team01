@@ -6,6 +6,8 @@ import com.team01.backend.domain.post.dto.PostPageResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
+import com.team01.backend.domain.user.entity.User;
+import com.team01.backend.domain.user.repository.UserRepository;
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -13,6 +15,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,6 +25,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
+    private final UserRepository userRepository;
 
     // 게시판별 글 목록 조회
     @GetMapping("/boards/{boardId}/posts")
@@ -36,11 +41,14 @@ public class PostController {
     // 게시글 상세 조회
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostById(
-            @PathVariable Long postId
-            // TODO: 인증 구현 후 추가, 로그인한 사용자만 접근 가능하도록 제한 필요
-            //@AuthenticationPrincipal User user
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        PostDetailResponseDto post = postService.getPostById(postId);
+        User user = null;
+        if (userDetails != null) {
+            user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
+        }
+        PostDetailResponseDto post = postService.getPostById(postId, user);
         return ResponseEntity.ok(ApiResponse.ofSuccess(post));
     }
 
