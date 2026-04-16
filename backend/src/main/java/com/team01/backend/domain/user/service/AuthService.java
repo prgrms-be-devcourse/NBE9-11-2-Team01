@@ -5,6 +5,7 @@ import com.team01.backend.domain.user.dto.SignUpRequest;
 import com.team01.backend.domain.user.entity.Role;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import com.team01.backend.domain.user.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -21,7 +22,7 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-
+    private final JwtTokenProvider jwtTokenProvider;
     /**
      * 회원가입 로직: 중복 체크 및 입력값의 물리적 검증을 수행합니다.
      */
@@ -68,7 +69,7 @@ public class AuthService {
 
         // 4. [JWT 과제] 인증 성공 시 토큰을 생성하여 반환합니다.
         // 실제 구현 시에는 JwtTokenProvider를 통해 생성하지만, 여기서는 예시 문자열을 반환합니다.
-        return "header.payload.signature-generated-jwt-token";
+        return jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
     }
 
     /**

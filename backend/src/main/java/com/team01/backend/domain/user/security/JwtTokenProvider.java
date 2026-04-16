@@ -1,4 +1,4 @@
-package com.team01.backend.global.security;
+package com.team01.backend.domain.user.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;

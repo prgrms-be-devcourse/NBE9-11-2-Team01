@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,10 +36,10 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(
             @PathVariable Long postId,
-            @Valid @RequestBody CommentRequestDto reqDto){
+            @Valid @RequestBody CommentRequestDto reqDto,
+            @AuthenticationPrincipal UserDetails userDetails){
 
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
+        User user = userRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
 
 
