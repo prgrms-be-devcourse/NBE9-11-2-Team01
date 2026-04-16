@@ -1,8 +1,13 @@
 package com.team01.backend.domain.post.controller;
 
+import com.team01.backend.domain.board.entity.Board;
+import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.category.entity.Category;
+import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +38,12 @@ public class PostControllerTest {
 
     @Autowired
     private PostService postService;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
+
+    @Autowired
+    private BoardRepository boardRepository;
 
     @Test
     @DisplayName("게시판별 글 목록 조회 - 성공")
@@ -196,11 +207,19 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.message").value("잘못된 형식의 JSON 데이터입니다."));
     }
 
-    @Test
-    @DisplayName("글 수정")
-    void t7() throws Exception {
 
+    @Test
+    @DisplayName("글 수정 성공 - 제목, 내용, 올바른 카테고리 변경")
+    void t7_1() throws Exception {
+        // 기존 게시글 정보 조회 (연관된 게시판 ID를 얻기 위해서)
         Long targetId = 1L;
+        Post targetPost = postRepository.findById(targetId)
+                .orElseThrow(() -> new EntityNotFoundException("대상 게시글 없음"));
+
+        // 해당 게시판에 속한 다른 카테고리를 새롭게 준비 (검증 로직 통과를 위함)
+        Long targetBoardId = targetPost.getBoard().getId();
+        Category newCategory = categoryRepository.save(new Category(targetBoardId, "수정된 카테고리"));
+        Long newCategoryId = newCategory.getId();
 
         String title = "제목 수정";
         String content = "내용 수정";
@@ -211,28 +230,72 @@ public class PostControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
-                                                {
-                                                    "title" : "%s",
-                                                    "content" : "%s"
-                                                }
-                                                """.formatted(title, content))
+                                        {
+                                            "title" : "%s",
+                                            "content" : "%s",
+                                            "categoryId" : %d
+                                        }
+                                        """.formatted(title, content, newCategoryId))
                 )
                 .andDo(print());
 
-        // 필수 검증
+
         resultActions
                 .andExpect(handler().handlerType(PostController.class))
                 .andExpect(handler().methodName("modify"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true)) // success 필드 확인
-                .andExpect(jsonPath("$.data.postDto.title").value(title)) // 수정된 데이터가 바로 오는지 확인
-                .andExpect(jsonPath("$.data.postDto.content").value(content));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.postDto.title").value(title))
+                .andExpect(jsonPath("$.data.postDto.content").value(content))
+                .andExpect(jsonPath("$.data.postDto.categoryId").value(newCategoryId))
+                .andExpect(jsonPath("$.data.postDto.categoryName").value("수정된 카테고리"));
 
-        Post post = postRepository.findById(targetId)
-                .orElseThrow(() -> new AssertionError("게시물이 DB에 존재하지 않습니다."));
-
+        Post post = postRepository.findById(targetId).get();
         assertThat(post.getTitle()).isEqualTo(title);
         assertThat(post.getContent()).isEqualTo(content);
+        assertThat(post.getCategory().getId()).isEqualTo(newCategoryId);
+    }
+
+    @Test
+    @DisplayName("글 수정 실패 - 다른 게시판의 카테고리 ID를 전달한 경우")
+    void t7_2() throws Exception {
+        // 기존 게시글 준비
+        Long targetId = 1L;
+        Post targetPost = postRepository.findById(targetId).get();
+//        Long originalBoardId = targetPost.getBoard().getId();
+
+        // 다른 게시판, 그 게시판의 카테고리 생성 (예: 공지사항 게시판)
+        Board anotherBoard = boardRepository.save(new Board("공지사항", "공지사항 게시판"));
+        Category invalidCategory = categoryRepository.save(new Category(anotherBoard.getId(), "공지용 카테고리"));
+        Long invalidCategoryId = invalidCategory.getId();
+
+
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/posts/%d".formatted(targetId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {
+                                            "title" : "수정 시도",
+                                            "content" : "내용 수정 시도",
+                                            "categoryId" : %d
+                                        }
+                                        """.formatted(invalidCategoryId))
+                )
+                .andDo(print());
+
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("해당 게시판에서 사용할 수 없는 카테고리입니다."));
+
+        // DB 데이터가 변경되지 않았는지 확인 (Safety Check)
+        Post post = postRepository.findById(targetId).get();
+
+        assertThat(post.getCategory().getId()).isNotEqualTo(invalidCategoryId);
     }
 
     @Test
