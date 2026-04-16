@@ -3,13 +3,18 @@ package com.team01.backend.domain.user.service;
 import com.team01.backend.domain.user.dto.*;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import jakarta.persistence.EntityNotFoundException; // [수정] 표준 JPA 예외 임포트
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
- // 사용자 정보(마이페이지) 관련 핵심 로직을 처리하는 서비스입니다.
-
+/**
+ * [과제명: 객체지향적 예외 처리를 적용한 사용자 서비스]
+ * 본 클래스는 마이페이지 조회 및 정보 수정을 담당하는 서비스 레이어입니다.
+ * 존재하지 않는 리소스 접근 시 EntityNotFoundException을 발생시켜 
+ * 데이터의 부재를 명확히 정의하도록 설계하였습니다.
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -18,13 +23,14 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-     // [마이페이지 조회] 
-     // JWT 토큰에서 추출한 이메일을 사용해 본인의 정보를 가져옵니다.
-
+    /**
+     * [마이페이지 조회]
+     * 식별자(Email)를 통해 사용자를 조회하며, 존재하지 않을 경우 엔티티 미발견 예외를 던집니다.
+     */
     @Transactional(readOnly = true)
     public MyPageResponse getMyPage(String email) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 이메일을 가진 사용자 정보를 찾을 수 없습니다: " + email));
 
         return MyPageResponse.builder()
                 .email(user.getEmail())
@@ -34,30 +40,30 @@ public class UserService {
                 .build();
     }
 
-    // [닉네임 및 비밀번호 수정]
-    // 한 번의 요청으로 닉네임과 비밀번호를 모두 변경합니다.	
-	public void updateUserInfo(String email, UserUpdateInfoRequest request) {
-		User user = userRepository.findByEmail(email)
-				.orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+    /**
+     * [사용자 정보 수정]
+     * 닉네임과 비밀번호를 변경하며, 대상 사용자가 없을 시 예외를 발생시킵니다.
+     */
+    public void updateUserInfo(String email, UserUpdateInfoRequest request) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("수정 대상 사용자 정보를 찾을 수 없습니다."));
 
-		// 비밀번호 암호화하여 저장
-		String finalPassword = user.getPassword(); // 기존 비밀번호 유지
+        String finalPassword = user.getPassword();
 
-		// 새로운 비밀번호가 존재할 때만 암호화 과정을 거치도록 설계했네.
-		if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
-			finalPassword = passwordEncoder.encode(request.getNewPassword());
-		}
-		
-		// 엔티티의 업데이트 메서드 호출
-		user.updateInfo(request.getNickname(), finalPassword);
-	}
+        // 새로운 비밀번호가 입력된 경우에만 암호화 및 갱신 수행
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            finalPassword = passwordEncoder.encode(request.getNewPassword());
+        }
+        
+        user.updateInfo(request.getNickname(), finalPassword);
+    }
 
-     // [프로필 이미지 별도 수정]
-     // 별도의 버튼 클릭 시 이미지 경로만 즉시 업데이트합니다.
-    
+    /**
+     * [프로필 이미지 수정]
+     */
     public void updateProfileImage(String email, UserProfileImageRequest request) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("이미지 수정 대상 사용자 정보를 찾을 수 없습니다."));
 
         user.updateProfileImage(request.getProfileImage());
     }
