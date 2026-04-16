@@ -4,26 +4,14 @@ import com.team01.backend.domain.user.dto.LoginRequest;
 import com.team01.backend.domain.user.dto.SignUpRequest;
 import com.team01.backend.domain.user.service.AuthService;
 import com.team01.backend.global.response.ApiResponse;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.validation.Valid; // @Valid 어노테이션 사용을 위해 임포트하였습니다.
+import jakarta.validation.Valid; // [과제] 유효성 검증 활성화를 위해 필수입니다.
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContext;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
-import org.springframework.security.web.context.SecurityContextRepository;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
- * [과제] 인증 관련 HTTP 요청을 받아 처리하는 컨트롤러 클래스입니다.
- * API 응답 규격은 ApiResponse 클래스를 사용하여 통일하였습니다.
+ * [과제] 사용자의 요청을 가장 먼저 받는 컨트롤러입니다.
+ * 세션 방식이 아닌 JWT 토큰을 응답 본문에 담아 반환하는 구조로 개편하였습니다.
  */
 @RestController
 @RequestMapping("/api/auth")
@@ -31,42 +19,26 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final AuthService authService;
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-     // [회원가입 API]
-     // @Valid 어노테이션을 사용하여 요청 객체의 유효성 검사를 활성화하였습니다.
-     
+    /**
+     * 회원가입 API: @Valid를 통해 DTO의 검증 로직을 실행합니다.
+     */
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<Void>> signUp(@Valid @RequestBody SignUpRequest request) {
         authService.signUp(request);
         return ResponseEntity.ok(new ApiResponse<>(true, null, "회원가입 완료", null));
     }
 
-    
-    //[로그인 API]
-    //Spring Security의 AuthenticationManager를 통해 인증을 수행하고 세션을 저장합니다.
-    
+    /**
+     * 로그인 API: 성공 시 발급된 JWT 토큰을 ApiResponse의 데이터 필드에 담아 응답합니다.
+     */
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<Void>> login(
-            @Valid @RequestBody LoginRequest request, // 입구에서 유효성 검사를 실시합니다.
-            HttpServletRequest httpRequest, 
-            HttpServletResponse httpResponse) {
+    public ResponseEntity<ApiResponse<String>> login(@Valid @RequestBody LoginRequest request) {
+        // 1. 서비스에서 인증을 수행하고 생성된 JWT 토큰을 전달받습니다.
+        // 형식이 틀리거나 인증 실패 시 IllegalArgumentException이 발생하여 400 에러가 나갑니다.
+        String token = authService.login(request);
         
-        // 시큐리티 인증 전, 서비스 계층에서 비즈니스 검증(형식 등)을 선행하여 500 에러를 방지합니다.
-        authService.login(request);
-        
-        // 실제 인증(아이디/비밀번호 대조) 과정을 수행합니다.
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-        
-        // 인증된 정보를 시큐리티 컨텍스트에 저장하여 로그인 상태를 유지합니다.
-        SecurityContext context = SecurityContextHolder.createEmptyContext();
-        context.setAuthentication(authentication);
-        SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, httpRequest, httpResponse);
-        
-        return ResponseEntity.ok(new ApiResponse<>(true, null, "로그인 성공", null));
+        // 2. 발급된 토큰을 클라이언트에게 성공 메시지와 함께 반환합니다.
+        return ResponseEntity.ok(new ApiResponse<>(true, token, "로그인 성공", null));
     }
 }

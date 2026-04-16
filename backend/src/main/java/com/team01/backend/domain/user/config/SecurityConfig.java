@@ -1,5 +1,7 @@
-package com.team01.backend.domain.user.config;
+package com.team01.backend.global.config;
 
+import com.team01.backend.global.security.JwtAuthenticationFilter;
+import com.team01.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,45 +13,49 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+/**
+ * [과제] 시스템 전체의 보안 설정을 관리하는 클래스입니다.
+ * 세션 방식을 사용하지 않고 JWT(Stateless) 방식을 사용하도록 설정했습니다.
+ */
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private final JwtTokenProvider jwtTokenProvider;
+
+    /**
+     * [과제] 비밀번호 암호화를 위한 Encoder 빈 등록입니다.
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // [중요] 컨트롤러에서 수동 로그인을 처리하기 위해 반드시 빈으로 등록해야 하네
+    /**
+     * [과제] 인증 매니저 빈 등록입니다.
+     */
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
     }
 
+    /**
+     * [과제] 보안 필터 체인 설정입니다. 가장 핵심적인 부분입니다.
+     */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // 1. CSRF 보호 해제
-            .csrf(csrf -> csrf.disable())
-
-            // 2. 세션 정책 설정
-            .sessionManagement(session -> session
-                .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-            )
-
-            // 3. 접근 권한 제어
+            .csrf(csrf -> csrf.disable()) // [과제] REST API이므로 CSRF 보안은 비활성화합니다.
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // [과제] 세션을 사용하지 않습니다.
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**").permitAll() // 인증 관련 경로는 기본 허용
-                .anyRequest().permitAll() // 나머지 모든 요청도 인증 없이 허용
+                .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입은 모두 허용합니다.
+                .anyRequest().authenticated() // 그 외의 요청은 인증이 필요합니다.
             )
-
-            .logout(logout -> logout
-                .logoutUrl("/api/auth/logout")
-                .invalidateHttpSession(true)
-                .deleteCookies("JSESSIONID")
-            );
+            // [과제] JWT 필터를 UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정합니다.
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
