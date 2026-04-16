@@ -25,7 +25,9 @@ public class CategoryService {
         if(!boardService.existsById(boardId)){ //boardId에 해당하는 게시판이 없다면 예외처리
             throw new EntityNotFoundException();
         }
-
+        if(categoryRepository.existsByBoardIdAndName(boardId, name)){
+            throw new IllegalArgumentException("중복된 이름입니다");
+        }
         Category category = new Category(boardId, name);
         categoryRepository.save(category);
         return new CategoryCreateResponseDto(category);

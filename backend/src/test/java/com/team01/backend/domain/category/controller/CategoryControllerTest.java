@@ -118,7 +118,54 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
     }
-
+    @Test
+    @DisplayName("카테고리 생성 테스트 - 게시판 별 이름 중복")
+    void c5() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.post("/admin/categories")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "boardId": 1,
+                                            "name":"카테고리 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("createCategory"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("중복된 이름입니다"));
+    }
+    @Test
+    @DisplayName("카테고리 생성 - 다른게시판에만 존재하는 이름 - 성공")
+    void c6() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.post("/admin/categories")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "boardId": 3,
+                                            "name":"카테고리 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("createCategory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.id").value(7))
+                .andExpect(jsonPath("$.data.boardId").value(3))
+                .andExpect(jsonPath("$.data.name").value("카테고리 1"))
+                .andExpect(jsonPath("$.data.createdAt").exists());
+    }
     @Test
     @DisplayName("카테고리 수정 테스트")
     void u1() throws Exception{
