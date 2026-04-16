@@ -7,6 +7,7 @@ import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
+import com.team01.backend.domain.post.dto.PostPageResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
@@ -14,6 +15,9 @@ import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,14 +64,17 @@ public class PostService {
         return postRepository.count();
     }
 
-    public List<PostResponseDto> getPostsByBoardId(Long boardId) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, int size) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        return postRepository.findByBoardIdAndIsDeletedFalse(boardId)
-                .stream()
-                .map(PostResponseDto::new)
-                .toList();
+        Pageable pageable = PageRequest.of(page - 1, size);
+
+        Page<PostResponseDto> postPage = postRepository
+                .findByBoardIdAndIsDeletedFalse(boardId, pageable)
+                .map(PostResponseDto::new);
+
+        return PostPageResponseDto.from(postPage);
     }
 
     // TODO: 인가/인가 구현 후 주석해제와 User currentUser 추가
