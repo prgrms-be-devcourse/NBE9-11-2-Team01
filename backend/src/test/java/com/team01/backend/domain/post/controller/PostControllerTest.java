@@ -48,23 +48,24 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시판별 글 목록 조회 - 성공")
     void t1() throws Exception {
-        // given: BaseInitData에서 생성된 데이터 사용
-
-        // when
         ResultActions resultActions = mvc
-                .perform(get("/boards/1/posts"))
+                .perform(get("/boards/1/posts?page=1&size=20"))
                 .andDo(print());
 
-        // then
         resultActions
                 .andExpect(handler().handlerType(PostController.class))
                 .andExpect(handler().methodName("getPostsByBoardId"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                .andExpect(jsonPath("$.data[0].author").exists())
-                .andExpect(jsonPath("$.data[0].categoryId").exists())
-                .andExpect(jsonPath("$.data[0].categoryName").exists());
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.currentPage").value(1))
+                .andExpect(jsonPath("$.data.totalPages").exists())
+                .andExpect(jsonPath("$.data.totalElements").exists())
+                .andExpect(jsonPath("$.data.size").value(20))
+                .andExpect(jsonPath("$.data.hasNext").exists())
+                .andExpect(jsonPath("$.data.posts[0].author").exists())
+                .andExpect(jsonPath("$.data.posts[0].categoryId").exists())
+                .andExpect(jsonPath("$.data.posts[0].categoryName").exists());
     }
 
     @Test
@@ -301,18 +302,13 @@ public class PostControllerTest {
         assertThat(post.getCategory().getId()).isNotEqualTo(invalidCategoryId);
     }
 
-    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 성공")
     void t8() throws Exception {
-        // given: BaseInitData에서 생성된 게시글 사용 (id=1)
-
-        // when
         ResultActions resultActions = mvc
                 .perform(get("/posts/1"))
                 .andDo(print());
 
-        // then
         resultActions
                 .andExpect(handler().handlerType(PostController.class))
                 .andExpect(handler().methodName("getPostById"))
@@ -328,16 +324,13 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.modifiedAt").exists());
     }
 
-    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
     void t9() throws Exception {
-        // when
         ResultActions resultActions = mvc
-                .perform(get("/posts/999"))
+                .perform(get("/posts/1"))
                 .andDo(print());
 
-        // then
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
@@ -367,20 +360,16 @@ public class PostControllerTest {
         assertThat(deletedPost.isDeleted()).isTrue();
     }
 
-    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 삭제된 게시글")
     void t11() throws Exception {
-        // given
         Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
         postService.delete(post.getId());
 
-        // when
         ResultActions resultActions = mvc
                 .perform(get("/posts/%d".formatted(post.getId())))
                 .andDo(print());
 
-        // then
         resultActions
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
