@@ -79,7 +79,7 @@ public class AuthService {
                 .orElseThrow(() -> new IllegalArgumentException("이메일이 일치하지 않습니다."));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new IllegalArgumentException("이메일비밀번호가 일치하지 않습니다.");
+            throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
 
         // JwtTokenProvider를 통해 실제 토큰 발행 (사용자의 Role 포함)
