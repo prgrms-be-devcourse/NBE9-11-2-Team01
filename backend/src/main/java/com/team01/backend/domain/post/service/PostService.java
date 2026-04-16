@@ -96,9 +96,22 @@ public class PostService {
     public Optional<Post> findById(Long id) {return postRepository.findById(id);}
 
     @Transactional
-    public Post modify(Long id, String title, String content) {
-        Post post = postRepository.findById(id).get();
-        post.update(title, content);
+    public Post modify(Long postId, String title, String content, Long categoryId) {
+
+        // 게시글 조회
+        Post post = postRepository.findById(postId)
+                        .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+
+        // 변경하려고 하는 카테고리 조회
+        Category category = categoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+
+        // 변경하려고 하는 카테고리가 현재 게시글의 게시판에 속하는지
+        if (!category.getBoardId().equals(post.getBoard().getId())) {
+            throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
+        }
+
+        post.update(title, content, category);
 
         return post;
 
