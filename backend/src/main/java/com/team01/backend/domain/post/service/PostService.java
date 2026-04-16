@@ -98,18 +98,20 @@ public class PostService {
         return PostDetailResponseDto.of(post, board, category, comments);
     }
 
-    public Optional<Post> findById(Long id) {return postRepository.findById(id);}
+    public Optional<Post> findById(Long id) {
+        return postRepository.findById(id);
+    }
 
     @Transactional
     public Post modify(Long postId, String title, String content, Long categoryId) {
 
         // 게시글 조회
         Post post = postRepository.findById(postId)
-                        .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 변경하려고 하는 카테고리 조회
         Category category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
 
         // 변경하려고 하는 카테고리가 현재 게시글의 게시판에 속하는지
         if (!category.getBoardId().equals(post.getBoard().getId())) {
@@ -134,4 +136,21 @@ public class PostService {
         post.delete(/*actor*/);
     }
 
+    @Transactional(readOnly = true)
+    public List<PostResponseDto> getPostsByBoardAndCategory(Long boardId, Long categoryId) {
+        // 1. 카테고리가 해당 게시판 소속인지 검증 (데이터 무결성)
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+
+        if (!category.getBoardId().equals(boardId)) {
+            throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
+        }
+
+        // 2. Fetch Join을 사용하여 N+1 문제를 방어하며 조회
+        List<Post> posts = postRepository.findAllByBoardIdAndCategoryId(boardId, categoryId);
+
+        return posts.stream()
+                .map(PostResponseDto::new)
+                .toList();
+    }
 }

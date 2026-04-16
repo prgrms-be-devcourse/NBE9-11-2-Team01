@@ -30,6 +30,17 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
+    // 게시판별, 카테고리별 글 목록 조회
+    @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
+    public ResponseEntity<ApiResponse<List<PostResponseDto>>> getPostsByCategory(
+            @PathVariable("boardId") Long boardId,
+            @PathVariable("categoryId") Long categoryId
+    ) {
+        List<PostResponseDto> posts = postService.getPostsByBoardAndCategory(boardId, categoryId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
+    }
+
+
     // 게시글 상세 조회
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostById(
