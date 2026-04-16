@@ -61,7 +61,10 @@ public class PostControllerTest {
                 .andExpect(handler().methodName("getPostsByBoardId"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray());
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data[0].author").exists())
+                .andExpect(jsonPath("$.data[0].categoryId").exists())
+                .andExpect(jsonPath("$.data[0].categoryName").exists());
     }
 
     @Test
@@ -298,6 +301,7 @@ public class PostControllerTest {
         assertThat(post.getCategory().getId()).isNotEqualTo(invalidCategoryId);
     }
 
+    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 성공")
     void t8() throws Exception {
@@ -324,6 +328,7 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.modifiedAt").exists());
     }
 
+    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
     void t9() throws Exception {
@@ -362,6 +367,7 @@ public class PostControllerTest {
         assertThat(deletedPost.isDeleted()).isTrue();
     }
 
+    // TODO: @WithMockUser 인증 구현 되면 붙이기
     @Test
     @DisplayName("게시글 상세 조회 - 삭제된 게시글")
     void t11() throws Exception {

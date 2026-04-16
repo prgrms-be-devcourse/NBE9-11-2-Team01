@@ -34,10 +34,9 @@ public class PostController {
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostById(
             @PathVariable Long postId
-            // TODO: 인증 구현 후 추가
-            // User user
+            // TODO: 인증 구현 후 추가, 로그인한 사용자만 접근 가능하도록 제한 필요
+            //@AuthenticationPrincipal User user
     ) {
-        // TODO: 로그인한 사용자만 접근 가능하도록 제한 필요
         PostDetailResponseDto post = postService.getPostById(postId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(post));
     }

@@ -8,16 +8,22 @@ public record PostResponseDto(
         Long id,
         String title,
         String author,
+        Long categoryId,
+        String categoryName,
         int likeCount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime modifiedAt
 ) {
     public PostResponseDto(Post post) {
         this(
                 post.getId(),
                 post.getTitle(),
                 post.getAuthor().getNickname(),
+                post.getCategory().getId(),
+                post.getCategory().getName(),
                 post.getLikeCount(),
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                post.getModifiedAt()
         );
     }
 }

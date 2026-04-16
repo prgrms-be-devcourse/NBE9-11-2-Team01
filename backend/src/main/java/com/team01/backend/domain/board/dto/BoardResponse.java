@@ -6,7 +6,7 @@ import java.time.LocalDateTime;
 
 public record BoardResponse(
         Long id,
-        String name,
+        String boardName,
         String description,
         LocalDateTime createdAt,
         LocalDateTime modifiedAt
