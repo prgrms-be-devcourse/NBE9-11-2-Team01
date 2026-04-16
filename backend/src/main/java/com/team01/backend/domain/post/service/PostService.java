@@ -70,6 +70,7 @@ public class PostService {
                 .toList();
     }
 
+    // TODO: 인가/인가 구현 후 주석해제와 User currentUser 추가
     public PostDetailResponseDto getPostById(Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
@@ -89,6 +90,10 @@ public class PostService {
         }
 
         List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
+
+        // TODO: 인증/인가 구현 후 주석 해제, isOwner 넘겨주기
+        //boolean isOwner = currentUser != null &&
+        //        post.getAuthor().getId().equals(currentUser.getId());
 
         return PostDetailResponseDto.of(post, board, category, comments);
     }
