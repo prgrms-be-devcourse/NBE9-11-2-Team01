@@ -41,6 +41,9 @@ public class BoardService {
     @Transactional
     public BoardUpdateResponseDto updateBoard(Long id, String name, String description) {
         Board board = boardRepository.findByIdAndIsDeletedFalse(id).orElseThrow(EntityNotFoundException::new);
+        if(boardRepository.existsByNameAndIsDeletedFalse(name)){
+            throw new IllegalArgumentException("중복된 이름입니다");
+        }
         board.update(name, description);
         boardRepository.save(board);
         return new BoardUpdateResponseDto(board);
