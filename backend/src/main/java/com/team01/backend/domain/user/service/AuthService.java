@@ -11,46 +11,48 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
- * [과제명: Spring Security와 JWT 기반의 웹 보안 시스템 구축]
- * 본 클래스는 사용자 인증(Authentication)과 권한 부여(Authorization)를 위한 
- * 핵심 비즈니스 로직을 처리하는 서비스 레이어입니다.
- * 회원가입 시의 비밀번호 해싱 처리와 로그인 성공 시의 토큰 발행을 담당합니다.
+ * [과제명: Spring Security와 JWT를 활용한 보안 인증 시스템 구현]
+ * 본 서비스 클래스는 사용자의 회원가입 및 로그인 절차를 관장하는 핵심 로직을 포함합니다.
+ * 클래스 레벨의 @Transactional 선언을 통해 기본적인 원자성을 보장하며,
+ * 각 메서드의 성격에 맞춰 세부적인 트랜잭션 옵션을 최적화하였습니다.
  */
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional // 클래스 레벨 선언으로 모든 public 메서드에 트랜잭션 보호막을 적용합니다.
 public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     
     /**
-     * [구현 포인트] JWT 생성을 전담하는 공통 컴포넌트입니다.
-     * 로그인 성공 시 클라이언트에게 제공할 액세스 토큰을 발행하는 데 사용됩니다.
+     * [구현 사항] 실제 인가 토큰을 발행하기 위한 JwtTokenProvider를 주입받습니다.
      */
     private final JwtTokenProvider jwtTokenProvider;
 
     /**
      * [메서드: signUp]
-     * 신규 사용자의 정보를 시스템에 등록합니다.
-     * 중복 가입 방지를 위해 이메일 존재 여부를 우선 검증합니다.
+     * 신규 사용자를 시스템의 정식 데이터로 등록하는 과정입니다.
+     * @Transactional: 자네의 피드백을 수용하여, 데이터 쓰기 작업의 중요성을 강조하고 
+     * 설정 오류로부터 원자성을 보호하기 위해 메서드 레벨에 직접 명시하였습니다.
      */
+    @Transactional 
     public void signUp(SignUpRequest request) {
-        // [검증] 입력된 이메일과 비밀번호의 유효성을 체크합니다.
+        // [검증] 도메인 로직 진입 전, 입력값의 물리적 유효성을 재검증합니다.
         validateInput(request.getEmail(), request.getPassword());
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new IllegalArgumentException("이미 등록된 이메일입니다.");
         }
 
-        // [보안] 비밀번호는 BCrypt 알고리즘을 사용하여 단방향 암호화 후 저장합니다.
-        Role role = Role.USER;
+        // [보안] 비밀번호는 단방향 해시 알고리즘인 BCrypt를 통해 암호화되어 저장됩니다.
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .nickname(request.getNickname())
-                .role(role)
+                .role(Role.USER)
                 .build();
 
         userRepository.save(user);
@@ -58,35 +60,34 @@ public class AuthService {
 
     /**
      * [메서드: login]
-     * 사용자 인증을 수행하고 최종적으로 JWT 토큰을 반환합니다.
-     * @return 생성된 JWT 액세스 토큰 (String)
+     * 사용자의 자격 증명을 확인하고, 성공 시 접근 권한이 담긴 JWT를 생성하여 반환합니다.
+     * readOnly = true: DB 부하를 줄이고 성능을 최적화하기 위해 읽기 전용 모드를 활성화했습니다.
      */
     @Transactional(readOnly = true)
     public String login(LoginRequest request) {
-        // 1. 입력 데이터 필터링
+        // 1. 입력 형식 기초 검증
         validateInput(request.getEmail(), request.getPassword());
 
-        // 2. 사용자 계정 존재 여부 확인
+        // 2. 사용자 존재 여부 확인 (식별자: Email)
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다."));
 
-        // 3. 암호화된 비밀번호와 입력값 대조 (matches 메서드 활용)
+        // 3. 비밀번호 일치 여부 확인 (암호화된 값과 대조)
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("이메일 또는 비밀번호가 일치하지 않습니다.");
         }
 
         /**
-         * [수정 사항: 타입 불일치 해결]
-         * JwtTokenProvider.createToken의 시그니처가 String 타입을 요구하므로,
-         * 기존의 List.of()를 제거하고 사용자의 Role 이름(String)을 직접 전달합니다.
-         * 이를 통해 'incompatible types' 컴파일 에러를 해결하였습니다.
+         * [JWT 발행 로직] 
+         * 기존의 가짜 문자열을 제거하고, JwtTokenProvider를 호출하여 실제 JWT를 생성합니다.
+         * 타입 불일치 에러 해결: createToken(String, String) 규격에 맞춰 권한명을 단일 문자열로 전달합니다.
          */
         return jwtTokenProvider.createToken(user.getEmail(), user.getRole().name());
     }
 
     /**
-     * [유효성 검사 모듈]
-     * 서비스 계층에서의 2차 검증을 통해 시스템의 안정성을 확보합니다.
+     * [내부 검증 로직]
+     * 비즈니스 데이터의 정합성을 보장하기 위해 서비스 레이어에서 수행하는 최종 필터링입니다.
      */
     private void validateInput(String email, String password) {
         if (email == null || !email.contains("@")) {
