@@ -11,7 +11,8 @@ public record PostResponseDto(
         Long categoryId,
         String categoryName,
         int likeCount,
-        LocalDateTime createdAt
+        LocalDateTime createdAt,
+        LocalDateTime modifiedAt
 ) {
     public PostResponseDto(Post post) {
         this(
@@ -21,7 +22,8 @@ public record PostResponseDto(
                 post.getCategory().getId(),
                 post.getCategory().getName(),
                 post.getLikeCount(),
-                post.getCreatedAt()
+                post.getCreatedAt(),
+                post.getModifiedAt()
         );
     }
 }
