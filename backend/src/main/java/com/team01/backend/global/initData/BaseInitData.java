@@ -120,27 +120,22 @@ public class BaseInitData {
     public void setComment() {
         if (commentService.count() > 0) return;
 
-        // 임시 유저 생성
-        User tempUser = userRepository.save(User.builder()
-                .email("init@init.com")
-                .nickname("유저")
-                .password("1234")
-                .build());
+        User author1 = userRepository.findByEmail("user1@test.com").orElseThrow();
+        User author2 = userRepository.findByEmail("user2@test.com").orElseThrow();
 
         // 일반 댓글 — parentId 자리에 null
-        // 일반 댓글 — parentId 자리에 null
-        commentService.writeInitComment(1L, tempUser,"첫 번째 댓글입니다", null);
-        commentService.writeInitComment(1L, tempUser,"두 번째 댓글입니다", null);
-        commentService.writeInitComment(1L, tempUser,"세 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, author1,"첫 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, author2,"두 번째 댓글입니다", null);
+        commentService.writeInitComment(1L, author1,"세 번째 댓글입니다", null);
 
         // 대댓글 — parentId 자리에 id 값
-        commentService.writeInitComment(1L, tempUser,"첫 번째 대댓글입니다", 1L);
-        commentService.writeInitComment(1L, tempUser,"두 번째 대댓글입니다", 2L);
+        commentService.writeInitComment(1L, author2,"첫 번째 대댓글입니다", 1L);
+        commentService.writeInitComment(1L, author1,"두 번째 대댓글입니다", 2L);
 
-        commentService.writeInitComment(2L, tempUser,"첫 번째 댓글입니다", null);
-        commentService.writeInitComment(2L, tempUser,"두 번째 댓글입니다", null);
+        commentService.writeInitComment(2L, author1,"첫 번째 댓글입니다", null);
+        commentService.writeInitComment(2L, author2,"두 번째 댓글입니다", null);
 
-        commentService.writeInitComment(2L, tempUser,"첫 번째 대댓글입니다", 6L);
+        commentService.writeInitComment(2L, author2,"첫 번째 대댓글입니다", 6L);
     }
     @Transactional
     public void setCategory(){

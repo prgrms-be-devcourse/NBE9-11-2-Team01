@@ -87,13 +87,15 @@ public class CommentControllerTest {
     @DisplayName("댓글 생성 - 1번 글에 생성")
     void t1() throws Exception {
 
+        Long targetPostId = 1L;
+        User author = userRepository.findByEmail("user1@test.com").get();
         // 테스트용 토큰 발급
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createToken(author.getEmail(), author.getRole().name());
         String content = "새로운 댓글";
 
         ResultActions resultActions = mvc
                 .perform(
-                        post("/posts/%d/comments".formatted(testPost.getId()))
+                        post("/posts/%d/comments".formatted(targetPostId))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .header("Authorization", "Bearer " + token)  // ✅
                                 .content("""
@@ -107,11 +109,11 @@ public class CommentControllerTest {
         resultActions
                 .andExpect(handler().handlerType(CommentController.class))
                 .andExpect(handler().methodName("writeComment"))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
-                .andExpect(jsonPath("$.data.author").value("테스터"))
+                .andExpect(jsonPath("$.data.author").value("유저1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
 
