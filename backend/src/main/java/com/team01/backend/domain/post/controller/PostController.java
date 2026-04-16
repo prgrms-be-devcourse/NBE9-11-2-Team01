@@ -1,7 +1,6 @@
 package com.team01.backend.domain.post.controller;
 
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
-
 import com.team01.backend.domain.post.dto.PostDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.entity.Post;
@@ -13,7 +12,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -102,7 +100,10 @@ public class PostController {
 
             @Size(min = 2, message = "내용은 2자 이상이어야 합니다.")
             @NotBlank(message = "내용은 공백일 수 없습니다.")
-            String content
+            String content,
+
+            @NotNull(message = "카테고리 선택은 필수입니다.")
+            Long categoryId
     ) {
     }
 
@@ -125,7 +126,7 @@ public class PostController {
 //
 //        postService.modify(postId, reqBody.title, reqBody.content);
 
-        Post post = postService.modify(postId, reqBody.title(), reqBody.content());
+        Post post = postService.modify(postId, reqBody.title(), reqBody.content(), reqBody.categoryId);
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(
@@ -138,7 +139,6 @@ public class PostController {
 
     // 글 삭제 api
     @DeleteMapping("/posts/{postId}")
-    @Transactional
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable("postId") Long postId
     ) {
