@@ -4,10 +4,13 @@ import com.team01.backend.domain.user.dto.LoginRequest;
 import com.team01.backend.domain.user.dto.SignUpRequest;
 import com.team01.backend.domain.user.service.AuthService;
 import com.team01.backend.global.response.ApiResponse;
-import jakarta.validation.Valid; // [과제] 유효성 검증 활성화를 위해 필수입니다.
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 /**
  * [과제] 사용자의 요청을 가장 먼저 받는 컨트롤러입니다.
