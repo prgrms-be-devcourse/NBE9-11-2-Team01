@@ -40,6 +40,11 @@ public class CategoryService {
     @Transactional
     public CategoryCreateResponseDto update(long categoryId, String name) {
         Category category = categoryRepository.findById(categoryId).orElseThrow(EntityNotFoundException::new);
+
+        if(categoryRepository.existsByBoardIdAndName(category.getBoardId(), name)){ //게시판 별 이름 중복 체크
+            throw new IllegalArgumentException("중복된 이름입니다");
+        }
+
         category.update(name);
         categoryRepository.save(category);
 

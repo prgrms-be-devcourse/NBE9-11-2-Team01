@@ -234,6 +234,30 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.message",startsWith("요청하신 데이터를 찾을 수 없습니다")));
     }
+
+    @Test
+    @DisplayName("카테고리 수정 테스트 - 이름 중복 체크")
+    void u4() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.put("/admin/categories/2")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"카테고리 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(handler().handlerType(CategoryController.class))
+                .andExpect(handler().methodName("updateCategory"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message",startsWith("중복된 이름입니다")));
+    }
+
     @Test
     @DisplayName("카테고리 조회 테스트")
     void v1() throws  Exception{
