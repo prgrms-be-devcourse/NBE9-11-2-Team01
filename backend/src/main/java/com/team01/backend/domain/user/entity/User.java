@@ -34,4 +34,14 @@ public class User extends BaseEntity {
         this.profileImage = profileImage;
         this.role = role != null ? role : Role.USER; // 기본값 설정
     }
+	
+	
+	public void updateInfo(String nickname, String password) {
+		this.nickname = nickname;
+		this.password = password;
+	}
+
+	public void updateProfileImage(String profileImage) {
+		this.profileImage = profileImage;
+	}
 }
