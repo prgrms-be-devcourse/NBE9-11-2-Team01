@@ -18,6 +18,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
@@ -41,6 +42,8 @@ public class BaseInitData {
     private CategoryRepository categoryRepository;
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private CategoryService categoryService;
@@ -62,8 +65,16 @@ public class BaseInitData {
 
         if (userRepository.count() > 0) return;
 
-        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password("1234").build());
-        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password("1234").build());
+        userRepository.save(User.builder()
+                .email("user1@test.com")
+                .nickname("유저1")
+                .password(passwordEncoder.encode("1234"))   // password 암호화해서 저장
+                .build());
+        userRepository.save(User.builder()
+                .email("user2@test.com")
+                .nickname("유저2")
+                .password(passwordEncoder.encode("1234"))
+                .build());
 
     }
 

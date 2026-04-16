@@ -11,7 +11,6 @@ import com.team01.backend.global.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -42,7 +41,7 @@ public class CommentController {
         CommentResponseDto resDto = commentService.writeComment(
                 postId, reqDto, userDetails.getUsername());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ofSuccess(resDto));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
     @PutMapping("/comments/{commentId}")
@@ -51,14 +50,10 @@ public class CommentController {
             @Valid @RequestBody CommentRequestDto requestDto,
             @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
-
-        CommentResponseDto response = commentService.updateComment(
+        CommentResponseDto resDto = commentService.updateComment(
                 commentId, requestDto, userDetails.getUsername());
 
-        return ResponseEntity.ok(ApiResponse.ofSuccess(response));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
 
