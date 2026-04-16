@@ -9,6 +9,7 @@ import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
+import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
@@ -26,6 +27,7 @@ public class CommentService {
 
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
+    private final UserRepository userRepository;
 
     // 댓글 수 조회
     public long count() {
@@ -82,7 +84,10 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponseDto writeComment(Long postId, CommentRequestDto reqDto, User loginUser){
+    public CommentResponseDto writeComment(Long postId, CommentRequestDto reqDto, String email){
+
+        User user = userRepository.findByEmail(email)  // ✅ DB 접근은 Service에서
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
 
         // 게시글 존재 확인
         Post post = postRepository.findById(postId)
@@ -114,7 +119,7 @@ public class CommentService {
             }
         }
 
-        Comment comment = new Comment(post, loginUser, reqDto.content(), parent);
+        Comment comment = new Comment(post, user, reqDto.content(), parent);
 
         commentRepository.save(comment);
 
@@ -122,7 +127,10 @@ public class CommentService {
     }
 
     @Transactional
-    public CommentResponseDto updateComment(Long commentId, CommentRequestDto reqDto, User loginUser){
+    public CommentResponseDto updateComment(Long commentId, CommentRequestDto reqDto, String email){
+
+        User user = userRepository.findByEmail(email)  // ✅ DB 접근은 Service에서
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
 
         //댓글 존재 확인 -> code:404
         Comment comment = commentRepository.findById(commentId)
@@ -134,7 +142,7 @@ public class CommentService {
         }
 
         // userId를 비교하여 본인 인증 -> 추후 시큐리티 사용시 변경 필요
-        if(!comment.getUser().getId().equals(loginUser.getId())){
+        if(!comment.getUser().getId().equals(user.getId())){
             throw new IllegalArgumentException("본인 댓글만 수정할 수 있습니다.");
         }
 

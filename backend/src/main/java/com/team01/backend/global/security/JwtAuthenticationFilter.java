@@ -1,4 +1,4 @@
-package com.team01.backend.domain.user.security;
+package com.team01.backend.global.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -5,7 +5,7 @@ import com.team01.backend.domain.user.dto.SignUpRequest;
 import com.team01.backend.domain.user.entity.Role;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
-import com.team01.backend.domain.user.security.JwtTokenProvider;
+import com.team01.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

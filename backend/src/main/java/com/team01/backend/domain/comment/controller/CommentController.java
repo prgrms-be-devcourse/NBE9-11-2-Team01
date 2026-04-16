@@ -39,12 +39,8 @@ public class CommentController {
             @Valid @RequestBody CommentRequestDto reqDto,
             @AuthenticationPrincipal UserDetails userDetails){
 
-        User user = userRepository.findByEmail(userDetails.getUsername())
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
-
-
         CommentResponseDto resDto = commentService.writeComment(
-                postId, reqDto, user);
+                postId, reqDto, userDetails.getUsername());
 
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ofSuccess(resDto));
     }
@@ -52,14 +48,15 @@ public class CommentController {
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
             @PathVariable Long commentId,
-            @Valid @RequestBody CommentRequestDto requestDto) {
+            @Valid @RequestBody CommentRequestDto requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         // 임시 — 나중에 @AuthenticationPrincipal 로 교체
         User user = userRepository.findById(1L)
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
 
         CommentResponseDto response = commentService.updateComment(
-                commentId, requestDto, user);
+                commentId, requestDto, userDetails.getUsername());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(response));
     }

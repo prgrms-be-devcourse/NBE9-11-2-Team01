@@ -1,7 +1,8 @@
-package com.team01.backend.domain.user.config;
+package com.team01.backend.global.config;
 
-import com.team01.backend.domain.user.security.JwtAuthenticationFilter;
-import com.team01.backend.domain.user.security.JwtTokenProvider;
+
+import com.team01.backend.global.security.JwtAuthenticationFilter;
+import com.team01.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
