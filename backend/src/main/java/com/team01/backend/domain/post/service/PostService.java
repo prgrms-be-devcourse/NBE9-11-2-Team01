@@ -147,7 +147,7 @@ public class PostService {
             throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
         }
 
-        // 2. Fetch Join을 사용하여 N+1 문제를 방어하며 조회
+        // 2. Fetch Join을 사용해서 N+1 문제를 방어
         List<Post> posts = postRepository.findAllByBoardIdAndCategoryId(boardId, categoryId);
 
         return posts.stream()

@@ -432,7 +432,7 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data[0].categoryId").value(categoryId))
                 .andExpect(jsonPath("$.data[0].categoryName").exists())
                 .andExpect(jsonPath("$.data[0].authorNickname").exists())
-                .andExpect(jsonPath("$.data[0].likeCount").isNumber()) // likeCount 필드 확인
+                .andExpect(jsonPath("$.data[0].likeCount").isNumber())
                 .andExpect(jsonPath("$.data[0].createdAt").exists())
                 .andExpect(jsonPath("$.data[0].modifiedAt").exists());
     }
