@@ -206,7 +206,10 @@ public class CategoryControllerTest {
                 )
                 .andDo(print());
         resultActions
-                .andExpect(status().isForbidden()); //
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message",startsWith("권한이 없습니다.")));
     }
     @Test
     @DisplayName("카테고리 수정 테스트")
@@ -320,7 +323,10 @@ public class CategoryControllerTest {
                 )
                 .andDo(print());
         resultActions
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message",startsWith("권한이 없습니다.")));
     }
 
     @Test
@@ -350,6 +356,9 @@ public class CategoryControllerTest {
                 )
                 .andDo(print());
         resultActions
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message",startsWith("인증이 필요합니다.")));
     }
 }
