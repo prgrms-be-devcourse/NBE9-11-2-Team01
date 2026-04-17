@@ -39,6 +39,6 @@ public class AuthController {
         String token = authService.login(request);
         
         // 2. 발급된 토큰을 클라이언트에게 성공 메시지와 함께 반환합니다.
-        return ResponseEntity.ok(new ApiResponse<>(true, token, "로그인 성공", null));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(token));
     }
 }
