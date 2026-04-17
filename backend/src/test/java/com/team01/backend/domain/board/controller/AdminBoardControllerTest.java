@@ -1,5 +1,7 @@
 package com.team01.backend.domain.board.controller;
 
+import com.team01.backend.global.security.JwtTokenProvider;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +13,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -23,6 +26,18 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class AdminBoardControllerTest {
     @Autowired
     private MockMvc mvc;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    //adminToken, user1Token의 경우 실행할 때마다 값이 달라져서 하드로 넣어서 테스트함
+    String adminToken = "";
+    String user1Token = "";
+
+    @BeforeEach
+    void setToken(){
+        adminToken = jwtTokenProvider.createToken("admin@admin.com", "ROLE_ADMIN");
+        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
+    }
 
     @Test
     @DisplayName("게시판 생성 테스트")
@@ -31,6 +46,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -60,6 +76,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -84,6 +101,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -111,6 +129,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -129,6 +148,51 @@ public class AdminBoardControllerTest {
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
                 .andExpect(jsonPath("$.message",startsWith("중복된 이름입니다")));
     }
+    @Test
+    @DisplayName("게시판 생성 테스트 - 일반 유저 로그인")
+    void t5() throws  Exception{
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name": "게시판 이름 1",
+                                            "description":"게시판 설명 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isForbidden());
+//                .andExpect(jsonPath("$.success").value(false))
+//                .andExpect(jsonPath("$.message").value("Forbidden"));
+    }
+    @Test
+    @DisplayName("게시판 생성 테스트 - 로그인 안된 상태")
+    void t6() throws  Exception{
+
+        ResultActions resultActions = mvc
+                .perform(
+                        post("/admin/boards")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name": "게시판 이름 1",
+                                            "description":"게시판 설명 1"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isForbidden());
+//                .andExpect(jsonPath("$.success").value(false))
+//                .andExpect(jsonPath("$.message").value("Forbidden"));
+    }
 
     // 게시판 수정 테스트
     @Test
@@ -138,6 +202,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/%s".formatted(targetId))
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -162,6 +227,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/2")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -184,6 +250,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/6")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -207,6 +274,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/3")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -220,6 +288,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/6")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -235,6 +304,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/4")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -252,6 +322,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         get("/admin/boards")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))

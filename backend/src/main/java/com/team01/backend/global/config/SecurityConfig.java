@@ -1,5 +1,6 @@
 package com.team01.backend.global.config;
 
+
 import com.team01.backend.global.security.JwtAuthenticationFilter;
 import com.team01.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -54,6 +55,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입은 모두 허용합니다.
                 .requestMatchers(HttpMethod.GET, "/boards/**").permitAll()  // board는 로그인 없이 가능하므로 허용하기
+                .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated() // 그 외의 요청은 인증이 필요합니다.
             )
             // [과제] JWT 필터를 UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정합니다.

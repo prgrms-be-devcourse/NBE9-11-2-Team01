@@ -11,8 +11,9 @@ import com.team01.backend.global.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,32 +35,25 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(
             @PathVariable Long postId,
-            @Valid @RequestBody CommentRequestDto reqDto){
-
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
-
+            @Valid @RequestBody CommentRequestDto reqDto,
+            @AuthenticationPrincipal UserDetails userDetails){
 
         CommentResponseDto resDto = commentService.writeComment(
-                postId, reqDto, user);
+                postId, reqDto, userDetails.getUsername());
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ofSuccess(resDto));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
             @PathVariable Long commentId,
-            @Valid @RequestBody CommentRequestDto requestDto) {
+            @Valid @RequestBody CommentRequestDto requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+        CommentResponseDto resDto = commentService.updateComment(
+                commentId, requestDto, userDetails.getUsername());
 
-        CommentResponseDto response = commentService.updateComment(
-                commentId, requestDto, user);
-
-        return ResponseEntity.ok(ApiResponse.ofSuccess(response));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
 
