@@ -11,6 +11,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * [과제명: 권한 계층 구조가 적용된 JWT 인증 시스템]
  * 본 서비스는 사용자의 가입 시점에 관리자 여부를 판별하고,
@@ -29,7 +31,7 @@ public class AuthService {
      * [메서드: signUp]
      * 관리자 토큰 검증 로직을 포함하여 사용자를 등록합니다.
      */
-    @Transactional
+    @Transactional 
     public void signUp(SignUpRequest request) {
         // 1. 입력값 기본 검증
         validateInput(request.getEmail(), request.getPassword());
@@ -75,9 +77,11 @@ public class AuthService {
     public String login(LoginRequest request) {
         validateInput(request.getEmail(), request.getPassword());
 
+        // 2. 사용자 존재 여부 확인 (식별자: Email)
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new IllegalArgumentException("이메일이 일치하지 않습니다."));
 
+        // 3. 비밀번호 일치 여부 확인 (암호화된 값과 대조)
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("비밀번호가 일치하지 않습니다.");
         }
