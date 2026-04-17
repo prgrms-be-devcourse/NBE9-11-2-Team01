@@ -1,5 +1,6 @@
 package com.team01.backend.domain.board.service;
 
+import com.team01.backend.domain.board.dto.AdminBoardResponseDto;
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
 import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
@@ -34,6 +35,14 @@ public class BoardService {
         return boardRepository.findAllByIsDeletedFalse()
                 .stream()
                 .map(BoardResponse::from)
+                .toList();
+    }
+
+    // 관리자 게시판 목록 조회 (삭제된것까지 포함해서)
+    public List<AdminBoardResponseDto> getAllBoardsByAdmin() {
+        return boardRepository.findAll()
+                .stream()
+                .map(AdminBoardResponseDto::new)
                 .toList();
     }
 

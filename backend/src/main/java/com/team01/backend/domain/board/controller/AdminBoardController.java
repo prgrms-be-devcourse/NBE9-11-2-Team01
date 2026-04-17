@@ -1,7 +1,7 @@
 package com.team01.backend.domain.board.controller;
 
+import com.team01.backend.domain.board.dto.AdminBoardResponseDto;
 import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
-import com.team01.backend.domain.board.dto.BoardResponse;
 import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
 import com.team01.backend.domain.board.service.BoardService;
 import com.team01.backend.global.response.ApiResponse;
@@ -75,8 +75,8 @@ public class AdminBoardController {
 
     // 게시판 다건 조회
     @GetMapping
-    public ResponseEntity<ApiResponse<List<BoardResponse>>> getBoards() {
-        List<BoardResponse> boards = boardService.getAllBoards();
+    public ResponseEntity<ApiResponse<List<AdminBoardResponseDto>>> getBoards() {
+        List<AdminBoardResponseDto> boards = boardService.getAllBoardsByAdmin();
         return ResponseEntity.ok(ApiResponse.ofSuccess(boards));
     }
 }
