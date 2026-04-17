@@ -520,4 +520,54 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
+
+    @Test
+    @DisplayName("게시글 카테고리 필터링 - 성공")
+    void t19() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&categoryId=1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.posts[0].categoryId").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(3));
+    }
+
+    @Test
+    @DisplayName("게시글 키워드 + 카테고리 필터링 - 성공")
+    void t20() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&keyword=첫&categoryId=1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.posts[0].title").value("첫 번째 게시글입니다."))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("게시글 카테고리 필터링 - 존재하지 않는 카테고리")
+    void t21() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&categoryId=999"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isEmpty())
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
 }
