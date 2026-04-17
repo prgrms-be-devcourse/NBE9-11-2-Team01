@@ -20,12 +20,11 @@ public record PostDetailResponseDto(
         int likeCount,
         LocalDateTime createdAt,
         LocalDateTime modifiedAt,
-        List<CommentReadResponseDto> comments
-        //boolean isOwner
+        List<CommentReadResponseDto> comments,
+        boolean isOwner
 ) {
-    // TODO: 인증/인가 구현하면 boolean isOwner 추가
     public static PostDetailResponseDto of(Post post, Board board, Category category,
-                                           List<CommentReadResponseDto> comments) {
+                                           List<CommentReadResponseDto> comments, boolean isOwner) {
         return new PostDetailResponseDto(
                 post.getId(),
                 board.getId(),
@@ -38,8 +37,8 @@ public record PostDetailResponseDto(
                 post.getLikeCount(),
                 post.getCreatedAt(),
                 post.getModifiedAt(),
-                comments
-                //isOwner
+                comments,
+                isOwner
         );
     }
 }
