@@ -27,6 +27,7 @@ public class AdminBoardControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    //adminToken, user1Token의 경우 실행할 때마다 값이 달라져서 하드로 넣어서 테스트함
     String adminToken = "";
     String user1Token = "";
 
