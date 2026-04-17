@@ -11,7 +11,6 @@ import com.team01.backend.global.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -44,7 +43,7 @@ public class CommentController {
         CommentResponseDto resDto = commentService.writeComment(
                 postId, reqDto, user);
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ofSuccess(resDto));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
     @PutMapping("/comments/{commentId}")
@@ -56,10 +55,10 @@ public class CommentController {
         User user = userRepository.findById(1L)
                 .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
 
-        CommentResponseDto response = commentService.updateComment(
+        CommentResponseDto resDto = commentService.updateComment(
                 commentId, requestDto, user);
 
-        return ResponseEntity.ok(ApiResponse.ofSuccess(response));
+        return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
 

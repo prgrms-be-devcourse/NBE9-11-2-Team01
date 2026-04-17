@@ -10,8 +10,10 @@ import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
+import com.team01.backend.domain.user.dto.SignUpRequest;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import com.team01.backend.domain.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
@@ -44,6 +46,8 @@ public class BaseInitData {
 
     @Autowired
     private CategoryService categoryService;
+    @Autowired
+    private AuthService authService;
 
     @Bean
     public ApplicationRunner initData() {
@@ -62,8 +66,9 @@ public class BaseInitData {
 
         if (userRepository.count() > 0) return;
 
-        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password("1234").build());
-        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password("1234").build());
+        authService.signUp(SignUpRequest.builder().email("user1@test.com").nickname("user1").password("1234").build());
+        authService.signUp(SignUpRequest.builder().email("user2@test.com").nickname("user2").password("1234").build());
+        authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("a12345").nickname("admin").adminToken("user_admin-2026").build());
 
     }
 
