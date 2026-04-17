@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -31,12 +30,13 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) String keyword
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId
     ) {
         if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
         if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
 
-        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword);
+        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 

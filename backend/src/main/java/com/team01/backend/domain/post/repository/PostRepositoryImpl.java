@@ -1,6 +1,7 @@
 package com.team01.backend.domain.post.repository;
 
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.entity.QPost;
@@ -21,7 +22,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final QPost post = QPost.post;
 
     @Override
-    public Page<Post> searchByBoardId(Long boardId, String keyword, Pageable pageable) {
+    public Page<Post> searchByBoardId(Long boardId, String keyword, Long categoryId, Pageable pageable) {
         List<Post> posts = queryFactory
                 .selectFrom(post)
                 .join(post.author).fetchJoin()
@@ -29,7 +30,8 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .where(
                         post.board.id.eq(boardId),
                         post.isDeleted.eq(false),
-                        containsKeyword(keyword)
+                        containsKeyword(keyword),
+                        eqCategoryId(categoryId)
                 )
                 .orderBy(post.createdAt.desc())
                 .offset(pageable.getOffset())
@@ -42,16 +44,23 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .where(
                         post.board.id.eq(boardId),
                         post.isDeleted.eq(false),
-                        containsKeyword(keyword)
+                        containsKeyword(keyword),
+                        eqCategoryId(categoryId)
                 )
                 .fetchOne();
 
         return new PageImpl<>(posts, pageable, total != null ? total : 0);
     }
 
-    // 검색어 유효성 검사 및 XSS 방지 처리 후 제목 검색 조건 반환 (null이면 전체 조회)
+    private BooleanExpression eqCategoryId(Long categoryId) {
+        if (categoryId == null) return null;
+        return post.category.id.eq(categoryId);
+    }
+
+    // 검색어 유효성 검사 및 XSS 방지 처리 후 제목 검색 조건 반환 (null이면 전체 조회, 공백이면 빈 리스트 반환)
     private BooleanExpression containsKeyword(String keyword) {
-        if (keyword == null || keyword.isBlank()) return null;
+        if (keyword == null) return null;
+        if (keyword.isBlank()) return Expressions.FALSE;
         String sanitized = keyword.trim()
                 .replace("<", "")
                 .replace(">", "")
