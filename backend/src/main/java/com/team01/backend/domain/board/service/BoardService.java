@@ -1,9 +1,6 @@
 package com.team01.backend.domain.board.service;
 
-import com.team01.backend.domain.board.dto.AdminBoardResponseDto;
-import com.team01.backend.domain.board.dto.BoardCreateResponseDto;
-import com.team01.backend.domain.board.dto.BoardResponse;
-import com.team01.backend.domain.board.dto.BoardUpdateResponseDto;
+import com.team01.backend.domain.board.dto.*;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -39,11 +36,16 @@ public class BoardService {
     }
 
     // 관리자 게시판 목록 조회 (삭제된것까지 포함해서)
-    public List<AdminBoardResponseDto> getAllBoardsByAdmin() {
-        return boardRepository.findAll()
+    public AdminBoardListResponseDto getAllBoardsByAdmin() {
+        List<AdminBoardResponseDto> exist = boardRepository.findAllByIsDeletedFalse()
                 .stream()
                 .map(AdminBoardResponseDto::new)
                 .toList();
+        List<AdminBoardResponseDto> deleted = boardRepository.findAllByIsDeletedTrue()
+                .stream()
+                .map(AdminBoardResponseDto::new)
+                .toList();
+        return new AdminBoardListResponseDto(exist, deleted);
     }
 
     // 게시판 수정, dto 형식으로 반환

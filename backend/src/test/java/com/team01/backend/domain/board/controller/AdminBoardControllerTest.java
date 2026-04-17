@@ -329,7 +329,8 @@ public class AdminBoardControllerTest {
                 .andExpect(handler().methodName("getBoards"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.[?(@.isDeleted == true)]").exists());
+                .andExpect(jsonPath("$.data.exist[?(@.isDeleted == true)]").doesNotExist())
+                .andExpect(jsonPath("$.data.deleted[?(@.isDeleted == true)]").exists());
     }
 
 }
