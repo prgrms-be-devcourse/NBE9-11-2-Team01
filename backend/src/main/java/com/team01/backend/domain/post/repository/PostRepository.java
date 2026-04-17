@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface PostRepository extends JpaRepository<Post, Long> {
+public interface PostRepository extends JpaRepository<Post, Long>, PostRepositoryCustom {
 
     @EntityGraph(attributePaths = {"author", "category"})
     Page<Post> findByBoardIdAndIsDeletedFalse(Long boardId, Pageable pageable);

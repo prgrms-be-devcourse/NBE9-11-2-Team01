@@ -68,14 +68,14 @@ public class PostService {
         return postRepository.count();
     }
 
-    public PostPageResponseDto getPostsByBoardId(Long boardId, int page) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
         Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
 
         Page<PostResponseDto> postPage = postRepository
-                .findByBoardIdAndIsDeletedFalse(boardId, pageable)
+                .searchByBoardId(boardId, keyword, pageable)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
