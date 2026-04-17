@@ -81,7 +81,7 @@ public class PostService {
         return PostPageResponseDto.from(postPage);
     }
 
-    public PostDetailResponseDto getPostById(Long postId, User currentUser) {
+    public PostDetailResponseDto getPostById(Long postId, String email) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
@@ -100,6 +100,11 @@ public class PostService {
         }
 
         List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
+
+        User currentUser = null;
+        if (email != null) {
+            currentUser = userRepository.findByEmail(email).orElse(null);
+        }
 
         boolean isOwner = currentUser != null &&
                 post.getAuthor().getId().equals(currentUser.getId());
