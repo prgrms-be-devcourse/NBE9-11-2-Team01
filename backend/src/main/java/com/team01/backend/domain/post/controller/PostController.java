@@ -24,6 +24,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
+    // TODO: 인증 로직 완전히 정리되면 제거 -> Service로 옮길 예정
+    // CustomUserDetailsService가 Spring Security 기본 User 객체를 반환하고 있어서
+    // @AuthenticationPrincipal로 이메일밖에 못 꺼내서 이메일로 DB 조회하는 구조로 했습니다. 추후 수정 예정입니다.
     private final UserRepository userRepository;
 
     // 게시판별 글 목록 조회
