@@ -14,13 +14,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 
 @RestController
 @RequiredArgsConstructor
-@Validated
 public class PostController {
     private final PostService postService;
     private final UserRepository userRepository;
@@ -29,10 +27,11 @@ public class PostController {
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
-            @RequestParam(defaultValue = "1")
-            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.") int page
+            @RequestParam(defaultValue = "1") int page
     ) {
-        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, 20);
+        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
+
+        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 

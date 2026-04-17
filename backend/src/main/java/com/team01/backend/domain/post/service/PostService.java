@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CategoryRepository categoryRepository;
+
+    private static final int PAGE_SIZE = 20;
 
 //    @Transactional
 //    public Post write(User author, String title, String content) {
@@ -64,11 +67,11 @@ public class PostService {
         return postRepository.count();
     }
 
-    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, int size) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        Pageable pageable = PageRequest.of(page - 1, size);
+        Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
 
         Page<PostResponseDto> postPage = postRepository
                 .findByBoardIdAndIsDeletedFalse(boardId, pageable)

@@ -6,12 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-import java.util.List;
-
 public interface PostRepository extends JpaRepository<Post, Long> {
-
-    @EntityGraph(attributePaths = {"author", "category"})
-    List<Post> findByBoardIdAndIsDeletedFalse(Long boardId);
 
     @EntityGraph(attributePaths = {"author", "category"})
     Page<Post> findByBoardIdAndIsDeletedFalse(Long boardId, Pageable pageable);

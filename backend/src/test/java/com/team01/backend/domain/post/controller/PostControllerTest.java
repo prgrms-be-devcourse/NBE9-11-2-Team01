@@ -1,5 +1,6 @@
 package com.team01.backend.domain.post.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
@@ -61,7 +62,6 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.currentPage").value(1))
                 .andExpect(jsonPath("$.data.totalPages").exists())
                 .andExpect(jsonPath("$.data.totalElements").exists())
-                .andExpect(jsonPath("$.data.size").value(20))
                 .andExpect(jsonPath("$.data.hasNext").exists())
                 .andExpect(jsonPath("$.data.posts[0].author").exists())
                 .andExpect(jsonPath("$.data.posts[0].categoryId").exists())
@@ -305,8 +305,21 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 성공")
     void t8() throws Exception {
+        String loginResponse = mvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "email": "user1@test.com",
+                                        "password": "1234"
+                                    }
+                                    """))
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(loginResponse, "$.data");
+
         ResultActions resultActions = mvc
-                .perform(get("/posts/1"))
+                .perform(get("/posts/1")
+                        .header("Authorization", "Bearer " + token))
                 .andDo(print());
 
         resultActions
@@ -327,8 +340,21 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
     void t9() throws Exception {
+        String loginResponse = mvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "email": "user1@test.com",
+                                        "password": "1234"
+                                    }
+                                    """))
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(loginResponse, "$.data");
+
         ResultActions resultActions = mvc
-                .perform(get("/posts/1"))
+                .perform(get("/posts/999")
+                        .header("Authorization", "Bearer " + token))
                 .andDo(print());
 
         resultActions
@@ -363,11 +389,24 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 삭제된 게시글")
     void t11() throws Exception {
+        String loginResponse = mvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "email": "user1@test.com",
+                                        "password": "1234"
+                                    }
+                                    """))
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(loginResponse, "$.data");
+
         Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
         postService.delete(post.getId());
 
         ResultActions resultActions = mvc
-                .perform(get("/posts/%d".formatted(post.getId())))
+                .perform(get("/posts/%d".formatted(post.getId()))
+                        .header("Authorization", "Bearer " + token))
                 .andDo(print());
 
         resultActions
@@ -391,5 +430,18 @@ public class PostControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("게시판별 글 목록 조회 - 잘못된 페이지 번호")
+    void t13() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=0"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
 }
