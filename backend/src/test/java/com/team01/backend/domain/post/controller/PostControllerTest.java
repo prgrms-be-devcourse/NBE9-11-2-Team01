@@ -403,4 +403,59 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
+
+    @Test
+    @DisplayName("게시판별-카테고리별 글 목록 조회 성공")
+    void t13() throws Exception {
+
+        Long boardId = 1L;
+        Long categoryId = 1L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/boards/%d/categories/%d/posts".formatted(boardId, categoryId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByCategory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                // PostSummaryDto 필드 검증
+                .andExpect(jsonPath("$.data[0].id").exists())
+                .andExpect(jsonPath("$.data[0].title").exists())
+                .andExpect(jsonPath("$.data[0].boardId").value(boardId))
+                .andExpect(jsonPath("$.data[0].boardName").exists())
+                .andExpect(jsonPath("$.data[0].categoryId").value(categoryId))
+                .andExpect(jsonPath("$.data[0].categoryName").exists())
+                .andExpect(jsonPath("$.data[0].authorNickname").exists())
+                .andExpect(jsonPath("$.data[0].likeCount").isNumber())
+                .andExpect(jsonPath("$.data[0].createdAt").exists())
+                .andExpect(jsonPath("$.data[0].modifiedAt").exists());
+    }
+
+    @Test
+    @DisplayName("게시판별-카테고리별 글 목록 조회 실패 - 타 게시판의 카테고리 선택")
+    void t14() throws Exception {
+
+        // 테스트 시점 기준 : 1번 게시판에는 3번 카테고리까지 존재
+        Long boardId = 1L;
+        Long invalidCategoryId = 4L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/boards/%d/categories/%d/posts".formatted(boardId, invalidCategoryId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("해당 게시판에서 사용할 수 없는 카테고리입니다."));
+    }
 }
