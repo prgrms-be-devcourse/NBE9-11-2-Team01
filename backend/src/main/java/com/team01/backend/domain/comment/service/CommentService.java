@@ -141,7 +141,6 @@ public class CommentService {
             throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없어요");
         }
 
-        // userId를 비교하여 본인 인증 -> 추후 시큐리티 사용시 변경 필요
         if(!comment.getUser().getId().equals(user.getId())){
             throw new IllegalArgumentException("본인 댓글만 수정할 수 있습니다.");
         }
