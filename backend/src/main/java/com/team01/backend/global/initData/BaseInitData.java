@@ -13,11 +13,13 @@ import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.h2.index.SpatialIndex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
@@ -45,6 +47,9 @@ public class BaseInitData {
     @Autowired
     private CategoryService categoryService;
 
+    @Autowired
+    PasswordEncoder passwordEncoder;
+
     @Bean
     public ApplicationRunner initData() {
         return args -> {
@@ -62,8 +67,8 @@ public class BaseInitData {
 
         if (userRepository.count() > 0) return;
 
-        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password("1234").build());
-        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password("1234").build());
+        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password(passwordEncoder.encode("1234")).build());
+        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password(passwordEncoder.encode("1234")).build());
 
     }
 
