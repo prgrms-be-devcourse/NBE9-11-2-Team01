@@ -50,7 +50,6 @@ public class BaseInitData {
     private CategoryService categoryService;
 
     @Autowired
-    PasswordEncoder passwordEncoder;
     private AuthService authService;
 
     @Bean
@@ -70,8 +69,6 @@ public class BaseInitData {
 
         if (userRepository.count() > 0) return;
 
-        userRepository.save(User.builder().email("user1@test.com").nickname("유저1").password(passwordEncoder.encode("1234")).build());
-        userRepository.save(User.builder().email("user2@test.com").nickname("유저2").password(passwordEncoder.encode("1234")).build());
         authService.signUp(SignUpRequest.builder().email("user1@test.com").password("1234").nickname("유저1").build());
         authService.signUp(SignUpRequest.builder().email("user2@test.com").password("1234").nickname("유저2").build());
         authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("a12345").nickname("admin").adminToken("user_admin-2026").build());
