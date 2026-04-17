@@ -7,13 +7,19 @@ import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.dto.PostDetailResponseDto;
+import com.team01.backend.domain.post.dto.PostPageResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
+import com.team01.backend.domain.post.dto.PostSummaryDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +37,8 @@ public class PostService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CategoryRepository categoryRepository;
+
+    private static final int PAGE_SIZE = 20;
 
 //    @Transactional
 //    public Post write(User author, String title, String content) {
@@ -60,18 +68,20 @@ public class PostService {
         return postRepository.count();
     }
 
-    public List<PostResponseDto> getPostsByBoardId(Long boardId) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        return postRepository.findByBoardIdAndIsDeletedFalse(boardId)
-                .stream()
-                .map(PostResponseDto::new)
-                .toList();
+        Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
+
+        Page<PostResponseDto> postPage = postRepository
+                .findByBoardIdAndIsDeletedFalse(boardId, pageable)
+                .map(PostResponseDto::new);
+
+        return PostPageResponseDto.from(postPage);
     }
 
-    // TODO: 인가/인가 구현 후 주석해제와 User currentUser 추가
-    public PostDetailResponseDto getPostById(Long postId) {
+    public PostDetailResponseDto getPostById(Long postId, User currentUser) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
@@ -91,25 +101,26 @@ public class PostService {
 
         List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
 
-        // TODO: 인증/인가 구현 후 주석 해제, isOwner 넘겨주기
-        //boolean isOwner = currentUser != null &&
-        //        post.getAuthor().getId().equals(currentUser.getId());
+        boolean isOwner = currentUser != null &&
+                post.getAuthor().getId().equals(currentUser.getId());
 
-        return PostDetailResponseDto.of(post, board, category, comments);
+        return PostDetailResponseDto.of(post, board, category, comments, isOwner);
     }
 
-    public Optional<Post> findById(Long id) {return postRepository.findById(id);}
+    public Optional<Post> findById(Long id) {
+        return postRepository.findById(id);
+    }
 
     @Transactional
     public Post modify(Long postId, String title, String content, Long categoryId) {
 
         // 게시글 조회
         Post post = postRepository.findById(postId)
-                        .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
 
         // 변경하려고 하는 카테고리 조회
         Category category = categoryRepository.findById(categoryId)
-                        .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
 
         // 변경하려고 하는 카테고리가 현재 게시글의 게시판에 속하는지
         if (!category.getBoardId().equals(post.getBoard().getId())) {
@@ -134,4 +145,21 @@ public class PostService {
         post.delete(/*actor*/);
     }
 
+    @Transactional(readOnly = true)
+    public List<PostSummaryDto> getPostsByBoardAndCategory(Long boardId, Long categoryId) {
+        // 1. 카테고리가 해당 게시판 소속인지 검증 (데이터 무결성)
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+
+        if (!category.getBoardId().equals(boardId)) {
+            throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
+        }
+
+        // 2. Fetch Join을 사용해서 N+1 문제를 방어
+        List<Post> posts = postRepository.findAllByBoardIdAndCategoryId(boardId, categoryId);
+
+        return posts.stream()
+                .map(PostSummaryDto::new)
+                .toList();
+    }
 }
