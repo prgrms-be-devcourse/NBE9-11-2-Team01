@@ -10,6 +10,7 @@ import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
+import com.team01.backend.domain.user.entity.Role;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,14 @@ public class BaseInitData {
     public void setMember() {
 
         if (userRepository.count() > 0) return;
+
+        // ✅ 관리자 추가
+        userRepository.save(User.builder()
+                .email("admin@test.com")
+                .nickname("관리자")
+                .password(passwordEncoder.encode("1234"))
+                .role(Role.ADMIN)
+                .build());
 
         userRepository.save(User.builder()
                 .email("user1@test.com")
