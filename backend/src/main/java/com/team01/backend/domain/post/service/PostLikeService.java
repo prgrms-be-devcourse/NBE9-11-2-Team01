@@ -63,19 +63,19 @@ public class PostLikeService {
     }
 
     private PostLikeResponseDto toggleLikeWithDB(Long postId, User loginUser, Post post) {
-        Optional<PostLike> existing = postLikeRepository.findByUserIdAndPostId(postId, post.getId());
+        Optional<PostLike> existing = postLikeRepository.findByUserIdAndPostId(loginUser.getId(), postId);
 
         if(existing.isPresent()){
             postLikeRepository.delete(existing.get());
             postRepository.decreaseLikeCount(postId);
+            int likeCount = postLikeRepository.countByPostId(postId);
+            return new PostLikeResponseDto(false, likeCount);
         }
         else{
             postLikeRepository.save(new PostLike(loginUser, post));
             postRepository.increaseLikeCount(postId);
+            int likeCount = postLikeRepository.countByPostId(postId);
+            return new PostLikeResponseDto(true, likeCount);
         }
-
-        int likeCount = postLikeRepository.countByPostId(postId);
-        boolean alreadyLiked = Boolean.FALSE;
-        return new PostLikeResponseDto(alreadyLiked, likeCount);
     }
 }
