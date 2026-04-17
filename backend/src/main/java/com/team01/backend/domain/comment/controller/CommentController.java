@@ -12,6 +12,8 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -33,15 +35,11 @@ public class CommentController {
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(
             @PathVariable Long postId,
-            @Valid @RequestBody CommentRequestDto reqDto){
-
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
-
+            @Valid @RequestBody CommentRequestDto reqDto,
+            @AuthenticationPrincipal UserDetails userDetails){
 
         CommentResponseDto resDto = commentService.writeComment(
-                postId, reqDto, user);
+                postId, reqDto, userDetails.getUsername());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
@@ -49,14 +47,11 @@ public class CommentController {
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
             @PathVariable Long commentId,
-            @Valid @RequestBody CommentRequestDto requestDto) {
-
-        // 임시 — 나중에 @AuthenticationPrincipal 로 교체
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+            @Valid @RequestBody CommentRequestDto requestDto,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         CommentResponseDto resDto = commentService.updateComment(
-                commentId, requestDto, user);
+                commentId, requestDto, userDetails.getUsername());
 
         return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }

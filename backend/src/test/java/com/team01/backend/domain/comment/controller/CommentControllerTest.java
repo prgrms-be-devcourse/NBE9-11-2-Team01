@@ -2,9 +2,7 @@ package com.team01.backend.domain.comment.controller;
 
 
 import com.jayway.jsonpath.JsonPath;
-import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
-import com.team01.backend.domain.category.entity.Category;
 import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.comment.dto.CommentDeleteResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
@@ -14,25 +12,23 @@ import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
+import com.team01.backend.global.security.JwtTokenProvider;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -63,47 +59,49 @@ public class CommentControllerTest {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
     private User testUser;
     private Post testPost;
     private Post testPost2;
 
     @BeforeEach
     void setUp() {
-        testUser = userRepository.save(User.builder()
-                .email("test@test.com")
-                .nickname("테스터")
-                .password("1234")
-                .build());
 
-        Board testBoard = boardRepository.save(new Board("자유게시판", "자유롭게 글을 쓰는 곳"));
-        Category testCategory = categoryRepository.save(new Category(testBoard.getId(), "일반"));
+        testUser = userRepository.findByEmail("user1@test.com").orElseThrow();
 
-        testPost = postRepository.save(new Post(testUser, "테스트 게시글", "내용", testBoard, testCategory));
-        testPost2 = postRepository.save(new Post(testUser, "테스트 게시글2", "내용2", testBoard, testCategory));
+        // BaseInitData에서 만든 게시글 조회
+        testPost = postRepository.findById(1L).orElseThrow();
+        testPost2 = postRepository.findById(2L).orElseThrow();
     }
 
     @Test
     @DisplayName("댓글 생성 - 1번 글에 생성")
     void t1() throws Exception {
 
+        User author = userRepository.findByEmail("user1@test.com").get();
+        // 테스트용 토큰 발급
+        String token = jwtTokenProvider.createToken(author.getEmail(), author.getRole().name());
         String content = "새로운 댓글";
 
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)  // ✅
                                 .content("""
-                                    {
-                                        "content": "%s"
-                                    }
-                                    """.formatted(content))
+                                {
+                                    "content": "%s"
+                                }
+                                """.formatted(content))
                 )
                 .andDo(print());
 
         resultActions
                 .andExpect(handler().handlerType(CommentController.class))
                 .andExpect(handler().methodName("writeComment"))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(content))
@@ -115,10 +113,13 @@ public class CommentControllerTest {
     @DisplayName("댓글 생성 - 내용이 없을 시 예외")
     void t2() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                     {
                                         "content": ""
@@ -141,11 +142,13 @@ public class CommentControllerTest {
     void t3() throws Exception {
 
         Long postId = 999L;
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
 
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(postId))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "댓글 내용"
@@ -165,6 +168,9 @@ public class CommentControllerTest {
     @Test
     @DisplayName("댓글 작성 실패 - 삭제된 게시글")
     void t4() throws Exception {
+
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+
         ReflectionTestUtils.setField(testPost, "isDeleted", true);
         postRepository.saveAndFlush(testPost);
 
@@ -172,6 +178,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                         {
                                             "content": "댓글 내용"
@@ -192,6 +199,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 작성 실패 - 500자 초과")
     void t5() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
         // 501자 문자열 생성
         String longContent = "a".repeat(501);
 
@@ -199,6 +207,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "%s"
@@ -219,11 +228,14 @@ public class CommentControllerTest {
     @DisplayName("대댓글 생성 - 1번 댓글에 대댓글 작성")
     void t6() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+
         // 1. 먼저 부모 댓글 생성
         String createResponse = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "부모 댓글"
@@ -244,6 +256,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "%s",
@@ -256,7 +269,7 @@ public class CommentControllerTest {
         resultActions
                 .andExpect(handler().handlerType(CommentController.class))
                 .andExpect(handler().methodName("writeComment"))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").exists())
                 .andExpect(jsonPath("$.data.content").value(childContent))
@@ -268,11 +281,13 @@ public class CommentControllerTest {
     @DisplayName("대댓글 생성 실패 - 대댓글에 답글 달기 불가")
     void t7() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
         // 1. 부모 댓글 생성
         String parentResponse = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "부모 댓글"
@@ -290,6 +305,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "대댓글",
@@ -308,6 +324,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "대댓글의 대댓글",
@@ -330,10 +347,13 @@ public class CommentControllerTest {
     @DisplayName("댓글 작성 실패 - 다른 게시글의 댓글에 대댓글 작성")
     void t8() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+
         String createResponse = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "1번 게시글 댓글"
@@ -348,6 +368,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost2.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                 {
                                     "content": "잘못된 대댓글",
@@ -368,10 +389,13 @@ public class CommentControllerTest {
     @DisplayName("댓글 수정 - 1번 댓글 수정")
     void t9() throws Exception {
 
+        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+
         ResultActions createResult = mvc
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                     {
                                         "content": "원래 댓글"
@@ -390,6 +414,7 @@ public class CommentControllerTest {
                 .perform(
                         put("/comments/%d".formatted(commentId))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .header("Authorization", "Bearer " + token)
                                 .content("""
                                     {
                                         "content": "%s"
