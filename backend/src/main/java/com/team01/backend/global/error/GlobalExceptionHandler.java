@@ -3,14 +3,16 @@ package com.team01.backend.global.error;
 
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.persistence.EntityNotFoundException;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /** 기본 예외 처리. 응답 본문은 항상 {@link ApiResponse} 형태로 맞춘다. */
 @Slf4j
@@ -66,5 +68,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleHttpMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.ofFailure("INVALID_JSON", "잘못된 형식의 JSON 데이터입니다."));
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN) // 403 Forbidden
+                .body(ApiResponse.ofFailure("FORBIDDEN", ex.getMessage()));
     }
 }

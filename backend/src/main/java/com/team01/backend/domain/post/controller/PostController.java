@@ -123,33 +123,27 @@ public class PostController {
     ) {
     }
 
-    record PostModifyResBody(
-            PostDto postDto
-    ) {
-    }
-
     // 글 수정 api
     @PutMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse<PostModifyResBody>> modify(
+    public ResponseEntity<ApiResponse<PostModifyResponse>> modify(
             @PathVariable("postId") Long postId,
-            @RequestBody @Valid PostModifyReqBody reqBody
+            @RequestBody @Valid PostModifyReqBody reqBody,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 유저 정보 생기면 사용
-//        User actor = rq.getActor();
-//
-//        Post post = postService.findById(postId).get();
-//        post.checkModify(actor);
-//
-//        postService.modify(postId, reqBody.title, reqBody.content);
 
-        Post post = postService.modify(postId, reqBody.title(), reqBody.content(), reqBody.categoryId);
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+
+        Post post = postService.modify(
+                postId,
+                userDetails.getUsername(),
+                reqBody.title(),
+                reqBody.content(),
+                reqBody.categoryId);
 
         return ResponseEntity.ok(
-                ApiResponse.ofSuccess(
-                        new PostModifyResBody(
-                                new PostDto(post)
-                        )
-                )
+                ApiResponse.ofSuccess(new PostModifyResponse(post))
         );
     }
 

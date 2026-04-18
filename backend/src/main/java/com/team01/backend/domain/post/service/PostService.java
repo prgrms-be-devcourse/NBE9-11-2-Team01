@@ -23,6 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 
@@ -111,11 +113,19 @@ public class PostService {
     }
 
     @Transactional
-    public Post modify(Long postId, String title, String content, Long categoryId) {
+    public Post modify(Long postId, String email, String title, String content, Long categoryId) {
 
         // 게시글 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+
+        // api 요청자 actor 찾기
+        User actor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!post.getAuthor().getId().equals(actor.getId())) {
+            throw new AccessDeniedException("작성자만 수정할 수 있습니다.");
+        }
 
         // 변경하려고 하는 카테고리 조회
         Category category = categoryRepository.findById(categoryId)
