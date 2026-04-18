@@ -109,7 +109,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
-                                .header("Authorization", "Bearer " + token) // 추가된 부분!
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -128,11 +128,11 @@ public class PostControllerTest {
                 .andExpect(handler().methodName("write"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.postDto.id").exists())
-                .andExpect(jsonPath("$.data.postDto.title").value(title))
-                .andExpect(jsonPath("$.data.postDto.content").value(content))
-                .andExpect(jsonPath("$.data.postDto.createdAt").exists())
-                .andExpect(jsonPath("$.data.postDto.modifiedAt").exists());
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.title").value(title))
+                .andExpect(jsonPath("$.data.content").value(content))
+                .andExpect(jsonPath("$.data.createdAt").exists())
+                .andExpect(jsonPath("$.data.modifiedAt").exists());
     }
 
     @Test

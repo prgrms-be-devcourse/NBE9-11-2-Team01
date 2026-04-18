@@ -1,9 +1,6 @@
 package com.team01.backend.domain.post.controller;
 
-import com.team01.backend.domain.post.dto.PostDetailResponseDto;
-import com.team01.backend.domain.post.dto.PostDto;
-import com.team01.backend.domain.post.dto.PostPageResponseDto;
-import com.team01.backend.domain.post.dto.PostSummaryDto;
+import com.team01.backend.domain.post.dto.*;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.domain.user.entity.User;
@@ -83,15 +80,9 @@ public class PostController {
     ){
     }
 
-    record PostWriteResBody(
-            PostDto postDto,
-            long postsCount
-    ) {
-    }
-
     // 글 작성 api
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse<PostWriteResBody>> write(
+    public ResponseEntity<ApiResponse<PostWriteResponse>> write(
             @RequestBody @Valid PostWriteReqBody reqBody,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
@@ -113,10 +104,7 @@ public class PostController {
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(
-                        new PostWriteResBody(
-                                new PostDto(post),
-                                postsCount
-                        )
+                        new PostWriteResponse(post, postsCount)
                 )
         );
     }
