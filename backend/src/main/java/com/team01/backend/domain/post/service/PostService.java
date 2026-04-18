@@ -143,15 +143,23 @@ public class PostService {
     }
 
     @Transactional
-    public void delete(Long postId /*, User actor*/) {
+    public void delete(Long postId, String email) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
+
+        // 요청 유저 찾기
+        User actor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (post.isDeleted()) {
             throw new IllegalArgumentException("이미 삭제된 게시물입니다.");
         }
 
-        post.delete(/*actor*/);
+        if (!post.getAuthor().getId().equals(actor.getId())) {
+            throw new AccessDeniedException("작성자만 삭제할 수 있습니다.");
+        }
+
+        post.delete();
     }
 
     @Transactional(readOnly = true)

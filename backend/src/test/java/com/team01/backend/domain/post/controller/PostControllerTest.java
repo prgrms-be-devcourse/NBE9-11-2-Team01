@@ -24,6 +24,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -436,128 +437,160 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
     }
-//
-//
-//    @Test
-//    @DisplayName("글 삭제 성공")
-//    void t10() throws Exception {
-////        Post post = postRepository.findById(1L).get();
-////        Long targetId = post.getId();
-//
-//        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
-//        Long targetId = post.getId();
-//
-//        ResultActions resultActions = mvc
-//                .perform(
-//                        delete("/posts/%d".formatted(targetId)))
-//                .andDo(print());
-//
-//        resultActions
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true));
-//
-//        Post deletedPost = postRepository.findById(targetId).get();
-//        assertThat(deletedPost.isDeleted()).isTrue();
-//    }
-//
-//    @Test
-//    @DisplayName("게시글 상세 조회 - 삭제된 게시글")
-//    void t11() throws Exception {
-//        String loginResponse = mvc.perform(
-//                        post("/api/auth/login")
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                                .content("""
-//                                    {
-//                                        "email": "user1@test.com",
-//                                        "password": "1234"
-//                                    }
-//                                    """))
-//                .andReturn().getResponse().getContentAsString();
-//        String token = JsonPath.read(loginResponse, "$.data");
-//
-//        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
-//        postService.delete(post.getId());
-//
-//        ResultActions resultActions = mvc
-//                .perform(get("/posts/%d".formatted(post.getId()))
-//                        .header("Authorization", "Bearer " + token))
-//                .andDo(print());
-//
-//        resultActions
-//                .andExpect(status().isNotFound())
-//                .andExpect(jsonPath("$.success").value(false))
-//                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-//    }
-//
-//    @Test
-//    @DisplayName("게시판별 글 목록 조회 - 삭제된 게시판")
-//    void t12() throws Exception {
-//        // given: BaseInitData에서 4번 게시판이 삭제된 상태
-//
-//        // when
-//        ResultActions resultActions = mvc
-//                .perform(get("/boards/4/posts"))
-//                .andDo(print());
-//
-//        // then
-//        resultActions
-//                .andExpect(status().isNotFound())
-//                .andExpect(jsonPath("$.success").value(false))
-//                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
-//    }
-//
-//    @Test
-//    @DisplayName("게시판별-카테고리별 글 목록 조회 성공")
-//    void t13() throws Exception {
-//
-//        Long boardId = 1L;
-//        Long categoryId = 1L;
-//
-//        ResultActions resultActions = mvc
-//                .perform(
-//                        get("/boards/%d/categories/%d/posts".formatted(boardId, categoryId))
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                )
-//                .andDo(print());
-//
-//        resultActions
-//                .andExpect(handler().handlerType(PostController.class))
-//                .andExpect(handler().methodName("getPostsByCategory"))
-//                .andExpect(status().isOk())
-//                .andExpect(jsonPath("$.success").value(true))
-//                .andExpect(jsonPath("$.data").isArray())
-//                // PostSummaryDto 필드 검증
-//                .andExpect(jsonPath("$.data[0].id").exists())
-//                .andExpect(jsonPath("$.data[0].title").exists())
-//                .andExpect(jsonPath("$.data[0].boardId").value(boardId))
-//                .andExpect(jsonPath("$.data[0].boardName").exists())
-//                .andExpect(jsonPath("$.data[0].categoryId").value(categoryId))
-//                .andExpect(jsonPath("$.data[0].categoryName").exists())
-//                .andExpect(jsonPath("$.data[0].authorNickname").exists())
-//                .andExpect(jsonPath("$.data[0].likeCount").isNumber())
-//                .andExpect(jsonPath("$.data[0].createdAt").exists())
-//                .andExpect(jsonPath("$.data[0].modifiedAt").exists());
-//    }
-//
-//    @Test
-//    @DisplayName("게시판별-카테고리별 글 목록 조회 실패 - 타 게시판의 카테고리 선택")
-//    void t14() throws Exception {
-//
-//        // 테스트 시점 기준 : 1번 게시판에는 3번 카테고리까지 존재
-//        Long boardId = 1L;
-//        Long invalidCategoryId = 4L;
-//
-//        ResultActions resultActions = mvc
-//                .perform(
-//                        get("/boards/%d/categories/%d/posts".formatted(boardId, invalidCategoryId))
-//                                .contentType(MediaType.APPLICATION_JSON)
-//                )
-//                .andDo(print());
-//
-//        resultActions
-//                .andExpect(status().isBadRequest())
-//                .andExpect(jsonPath("$.success").value(false))
-//                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
-//                .andExpect(jsonPath("$.message").value("해당 게시판에서 사용할 수 없는 카테고리입니다."));
-//    }
+
+
+    @Test
+    @DisplayName("글 삭제 성공")
+    void t10_1() throws Exception {
+
+        String token = getAccessToken("user1@test.com", "1234");
+
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
+        Long targetId = post.getId();
+
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer "+token))
+
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Post deletedPost = postRepository.findById(targetId).get();
+        assertThat(deletedPost.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("글 삭제 실패 - 작성자가 아닌 경우")
+    void t10_2() throws Exception {
+
+        // author : user1
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
+        Long targetId = post.getId();
+
+        // actor : user2
+        String token = getAccessToken("user2@test.com", "1234");
+
+        // 다른 유저가 삭제 요청
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer " + token)) // 인증 헤더 추가
+                .andDo(print());
+
+        // 403 Forbidden 검증
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("작성자만 삭제할 수 있습니다."));
+
+        // 삭제되지 않았는지 확인
+        Post notDeletedPost = postRepository.findById(targetId).get();
+        assertThat(notDeletedPost.isDeleted()).isFalse();
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 - 삭제된 게시글")
+    void t11() throws Exception {
+        String loginResponse = mvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                    {
+                                        "email": "user1@test.com",
+                                        "password": "1234"
+                                    }
+                                    """))
+                .andReturn().getResponse().getContentAsString();
+        String token = JsonPath.read(loginResponse, "$.data");
+
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
+        postService.delete(post.getId(), "user1@test.com");
+
+        ResultActions resultActions = mvc
+                .perform(get("/posts/%d".formatted(post.getId()))
+                        .header("Authorization", "Bearer " + token))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("게시판별 글 목록 조회 - 삭제된 게시판")
+    void t12() throws Exception {
+        // given: BaseInitData에서 4번 게시판이 삭제된 상태
+
+        // when
+        ResultActions resultActions = mvc
+                .perform(get("/boards/4/posts"))
+                .andDo(print());
+
+        // then
+        resultActions
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("NOT_FOUND"));
+    }
+
+    @Test
+    @DisplayName("게시판별-카테고리별 글 목록 조회 성공")
+    void t13() throws Exception {
+
+        Long boardId = 1L;
+        Long categoryId = 1L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/boards/%d/categories/%d/posts".formatted(boardId, categoryId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByCategory"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                // PostSummaryDto 필드 검증
+                .andExpect(jsonPath("$.data[0].id").exists())
+                .andExpect(jsonPath("$.data[0].title").exists())
+                .andExpect(jsonPath("$.data[0].boardId").value(boardId))
+                .andExpect(jsonPath("$.data[0].boardName").exists())
+                .andExpect(jsonPath("$.data[0].categoryId").value(categoryId))
+                .andExpect(jsonPath("$.data[0].categoryName").exists())
+                .andExpect(jsonPath("$.data[0].authorNickname").exists())
+                .andExpect(jsonPath("$.data[0].likeCount").isNumber())
+                .andExpect(jsonPath("$.data[0].createdAt").exists())
+                .andExpect(jsonPath("$.data[0].modifiedAt").exists());
+    }
+
+    @Test
+    @DisplayName("게시판별-카테고리별 글 목록 조회 실패 - 타 게시판의 카테고리 선택")
+    void t14() throws Exception {
+
+        // 테스트 시점 기준 : 1번 게시판에는 3번 카테고리까지 존재
+        Long boardId = 1L;
+        Long invalidCategoryId = 4L;
+
+        ResultActions resultActions = mvc
+                .perform(
+                        get("/boards/%d/categories/%d/posts".formatted(boardId, invalidCategoryId))
+                                .contentType(MediaType.APPLICATION_JSON)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
+                .andExpect(jsonPath("$.message").value("해당 게시판에서 사용할 수 없는 카테고리입니다."));
+    }
 }

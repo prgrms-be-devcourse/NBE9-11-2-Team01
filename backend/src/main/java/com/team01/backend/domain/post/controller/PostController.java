@@ -150,14 +150,15 @@ public class PostController {
     // 글 삭제 api
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 유저 인증처리 생기면 사용
-//        User actor = rq.getActor();
-//        postService.delete(postId, actor);
 
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
 
-        postService.delete(postId);
+        postService.delete(postId, userDetails.getUsername());
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(null)
