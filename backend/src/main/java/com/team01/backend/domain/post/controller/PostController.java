@@ -92,12 +92,17 @@ public class PostController {
     // 글 작성 api
     @PostMapping("/posts")
     public ResponseEntity<ApiResponse<PostWriteResBody>> write(
-            @RequestBody @Valid PostWriteReqBody reqBody
+            @RequestBody @Valid PostWriteReqBody reqBody,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // User actor = rq.getActor();
 
-        //Post post = postService.write(actor, reqBody.title, reqBody.content);
+        // 비로그인 사용자에 대한 예외 처리
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+
         Post post = postService.write(
+                userDetails.getUsername(),
                 reqBody.title,
                 reqBody.content,
                 reqBody.boardId,

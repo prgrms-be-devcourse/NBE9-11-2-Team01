@@ -47,11 +47,10 @@ public class PostService {
 //    }
 
     @Transactional
-    public Post write(String title, String content, Long boardId, Long categoryId) {
+    public Post write(String email, String title, String content, Long boardId, Long categoryId) {
 
-        // 아직 controller에서 getActor를 사용할 수 없으므로 임시 유저 사용
-        User author = userRepository.findByEmail("user1@test.com")
-                .orElseThrow(() -> new RuntimeException("초기화 유저가 없습니다."));
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         // 게시판, 카테고리 조회
         Board board = boardRepository.findById(boardId)
