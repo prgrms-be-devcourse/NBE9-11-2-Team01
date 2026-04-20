@@ -57,4 +57,16 @@ public class Comment extends BaseEntity {
     public void softDelete() {
         this.isDeleted = true;
     }
+
+    /** 좋아요 추가 시 {@code CommentLike} 저장과 함께 호출. */
+    public void incrementLikeCount() {
+        this.likeCount++;
+    }
+
+    /** 좋아요 취소 시 {@code CommentLike} 삭제와 함께 호출. */
+    public void decrementLikeCount() {
+        if (this.likeCount > 0) {
+            this.likeCount--;
+        }
+    }
 }

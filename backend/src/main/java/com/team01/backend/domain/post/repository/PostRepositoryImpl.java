@@ -65,6 +65,9 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                 .replace("<", "")
                 .replace(">", "")
                 .replace("&", "");
+
+        // sanitized 후 빈 문자열 체크 추가
+        if (sanitized.isBlank()) return Expressions.FALSE;
         return post.title.containsIgnoreCase(sanitized);
     }
 }

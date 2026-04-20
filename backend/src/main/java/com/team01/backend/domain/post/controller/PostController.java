@@ -1,9 +1,6 @@
 package com.team01.backend.domain.post.controller;
 
-import com.team01.backend.domain.post.dto.PostDetailResponseDto;
-import com.team01.backend.domain.post.dto.PostDto;
-import com.team01.backend.domain.post.dto.PostPageResponseDto;
-import com.team01.backend.domain.post.dto.PostSummaryDto;
+import com.team01.backend.domain.post.dto.*;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
@@ -42,11 +39,18 @@ public class PostController {
 
     // 게시판별, 카테고리별 글 목록 조회
     @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
-    public ResponseEntity<ApiResponse<List<PostSummaryDto>>> getPostsByCategory(
-            @PathVariable("boardId") Long boardId,
-            @PathVariable("categoryId") Long categoryId
+    public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByCategory(
+            @PathVariable Long boardId,
+            @PathVariable Long categoryId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String keyword
     ) {
-        List<PostSummaryDto> posts = postService.getPostsByBoardAndCategory(boardId, categoryId);
+        // 페이지 번호 유효성 검증 (1 이상)
+        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
+        // 검색어 길이 검증 (50자 이하)
+        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
+
+        PostPageResponseDto posts = postService.getPostsByBoardAndCategory(boardId, categoryId, page, keyword);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
@@ -80,21 +84,20 @@ public class PostController {
     ){
     }
 
-    record PostWriteResBody(
-            PostDto postDto,
-            long postsCount
-    ) {
-    }
-
     // 글 작성 api
     @PostMapping("/posts")
-    public ResponseEntity<ApiResponse<PostWriteResBody>> write(
-            @RequestBody @Valid PostWriteReqBody reqBody
+    public ResponseEntity<ApiResponse<PostWriteResponse>> write(
+            @RequestBody @Valid PostWriteReqBody reqBody,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // User actor = rq.getActor();
 
-        //Post post = postService.write(actor, reqBody.title, reqBody.content);
+        // 비로그인 사용자에 대한 예외 처리
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+
         Post post = postService.write(
+                userDetails.getUsername(),
                 reqBody.title,
                 reqBody.content,
                 reqBody.boardId,
@@ -105,10 +108,7 @@ public class PostController {
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(
-                        new PostWriteResBody(
-                                new PostDto(post),
-                                postsCount
-                        )
+                        new PostWriteResponse(post, postsCount)
                 )
         );
     }
@@ -127,47 +127,42 @@ public class PostController {
     ) {
     }
 
-    record PostModifyResBody(
-            PostDto postDto
-    ) {
-    }
-
     // 글 수정 api
     @PutMapping("/posts/{postId}")
-    public ResponseEntity<ApiResponse<PostModifyResBody>> modify(
+    public ResponseEntity<ApiResponse<PostModifyResponse>> modify(
             @PathVariable("postId") Long postId,
-            @RequestBody @Valid PostModifyReqBody reqBody
+            @RequestBody @Valid PostModifyReqBody reqBody,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 유저 정보 생기면 사용
-//        User actor = rq.getActor();
-//
-//        Post post = postService.findById(postId).get();
-//        post.checkModify(actor);
-//
-//        postService.modify(postId, reqBody.title, reqBody.content);
 
-        Post post = postService.modify(postId, reqBody.title(), reqBody.content(), reqBody.categoryId);
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+
+        Post post = postService.modify(
+                postId,
+                userDetails.getUsername(),
+                reqBody.title(),
+                reqBody.content(),
+                reqBody.categoryId);
 
         return ResponseEntity.ok(
-                ApiResponse.ofSuccess(
-                        new PostModifyResBody(
-                                new PostDto(post)
-                        )
-                )
+                ApiResponse.ofSuccess(new PostModifyResponse(post))
         );
     }
 
     // 글 삭제 api
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<Void>> delete(
-            @PathVariable("postId") Long postId
+            @PathVariable("postId") Long postId,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 유저 인증처리 생기면 사용
-//        User actor = rq.getActor();
-//        postService.delete(postId, actor);
 
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
 
-        postService.delete(postId);
+        postService.delete(postId, userDetails.getUsername());
 
         return ResponseEntity.ok(
                 ApiResponse.ofSuccess(null)
