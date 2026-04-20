@@ -6,8 +6,6 @@ import com.team01.backend.domain.post.dto.PostPageResponseDto;
 import com.team01.backend.domain.post.dto.PostSummaryDto;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
-import com.team01.backend.domain.user.entity.User;
-import com.team01.backend.domain.user.repository.UserRepository;
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -26,17 +24,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
-    private final UserRepository userRepository;
 
     // 게시판별 글 목록 조회
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
-            @RequestParam(defaultValue = "1") int page
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long categoryId
     ) {
         if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
+        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
 
-        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page);
+        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
@@ -57,11 +57,8 @@ public class PostController {
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        User user = null;
-        if (userDetails != null) {
-            user = userRepository.findByEmail(userDetails.getUsername()).orElse(null);
-        }
-        PostDetailResponseDto post = postService.getPostById(postId, user);
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        PostDetailResponseDto post = postService.getPostById(postId, email);
         return ResponseEntity.ok(ApiResponse.ofSuccess(post));
     }
 

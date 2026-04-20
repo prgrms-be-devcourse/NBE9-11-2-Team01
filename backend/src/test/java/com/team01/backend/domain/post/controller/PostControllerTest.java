@@ -1,6 +1,5 @@
 package com.team01.backend.domain.post.controller;
 
-import com.jayway.jsonpath.JsonPath;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
@@ -8,7 +7,9 @@ import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
+import com.team01.backend.global.security.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,6 +46,16 @@ public class PostControllerTest {
 
     @Autowired
     private BoardRepository boardRepository;
+
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    String user1Token = "";
+
+    @BeforeEach
+    void setToken() {
+        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
+    }
 
     @Test
     @DisplayName("게시판별 글 목록 조회 - 성공")
@@ -305,21 +316,9 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 성공")
     void t8() throws Exception {
-        String loginResponse = mvc.perform(
-                        post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {
-                                        "email": "user1@test.com",
-                                        "password": "1234"
-                                    }
-                                    """))
-                .andReturn().getResponse().getContentAsString();
-        String token = JsonPath.read(loginResponse, "$.data");
-
         ResultActions resultActions = mvc
                 .perform(get("/posts/1")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + user1Token))
                 .andDo(print());
 
         resultActions
@@ -340,21 +339,9 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 존재하지 않는 게시글")
     void t9() throws Exception {
-        String loginResponse = mvc.perform(
-                        post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {
-                                        "email": "user1@test.com",
-                                        "password": "1234"
-                                    }
-                                    """))
-                .andReturn().getResponse().getContentAsString();
-        String token = JsonPath.read(loginResponse, "$.data");
-
         ResultActions resultActions = mvc
                 .perform(get("/posts/999")
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + user1Token))
                 .andDo(print());
 
         resultActions
@@ -389,24 +376,12 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시글 상세 조회 - 삭제된 게시글")
     void t11() throws Exception {
-        String loginResponse = mvc.perform(
-                        post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {
-                                        "email": "user1@test.com",
-                                        "password": "1234"
-                                    }
-                                    """))
-                .andReturn().getResponse().getContentAsString();
-        String token = JsonPath.read(loginResponse, "$.data");
-
         Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
         postService.delete(post.getId());
 
         ResultActions resultActions = mvc
                 .perform(get("/posts/%d".formatted(post.getId()))
-                        .header("Authorization", "Bearer " + token))
+                        .header("Authorization", "Bearer " + user1Token))
                 .andDo(print());
 
         resultActions
@@ -485,5 +460,114 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
                 .andExpect(jsonPath("$.message").value("해당 게시판에서 사용할 수 없는 카테고리입니다."));
+    }
+
+    @Test
+    @DisplayName("게시판별 글 목록 조회 - 잘못된 페이지 번호")
+    void t15() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=0"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    @DisplayName("게시글 키워드 검색 - 결과 있음")
+    void t16() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&keyword=첫"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.posts[0].title").value("첫 번째 게시글입니다."))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("게시글 키워드 검색 - 결과 없음")
+    void t17() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&keyword=존재하지않는키워드"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isEmpty())
+                .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("게시글 키워드 검색 - 검색어 50자 초과")
+    void t18() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&keyword=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
+    }
+
+    @Test
+    @DisplayName("게시글 카테고리 필터링 - 성공")
+    void t19() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&categoryId=1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.posts[0].categoryId").value(1))
+                .andExpect(jsonPath("$.data.totalElements").value(3));
+    }
+
+    @Test
+    @DisplayName("게시글 키워드 + 카테고리 필터링 - 성공")
+    void t20() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&keyword=첫&categoryId=1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.posts[0].title").value("첫 번째 게시글입니다."))
+                .andExpect(jsonPath("$.data.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("게시글 카테고리 필터링 - 존재하지 않는 카테고리")
+    void t21() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/posts?page=1&categoryId=999"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(PostController.class))
+                .andExpect(handler().methodName("getPostsByBoardId"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.posts").isEmpty())
+                .andExpect(jsonPath("$.data.totalElements").value(0));
     }
 }
