@@ -44,22 +44,6 @@ public class Post extends BaseEntity {
     private List<Comment> comments = new ArrayList<>();
 
 
-//    public Post(User author, String title, String content) {
-//        this.author = author;
-//        this.title = title;
-//        this.content = content;
-//    }
-
-//    //Comment테스트
-//    public void delete() {
-//        this.isDeleted = true;
-//    }
-
-//    public void delete() {       /*Comment테스트*/
-//        this.isDeleted = true;
-//    }
-
-
     public Post(User author, String title, String content, Board board, Category category) {
         this.title = title;
         this.content = content;
@@ -68,22 +52,13 @@ public class Post extends BaseEntity {
         this.category = category;
     }
 
-    // 유저 인증 로직 생기면 사용
-//    public void checkModify(User actor) {
-//
-//        if (!this.getAuthor().equals(actor)) {
-//            throw new IllegalArgumentException("수정 권한이 없습니다.");
-//        }
-//    }
-
     public void update(String title, String content, Category category) {
         this.title = title;
         this.content = content;
         this.category = category;
     }
 
-    public void delete(/*User actor*/) {
-//        checkModify(actor);
+    public void delete() {
 
         this.isDeleted = true;
 
