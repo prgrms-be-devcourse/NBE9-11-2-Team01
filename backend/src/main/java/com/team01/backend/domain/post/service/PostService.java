@@ -83,7 +83,7 @@ public class PostService {
     }
 
     public PostDetailResponseDto getPostById(Long postId, String email) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findWithDetailsById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
         if (post.isDeleted()) {
@@ -107,8 +107,7 @@ public class PostService {
             currentUser = userRepository.findByEmail(email).orElse(null);
         }
 
-        boolean isOwner = currentUser != null &&
-                post.getAuthor().getId().equals(currentUser.getId());
+        boolean isOwner = currentUser != null && post.getAuthor().getId().equals(currentUser.getId());
 
         return PostDetailResponseDto.of(post, board, category, comments, isOwner);
     }

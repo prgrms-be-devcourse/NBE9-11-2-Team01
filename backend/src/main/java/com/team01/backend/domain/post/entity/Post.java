@@ -17,6 +17,10 @@ import java.util.List;
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(indexes = {
+        // 게시판별 게시글 목록 조회 최적화 (board_id + isDeleted 필터링, createdAt 정렬)
+        @Index(name = "idx_post_board_deleted_created", columnList = "board_id, isDeleted, createdAt")
+})
 public class Post extends BaseEntity {
 
     private String title;
