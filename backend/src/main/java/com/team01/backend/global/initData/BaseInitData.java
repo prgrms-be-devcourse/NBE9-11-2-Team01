@@ -20,7 +20,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
@@ -70,6 +69,14 @@ public class BaseInitData {
         authService.signUp(SignUpRequest.builder().email("user2@test.com").password("1234").nickname("유저2").build());
         authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("a12345").nickname("admin").adminToken("user_admin-2026").build());
 
+        // 테스트용 유저 10명
+        for (int i = 1; i <= 10; i++) {
+            authService.signUp(SignUpRequest.builder()
+                    .email("test" + i + "@test.com")
+                    .password("1234")
+                    .nickname("테스터" + i)
+                    .build());
+        }
     }
 
     // 게시판 생성

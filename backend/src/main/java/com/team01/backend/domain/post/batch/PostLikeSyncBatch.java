@@ -6,9 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -17,30 +17,27 @@ public class PostLikeSyncBatch {
     private final RedisTemplate<String, String> redisTemplate;
     private final PostRepository postRepository;
 
-    @Scheduled(fixedDelay = 300000)
+    @Scheduled(fixedDelay = 60000)
+    @Transactional
     public void syncLikesToDB() {
         log.info("=== 게시글 좋아요 배치 동기화 시작");
 
-        Set<String> hotKeys = redisTemplate.keys("hot:post:*");
-        if (hotKeys == null || hotKeys.isEmpty()) {
-            log.info("=== 동기화할 인기 게시글 없음");
+        Set<String> countKeys = redisTemplate.keys("like:post:*:count");
+        if (countKeys == null || countKeys.isEmpty()) {
+            log.info("=== 동기화할 데이터 없음");
             return;
         }
 
-        for (String hotKey : hotKeys) {
-            Long postId = Long.parseLong(hotKey.replace("hot:post:", ""));
-            String countKey = "like:post:" + postId + ":count";
+        for (String countKey : countKeys) {
+            String postId = countKey.replace("like:post:", "").replace(":count", "");
             String countStr = redisTemplate.opsForValue().get(countKey);
-
             if (countStr == null) continue;
 
             int likeCount = Integer.parseInt(countStr);
-            postRepository.updateLikeCount(postId, likeCount);
-            log.info("=== 게시글 {} liked {} 로 DB 업데이트", postId, likeCount);
 
-            redisTemplate.delete(hotKey);
-            redisTemplate.delete(countKey);
-            log.info("=== 게시글 {} Redis 플래그 삭제 완료", postId);
+            // ✅ likeCount만 DB 업데이트 (post_likes 건드리지 않음)
+            postRepository.updateLikeCount(Long.parseLong(postId), likeCount);
+            log.info("=== 게시글 {} likeCount {} 업데이트", postId, likeCount);
         }
 
         log.info("=== 게시글 좋아요 배치 동기화 완료");

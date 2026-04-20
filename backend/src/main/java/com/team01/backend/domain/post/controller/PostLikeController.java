@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
@@ -26,5 +27,13 @@ public class PostLikeController {
 
         PostLikeResponseDto response = postLikeService.toggleLike(postId, userDetails.getUsername());
         return ResponseEntity.ok(ApiResponse.ofSuccess(response));
+    }
+
+    @GetMapping("/posts/{postId}/likes")
+    public ResponseEntity<ApiResponse<Integer>> getLikes(
+            @PathVariable Long postId) {
+
+        int likeCount = postLikeService.getLikes(postId).size();
+        return ResponseEntity.ok(ApiResponse.ofSuccess(likeCount));
     }
 }
