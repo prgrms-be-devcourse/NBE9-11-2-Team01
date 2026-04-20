@@ -25,4 +25,8 @@ public interface PostRepository extends JpaRepository<Post, Long>, PostRepositor
     @EntityGraph(attributePaths = {"board", "category", "author"})
     Page<Post> findAllByBoardIdAndCategoryIdAndIsDeletedFalse(
             Long boardId, Long categoryId, Pageable pageable);
+
+    // 게시판별 게시글 수 조회 (삭제된 게시글 제외)
+    // BoardService.getAllBoards에서 게시판 목록 조회 시 게시판별 게시글 수 표시에 사용
+    long countByBoardIdAndIsDeletedFalse(Long boardId);
 }
