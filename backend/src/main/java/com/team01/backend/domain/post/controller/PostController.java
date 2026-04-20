@@ -39,11 +39,18 @@ public class PostController {
 
     // 게시판별, 카테고리별 글 목록 조회
     @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
-    public ResponseEntity<ApiResponse<List<PostSummaryDto>>> getPostsByCategory(
-            @PathVariable("boardId") Long boardId,
-            @PathVariable("categoryId") Long categoryId
+    public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByCategory(
+            @PathVariable Long boardId,
+            @PathVariable Long categoryId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String keyword
     ) {
-        List<PostSummaryDto> posts = postService.getPostsByBoardAndCategory(boardId, categoryId);
+        // 페이지 번호 유효성 검증 (1 이상)
+        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
+        // 검색어 길이 검증 (50자 이하)
+        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
+
+        PostPageResponseDto posts = postService.getPostsByBoardAndCategory(boardId, categoryId, page, keyword);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
