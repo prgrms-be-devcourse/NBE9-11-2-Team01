@@ -1,12 +1,15 @@
 package com.team01.backend.domain.category.controller;
 
+import com.team01.backend.global.security.JwtTokenProvider;
 import jakarta.transaction.Transactional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -16,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @Transactional
 @AutoConfigureMockMvc
 public class CategoryControllerTest {
@@ -23,12 +27,25 @@ public class CategoryControllerTest {
     @Autowired
     private MockMvc mvc;
 
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
+
+    String adminToken = "";
+    String user1Token = "";
+
+    @BeforeEach
+    void setToken(){
+        adminToken = jwtTokenProvider.createToken("admin@admin.com", "ROLE_ADMIN");
+        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
+    }
+
     @Test
     @DisplayName("카테고리 생성 테스트")
     void c1() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -55,6 +72,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -77,6 +95,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -101,6 +120,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -124,6 +144,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -147,6 +168,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -166,12 +188,36 @@ public class CategoryControllerTest {
                 .andExpect(jsonPath("$.data.name").value("카테고리 1"))
                 .andExpect(jsonPath("$.data.createdAt").exists());
     }
+
+    @Test
+    @DisplayName("카테고리 생성 테스트 - 권한 없음 ")
+    void c7() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.post("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "boardId": 1,
+                                            "name":"카테고리 6"
+                                       }
+                                       """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message",startsWith("권한이 없습니다.")));
+    }
     @Test
     @DisplayName("카테고리 수정 테스트")
     void u1() throws Exception{
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/1")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -197,6 +243,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/2")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -218,6 +265,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/21")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -241,6 +289,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/2")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -259,12 +308,35 @@ public class CategoryControllerTest {
     }
 
     @Test
-    @DisplayName("카테고리 조회 테스트")
+    @DisplayName("카테고리 수정 테스트 - 권한 없음 ")
+    void u5() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.put("/admin/categories/1")
+                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "name":"카테고리 1 - 수정"
+                                        }
+                                        """)
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message",startsWith("권한이 없습니다.")));
+    }
+
+    @Test
+    @DisplayName("카테고리 관리자 조회 테스트")
     void v1() throws  Exception{
         //
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.get("/admin/categories")
+                                .header("Authorization", "Bearer %s".formatted(adminToken))
                 )
                 .andDo(print());
         resultActions
@@ -273,5 +345,20 @@ public class CategoryControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data[4]").exists());
+    }
+
+    @Test
+    @DisplayName("카테고리 관리자 조회 테스트 - 권한 없음 ")
+    void v2() throws Exception{
+        ResultActions resultActions = mvc
+                .perform(
+                        MockMvcRequestBuilders.get("/admin/categories")
+                )
+                .andDo(print());
+        resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
+                .andExpect(jsonPath("$.message",startsWith("인증이 필요합니다.")));
     }
 }

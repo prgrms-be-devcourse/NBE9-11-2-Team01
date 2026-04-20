@@ -189,7 +189,7 @@ public class AdminBoardControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 //                .andExpect(jsonPath("$.success").value(false))
 //                .andExpect(jsonPath("$.message").value("Forbidden"));
     }
