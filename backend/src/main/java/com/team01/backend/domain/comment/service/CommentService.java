@@ -127,8 +127,12 @@ public class CommentService {
         commentRepository.save(comment);
 
         // 댓글 달림 이벤트 발행
+        int maxLength = 10; //알림에서 보여줄 내용 글자수 제한
+
+        String contentLimit = comment.getContent();
+        contentLimit = contentLimit.length()>maxLength ? contentLimit.substring(0,maxLength)+"..." : contentLimit;
         eventPublisher.publishEvent(
-                new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId())
+                new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId(),contentLimit)
         );
 
         return CommentResponseDto.from(comment);

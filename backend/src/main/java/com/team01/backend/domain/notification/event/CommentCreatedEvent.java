@@ -10,4 +10,5 @@ public class CommentCreatedEvent {
     private final Long postOwnerId; //post - author userName
     private final Long commentId; // 댓글 ID
     private final Long commentWriterId; // 댓글 작성자 userName
+    private final String commentContent;
 }
