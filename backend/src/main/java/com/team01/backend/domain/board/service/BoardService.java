@@ -3,6 +3,7 @@ package com.team01.backend.domain.board.service;
 import com.team01.backend.domain.board.dto.*;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
+import com.team01.backend.domain.post.repository.PostRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class BoardService {
     private final BoardRepository boardRepository;
+    private final PostRepository postRepository;
 
     // 게시판 생성, dto 형식으로 반환
     @Transactional
@@ -31,7 +33,11 @@ public class BoardService {
     public List<BoardResponse> getAllBoards() {
         return boardRepository.findAllByIsDeletedFalse()
                 .stream()
-                .map(BoardResponse::from)
+                .map(board -> BoardResponse.from(
+                        board,
+                        // 삭제된 게시글 제외한 게시판별 게시글 수
+                        postRepository.countByBoardIdAndIsDeletedFalse(board.getId())
+                ))
                 .toList();
     }
 
