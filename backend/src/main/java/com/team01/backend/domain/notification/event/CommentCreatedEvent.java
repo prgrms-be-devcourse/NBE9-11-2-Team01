@@ -7,8 +7,8 @@ import lombok.Getter;
 @AllArgsConstructor
 public class CommentCreatedEvent {
     private final Long postId; // post Id
-    private final Long postOwnerId; //post - author userName
-    private final Long commentId; // 댓글 ID
-    private final Long commentWriterId; // 댓글 작성자 userName
-    private final String commentContent;
+    private final Long postOwnerId; //post author userId
+    private final Long commentId; // comment Id
+    private final Long commentWriterId; // 댓글 작성자 userId
+    private final String commentContent; // 알림 내용 + 댓글 내용
 }
