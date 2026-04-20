@@ -16,7 +16,7 @@ public class SignUpRequest {
     private String email;
 
     @NotBlank(message = "비밀번호는 필수 입력 값입니다.")
-    @Size(min = 8, message = "보안을 위해 최소 8글자 이상으로 설정하게.") 
+    @Size(min = 8, message = "보안을 위해 최소 8글자 이상으로 입력해주세요.") 
     private String password;
 
     @NotBlank(message = "닉네임은 필수 입력 값입니다.")
