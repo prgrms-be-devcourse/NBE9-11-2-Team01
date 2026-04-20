@@ -151,7 +151,7 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostPageResponseDto getPostsByBoardAndCategory(Long boardId, Long categoryId, int page) {
+    public PostPageResponseDto getPostsByBoardAndCategory(Long boardId, Long categoryId, int page, String keyword) {
         // 1. 카테고리가 해당 게시판 소속인지 검증 (데이터 무결성)
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
@@ -163,9 +163,9 @@ public class PostService {
         // 2. 페이징 조건 설정 (1-based → 0-based 변환, 최신순 정렬)
         Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
 
-        // 3. 삭제되지 않은 게시글만 페이징 조회 (@EntityGraph로 N+1 방지)
+        // 3. categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
         Page<PostResponseDto> postPage = postRepository
-                .findAllByBoardIdAndCategoryIdAndIsDeletedFalse(boardId, categoryId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
