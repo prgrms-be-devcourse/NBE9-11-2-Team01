@@ -20,7 +20,6 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 
 @Configuration
@@ -48,7 +47,6 @@ public class BaseInitData {
     private CategoryService categoryService;
     @Autowired
     private AuthService authService;
-
 
     @Bean
     public ApplicationRunner initData() {

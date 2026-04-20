@@ -69,20 +69,20 @@ public class PostService {
         return postRepository.count();
     }
 
-    public PostPageResponseDto getPostsByBoardId(Long boardId, int page) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
         Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
 
         Page<PostResponseDto> postPage = postRepository
-                .findByBoardIdAndIsDeletedFalse(boardId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
     }
 
-    public PostDetailResponseDto getPostById(Long postId, User currentUser) {
+    public PostDetailResponseDto getPostById(Long postId, String email) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
@@ -101,6 +101,11 @@ public class PostService {
         }
 
         List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
+
+        User currentUser = null;
+        if (email != null) {
+            currentUser = userRepository.findByEmail(email).orElse(null);
+        }
 
         boolean isOwner = currentUser != null &&
                 post.getAuthor().getId().equals(currentUser.getId());
