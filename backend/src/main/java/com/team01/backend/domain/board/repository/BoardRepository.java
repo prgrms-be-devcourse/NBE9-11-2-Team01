@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface BoardRepository extends JpaRepository<Board,Long> {
     Optional<Board> findByIdAndIsDeletedFalse(Long id);
     List<Board> findAllByIsDeletedFalse();
+    List<Board> findAllByIsDeletedTrue();
     boolean existsByNameAndIsDeletedFalse(String name);
 }
