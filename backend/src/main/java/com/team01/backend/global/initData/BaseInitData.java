@@ -65,9 +65,9 @@ public class BaseInitData {
 
         if (userRepository.count() > 0) return;
 
-        authService.signUp(SignUpRequest.builder().email("user1@test.com").password("1234").nickname("유저1").build());
-        authService.signUp(SignUpRequest.builder().email("user2@test.com").password("1234").nickname("유저2").build());
-        authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("a12345").nickname("admin").adminToken("user_admin-2026").build());
+        authService.signUp(SignUpRequest.builder().email("user1@test.com").password("password1234").nickname("유저1").build());
+        authService.signUp(SignUpRequest.builder().email("user2@test.com").password("password1234").nickname("유저2").build());
+        authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("passworda12345").nickname("admin").adminToken("user_admin-2026").build());
 
     }
 
