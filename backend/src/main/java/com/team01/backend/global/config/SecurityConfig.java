@@ -1,6 +1,8 @@
 package com.team01.backend.global.config;
 
 
+import com.team01.backend.global.security.CustomAccessDeniedHandler;
+import com.team01.backend.global.security.CustomAuthenticationEntryPoint;
 import com.team01.backend.global.security.JwtAuthenticationFilter;
 import com.team01.backend.global.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -27,7 +29,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
-
+    private final CustomAccessDeniedHandler accessDeniedHandler; //인가 실패 응답 관리
+    private final CustomAuthenticationEntryPoint authenticationEntryPoint; //인증 실패 응답 관리
     /**
      * [과제] 비밀번호 암호화를 위한 Encoder 빈 등록입니다.
      */
@@ -59,7 +62,12 @@ public class SecurityConfig {
                 .anyRequest().authenticated() // 그 외의 요청은 인증이 필요합니다.
             )
             // [과제] JWT 필터를 UsernamePasswordAuthenticationFilter 이전에 실행되도록 설정합니다.
-            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)
+            //인증 실패 및 인가 실패 응답 관리
+            .exceptionHandling(ex -> ex
+                .accessDeniedHandler(accessDeniedHandler)
+                .authenticationEntryPoint(authenticationEntryPoint)
+            );
 
         return http.build();
     }

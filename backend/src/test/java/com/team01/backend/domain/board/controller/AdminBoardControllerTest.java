@@ -189,7 +189,7 @@ public class AdminBoardControllerTest {
                 .andDo(print());
 
         resultActions
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
 //                .andExpect(jsonPath("$.success").value(false))
 //                .andExpect(jsonPath("$.message").value("Forbidden"));
     }
@@ -329,7 +329,8 @@ public class AdminBoardControllerTest {
                 .andExpect(handler().methodName("getBoards"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[2]").exists());
+                .andExpect(jsonPath("$.data.exist[?(@.isDeleted == true)]").doesNotExist())
+                .andExpect(jsonPath("$.data.deleted[?(@.isDeleted == true)]").exists());
     }
 
 }
