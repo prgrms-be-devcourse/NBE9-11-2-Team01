@@ -1,5 +1,6 @@
 package com.team01.backend.domain.post.controller;
 
+import com.jayway.jsonpath.JsonPath;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
@@ -21,7 +22,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -47,6 +48,24 @@ public class PostControllerTest {
     @Autowired
     private BoardRepository boardRepository;
 
+
+    // 공통 사용 목적 토큰 추출 메서드
+    private String getAccessToken(String email, String password) throws Exception {
+        String loginResponse = mvc.perform(
+                        post("/api/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                            "email": "%s",
+                                            "password": "%s"
+                                        }
+                                        """.formatted(email, password)))
+                .andReturn().getResponse().getContentAsString();
+
+        // JsonPath를 사용하여 토큰 추출
+        return JsonPath.read(loginResponse, "$.data");
+    }
+
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
@@ -55,6 +74,7 @@ public class PostControllerTest {
     @BeforeEach
     void setToken() {
         user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
+
     }
 
     @Test
@@ -95,41 +115,49 @@ public class PostControllerTest {
     @Test
     @DisplayName("글 작성")
     void t3() throws Exception {
+        // 로그인 후 토큰 획득
+        String token = getAccessToken("user1@test.com", "1234");
+
         String title = "제목입니다.";
         String content = "내용입니다.";
         Long boardId = 1L;
         Long categoryId = 1L;
 
+        // 인증을 위해 헤더에 토큰 추가
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                        {
-                                            "title": "%s",
-                                            "content": "%s",
-                                            "boardId" : %d,
-                                            "categoryId" : %d
-                                        }
-                                        """.formatted(title, content, boardId, categoryId))
+                                    {
+                                        "title": "%s",
+                                        "content": "%s",
+                                        "boardId" : %d,
+                                        "categoryId" : %d
+                                    }
+                                    """.formatted(title, content, boardId, categoryId))
                 )
                 .andDo(print());
 
+        // 검증
         resultActions
                 .andExpect(handler().handlerType(PostController.class))
                 .andExpect(handler().methodName("write"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.postDto.id").exists())
-                .andExpect(jsonPath("$.data.postDto.title").value(title))
-                .andExpect(jsonPath("$.data.postDto.content").value(content))
-                .andExpect(jsonPath("$.data.postDto.createdAt").exists())
-                .andExpect(jsonPath("$.data.postDto.modifiedAt").exists());
+                .andExpect(jsonPath("$.data.id").exists())
+                .andExpect(jsonPath("$.data.title").value(title))
+                .andExpect(jsonPath("$.data.content").value(content))
+                .andExpect(jsonPath("$.data.createdAt").exists())
+                .andExpect(jsonPath("$.data.modifiedAt").exists());
     }
 
     @Test
     @DisplayName("글 작성 실패 - 제목이 입력되지 않은 경우")
     void t4() throws Exception {
+
+        String token = getAccessToken("user1@test.com", "1234");
 
         String title = "";
         String content = "내용입니다.";
@@ -140,6 +168,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -164,6 +193,9 @@ public class PostControllerTest {
     @Test
     @DisplayName("글 작성, 내용이 입력되지 않은 경우")
     void t5() throws Exception {
+
+        String token = getAccessToken("user1@test.com", "1234");
+
         String title = "제목입니다.";
         String content = "";
         Long boardId = 1L;
@@ -172,6 +204,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -197,12 +230,15 @@ public class PostControllerTest {
     @DisplayName("글 작성 실패 - JSON 양식이 잘못된 경우")
     void t6() throws Exception {
 
+        String token = getAccessToken("user1@test.com", "1234");
+
         String title = "제목입니다.";
         String content = "내용입니다.";
 
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
+                                .header("Authorization", "Bearer " + token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -226,6 +262,9 @@ public class PostControllerTest {
     @Test
     @DisplayName("글 수정 성공 - 제목, 내용, 올바른 카테고리 변경")
     void t7_1() throws Exception {
+
+        String token = getAccessToken("user1@test.com", "1234");
+
         // 기존 게시글 정보 조회 (연관된 게시판 ID를 얻기 위해서)
         Long targetId = 1L;
         Post targetPost = postRepository.findById(targetId)
@@ -242,6 +281,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer "+token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -260,10 +300,10 @@ public class PostControllerTest {
                 .andExpect(handler().methodName("modify"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.postDto.title").value(title))
-                .andExpect(jsonPath("$.data.postDto.content").value(content))
-                .andExpect(jsonPath("$.data.postDto.categoryId").value(newCategoryId))
-                .andExpect(jsonPath("$.data.postDto.categoryName").value("수정된 카테고리"));
+                .andExpect(jsonPath("$.data.title").value(title))
+                .andExpect(jsonPath("$.data.content").value(content))
+                .andExpect(jsonPath("$.data.categoryId").value(newCategoryId))
+                .andExpect(jsonPath("$.data.categoryName").value("수정된 카테고리"));
 
         Post post = postRepository.findById(targetId).get();
         assertThat(post.getTitle()).isEqualTo(title);
@@ -274,6 +314,9 @@ public class PostControllerTest {
     @Test
     @DisplayName("글 수정 실패 - 다른 게시판의 카테고리 ID를 전달한 경우")
     void t7_2() throws Exception {
+
+        String token = getAccessToken("user1@test.com", "1234");
+
         // 기존 게시글 준비
         Long targetId = 1L;
         Post targetPost = postRepository.findById(targetId).get();
@@ -288,6 +331,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer "+token)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -312,6 +356,37 @@ public class PostControllerTest {
 
         assertThat(post.getCategory().getId()).isNotEqualTo(invalidCategoryId);
     }
+
+    @Test
+    @DisplayName("글 수정 실패 - 작성자가 아닌 경우 (인가 실패)")
+    void t7_3() throws Exception {
+        // 로그인 (user1이 작성한 글을 user2로 로그인해서 수정 시도)
+        String token = getAccessToken("user2@test.com", "1234");
+        Long targetId = 1L; // 1번 게시글의 작성자는 user1
+
+        ResultActions resultActions = mvc
+                .perform(
+                        put("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(
+                                        """
+                                        {
+                                            "title" : "수정 시도",
+                                            "content" : "내용 수정 시도",
+                                            "categoryId" : 1
+                                        }
+                                        """)
+                )
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isForbidden()) // 403 Forbidden 기대
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("작성자만 수정할 수 있습니다."));
+    }
+
 
     @Test
     @DisplayName("게시글 상세 조회 - 성공")
@@ -353,16 +428,18 @@ public class PostControllerTest {
 
     @Test
     @DisplayName("글 삭제 성공")
-    void t10() throws Exception {
-//        Post post = postRepository.findById(1L).get();
-//        Long targetId = post.getId();
+    void t10_1() throws Exception {
 
-        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
+        String token = getAccessToken("user1@test.com", "1234");
+
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
         Long targetId = post.getId();
 
         ResultActions resultActions = mvc
                 .perform(
-                        delete("/posts/%d".formatted(targetId)))
+                        delete("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer "+token))
+
                 .andDo(print());
 
         resultActions
@@ -374,10 +451,40 @@ public class PostControllerTest {
     }
 
     @Test
+    @DisplayName("글 삭제 실패 - 작성자가 아닌 경우")
+    void t10_2() throws Exception {
+
+        // author : user1
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
+        Long targetId = post.getId();
+
+        // actor : user2
+        String token = getAccessToken("user2@test.com", "1234");
+
+        // 다른 유저가 삭제 요청
+        ResultActions resultActions = mvc
+                .perform(
+                        delete("/posts/%d".formatted(targetId))
+                                .header("Authorization", "Bearer " + token)) // 인증 헤더 추가
+                .andDo(print());
+
+        // 403 Forbidden 검증
+        resultActions
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("FORBIDDEN"))
+                .andExpect(jsonPath("$.message").value("작성자만 삭제할 수 있습니다."));
+
+        // 삭제되지 않았는지 확인
+        Post notDeletedPost = postRepository.findById(targetId).get();
+        assertThat(notDeletedPost.isDeleted()).isFalse();
+    }
+
+    @Test
     @DisplayName("게시글 상세 조회 - 삭제된 게시글")
     void t11() throws Exception {
-        Post post = postService.write("테스트 제목", "테스트 내용", 1L, 1L);
-        postService.delete(post.getId());
+        Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
+        postService.delete(post.getId(), "user1@test.com");
 
         ResultActions resultActions = mvc
                 .perform(get("/posts/%d".formatted(post.getId()))

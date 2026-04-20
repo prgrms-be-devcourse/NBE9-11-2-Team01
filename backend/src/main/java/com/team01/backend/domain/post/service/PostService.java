@@ -23,6 +23,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+
+import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,11 +49,10 @@ public class PostService {
 //    }
 
     @Transactional
-    public Post write(String title, String content, Long boardId, Long categoryId) {
+    public Post write(String email, String title, String content, Long boardId, Long categoryId) {
 
-        // 아직 controller에서 getActor를 사용할 수 없으므로 임시 유저 사용
-        User author = userRepository.findByEmail("user1@test.com")
-                .orElseThrow(() -> new RuntimeException("초기화 유저가 없습니다."));
+        User author = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         // 게시판, 카테고리 조회
         Board board = boardRepository.findById(boardId)
@@ -117,11 +118,19 @@ public class PostService {
     }
 
     @Transactional
-    public Post modify(Long postId, String title, String content, Long categoryId) {
+    public Post modify(Long postId, String email, String title, String content, Long categoryId) {
 
         // 게시글 조회
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+
+        // api 요청자 actor 찾기
+        User actor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
+
+        if (!post.getAuthor().getId().equals(actor.getId())) {
+            throw new AccessDeniedException("작성자만 수정할 수 있습니다.");
+        }
 
         // 변경하려고 하는 카테고리 조회
         Category category = categoryRepository.findById(categoryId)
@@ -139,15 +148,23 @@ public class PostService {
     }
 
     @Transactional
-    public void delete(Long postId /*, User actor*/) {
+    public void delete(Long postId, String email) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new jakarta.persistence.EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
+                .orElseThrow(() -> new EntityNotFoundException("해당 게시물을 찾을 수 없습니다."));
+
+        // 요청 유저 찾기
+        User actor = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없습니다."));
 
         if (post.isDeleted()) {
             throw new IllegalArgumentException("이미 삭제된 게시물입니다.");
         }
 
-        post.delete(/*actor*/);
+        if (!post.getAuthor().getId().equals(actor.getId())) {
+            throw new AccessDeniedException("작성자만 삭제할 수 있습니다.");
+        }
+
+        post.delete();
     }
 
     @Transactional(readOnly = true)
