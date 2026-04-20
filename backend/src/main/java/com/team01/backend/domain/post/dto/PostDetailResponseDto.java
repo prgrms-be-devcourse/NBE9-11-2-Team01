@@ -1,5 +1,6 @@
 package com.team01.backend.domain.post.dto;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.category.entity.Category;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
@@ -18,7 +19,9 @@ public record PostDetailResponseDto(
         String content,
         String author,
         int likeCount,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime modifiedAt,
         List<CommentReadResponseDto> comments,
         boolean isOwner
