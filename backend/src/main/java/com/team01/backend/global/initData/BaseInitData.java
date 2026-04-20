@@ -49,9 +49,6 @@ public class BaseInitData {
     @Autowired
     private AuthService authService;
 
-    @Autowired
-    PasswordEncoder passwordEncoder;
-
     @Bean
     public ApplicationRunner initData() {
         return args -> {
