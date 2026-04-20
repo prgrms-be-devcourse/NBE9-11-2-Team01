@@ -410,7 +410,6 @@ public class PostControllerTest {
     @Test
     @DisplayName("게시판별-카테고리별 글 목록 조회 성공")
     void t13() throws Exception {
-
         Long boardId = 1L;
         Long categoryId = 1L;
 
@@ -426,18 +425,12 @@ public class PostControllerTest {
                 .andExpect(handler().methodName("getPostsByCategory"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data").isArray())
-                // PostSummaryDto 필드 검증
-                .andExpect(jsonPath("$.data[0].id").exists())
-                .andExpect(jsonPath("$.data[0].title").exists())
-                .andExpect(jsonPath("$.data[0].boardId").value(boardId))
-                .andExpect(jsonPath("$.data[0].boardName").exists())
-                .andExpect(jsonPath("$.data[0].categoryId").value(categoryId))
-                .andExpect(jsonPath("$.data[0].categoryName").exists())
-                .andExpect(jsonPath("$.data[0].authorNickname").exists())
-                .andExpect(jsonPath("$.data[0].likeCount").isNumber())
-                .andExpect(jsonPath("$.data[0].createdAt").exists())
-                .andExpect(jsonPath("$.data[0].modifiedAt").exists());
+                .andExpect(jsonPath("$.data.posts").isArray())
+                .andExpect(jsonPath("$.data.currentPage").value(1))
+                .andExpect(jsonPath("$.data.totalPages").exists())
+                .andExpect(jsonPath("$.data.totalElements").exists())
+                .andExpect(jsonPath("$.data.hasNext").exists())
+                .andExpect(jsonPath("$.data.posts[0].categoryId").value(categoryId));
     }
 
     @Test
@@ -569,5 +562,18 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.posts").isEmpty())
                 .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("게시판별-카테고리별 글 목록 조회 실패 - 잘못된 페이지 번호")
+    void t22() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards/1/categories/1/posts?page=0"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("INVALID_INPUT"));
     }
 }
