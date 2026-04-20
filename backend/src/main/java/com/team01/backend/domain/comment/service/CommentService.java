@@ -6,12 +6,14 @@ import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.comment.repository.CommentRepository;
+import com.team01.backend.domain.notification.event.CommentCreatedEvent;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +30,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 댓글 수 조회
     public long count() {
@@ -122,6 +125,11 @@ public class CommentService {
         Comment comment = new Comment(post, user, reqDto.content(), parent);
 
         commentRepository.save(comment);
+
+        // 댓글 달림 이벤트 발행
+        eventPublisher.publishEvent(
+                new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId())
+        );
 
         return CommentResponseDto.from(comment);
     }
