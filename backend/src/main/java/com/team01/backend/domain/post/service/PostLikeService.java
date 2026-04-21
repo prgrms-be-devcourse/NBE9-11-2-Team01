@@ -61,7 +61,7 @@ public class PostLikeService {
                         "        for id in string.gmatch(ARGV[3], '[^,]+') do\n" +
                         "            table.insert(ids, id)\n" +
                         "        end\n" +
-                        "        redis.call('sadd', KEYS[3], table.unpack(ids))\n" +
+                        "        redis.call('sadd', KEYS[3], unpack(ids))\n" +
                         "    end\n" +
                         "end\n" +
                         "local isMember = redis.call('sismember', KEYS[3], ARGV[1])\n" +
