@@ -27,10 +27,13 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
     annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-	
+
+    implementation ("org.springframework.boot:spring-boot-starter-data-redis")
+
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
     runtimeOnly("com.h2database:h2")

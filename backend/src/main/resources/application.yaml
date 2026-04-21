@@ -7,9 +7,19 @@ spring:
         # 엔티티 필드명 그대로 DB 컬럼명(카멜케이스, 언더스코어 변환 없음)
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 
+# Swagger UI 활성화
+springdoc:
+  swagger-ui:
+    enabled: true
+  api-docs:
+    enabled: true
 
 # [신규 추가] JWT 보안 설정을 위한 비밀키
 jwt:
   secret: "human-evolution-project-secret-key-for-jwt-token-2026"
 
 
+  data:
+    redis:
+      host: localhost
+      port: 6379

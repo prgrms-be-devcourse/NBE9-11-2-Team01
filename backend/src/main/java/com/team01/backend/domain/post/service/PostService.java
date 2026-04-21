@@ -42,6 +42,39 @@ public class PostService {
 
     private static final int PAGE_SIZE = 20;
 
+    // 페이징 공통 메서드(헬퍼 메서드)
+    private Pageable toPageable(int page) {
+        return PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
+    }
+
+    // 조회 시 검증 로직 따로 분리
+    private void validatePost(Post post) {
+        if (post.isDeleted()) {
+            throw new EntityNotFoundException("존재하지 않는 게시글입니다.");
+        }
+
+        Board board = post.getBoard();
+        if (board == null || board.isDeleted()) {
+            throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
+        }
+
+        Category category = post.getCategory();
+        if (category == null) {
+            throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
+        }
+    }
+
+    // 카테고리가 해당 게시판 소속인지 검증
+    private void validateCategoryInBoard(Long categoryId, Long boardId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+
+        // 카테고리가 요청한 게시판 소속이 아니면 예외
+        if (!category.getBoardId().equals(boardId)) {
+            throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
+        }
+    }
+
 //    @Transactional
 //    public Post write(User author, String title, String content) {
 //        Post post = new Post(author, title, content);
@@ -69,11 +102,12 @@ public class PostService {
         return postRepository.count();
     }
 
+    // 게시판별 게시글 목록 페이징 조회 (키워드 검색, 카테고리 필터 포함)
     public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
+        Pageable pageable = toPageable(page);  // 교체
 
         Page<PostResponseDto> postPage = postRepository
                 .searchByBoardId(boardId, keyword, categoryId, pageable)
@@ -82,35 +116,24 @@ public class PostService {
         return PostPageResponseDto.from(postPage);
     }
 
+    // 게시글 상세 조회 (비로그인 사용자는 Controller에서 차단, 작성자 여부 포함)
     public PostDetailResponseDto getPostById(Long postId, String email) {
-        Post post = postRepository.findById(postId)
+        Post post = postRepository.findWithDetailsById(postId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시글입니다."));
 
-        if (post.isDeleted()) {
-            throw new EntityNotFoundException("존재하지 않는 게시글입니다.");
-        }
-
-        Board board = post.getBoard();
-        if (board == null || board.isDeleted()) {
-            throw new EntityNotFoundException("존재하지 않는 게시판입니다.");
-        }
-
-        Category category = post.getCategory();
-        if (category == null) {
-            throw new EntityNotFoundException("존재하지 않는 카테고리입니다.");
-        }
+        validatePost(post);
 
         List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
 
-        User currentUser = null;
-        if (email != null) {
-            currentUser = userRepository.findByEmail(email).orElse(null);
-        }
+        // JWT 인증된 사용자면 조회, 비로그인(토큰 없음)이면 null
+        User currentUser = (email != null)
+                ? userRepository.findByEmail(email).orElse(null)
+                : null;
 
-        boolean isOwner = currentUser != null &&
-                post.getAuthor().getId().equals(currentUser.getId());
+        // 작성자 본인 여부 확인 (비로그인이거나 작성자가 아니면 false)
+        boolean isOwner = currentUser != null && post.getAuthor().getId().equals(currentUser.getId());
 
-        return PostDetailResponseDto.of(post, board, category, comments, isOwner);
+        return PostDetailResponseDto.of(post, post.getBoard(), post.getCategory(), comments, isOwner);
     }
 
     public Optional<Post> findById(Long id) {
@@ -169,18 +192,10 @@ public class PostService {
 
     @Transactional(readOnly = true)
     public PostPageResponseDto getPostsByBoardAndCategory(Long boardId, Long categoryId, int page, String keyword) {
-        // 1. 카테고리가 해당 게시판 소속인지 검증 (데이터 무결성)
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new EntityNotFoundException("카테고리를 찾을 수 없습니다."));
+        validateCategoryInBoard(categoryId, boardId);
+        Pageable pageable = toPageable(page);
 
-        if (!category.getBoardId().equals(boardId)) {
-            throw new IllegalArgumentException("해당 게시판에서 사용할 수 없는 카테고리입니다.");
-        }
-
-        // 2. 페이징 조건 설정 (1-based → 0-based 변환, 최신순 정렬)
-        Pageable pageable = PageRequest.of(page - 1, PAGE_SIZE, Sort.by("createdAt").descending());
-
-        // 3. categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
+        // categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
         Page<PostResponseDto> postPage = postRepository
                 .searchByBoardId(boardId, keyword, categoryId, pageable)
                 .map(PostResponseDto::new);
