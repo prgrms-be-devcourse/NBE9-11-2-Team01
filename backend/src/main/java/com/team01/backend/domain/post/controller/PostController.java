@@ -4,6 +4,8 @@ import com.team01.backend.domain.post.dto.*;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -16,6 +18,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+@Tag(name = "게시글", description = "게시글 관련 API")
 @Validated
 @RestController
 @RequiredArgsConstructor
@@ -30,6 +33,7 @@ public class PostController {
     }
 
     // 게시판별 글 목록 조회
+    @Operation(summary = "게시판별 글 목록 조회", description = "키워드 검색, 카테고리 필터, 페이징 지원")
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
@@ -42,6 +46,7 @@ public class PostController {
     }
 
     // 게시판별, 카테고리별 글 목록 조회
+    @Operation(summary = "게시판별-카테고리별 글 목록 조회", description = "키워드 검색, 페이징 지원")
     @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByCategory(
             @PathVariable Long boardId,
@@ -55,6 +60,7 @@ public class PostController {
 
 
     // 게시글 상세 조회
+    @Operation(summary = "게시글 상세 조회", description = "비로그인 사용자 접근 불가, 작성자 여부 포함")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostById(
             @PathVariable Long postId,
