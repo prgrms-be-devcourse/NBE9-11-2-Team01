@@ -27,105 +27,192 @@ public class PostLikeService {
     private final UserRepository userRepository;
     private final RedisTemplate<String, String> redisTemplate;
 
-    private static final DefaultRedisScript<Long> TOGGLE_SCRIPT;
+    // ─────────────────────────────────────────────────────────────
+    // Redis Key 규칙
+    //   like:post:{postId}:count   → 좋아요 수 (String)
+    //   like:post:{postId}:users   → 좋아요 유저 ID 집합 (Set)
+    //   like:post:{postId}:init    → 초기화 완료 플래그 (String "1")
+    // ─────────────────────────────────────────────────────────────
+
+    private static final String PREFIX = "like:post:";
+
+    /**
+     * Lua 스크립트: 초기화 + 토글을 하나의 원자적 명령으로 처리
+     *
+     * KEYS[1] = initKey   (like:post:{id}:init)
+     * KEYS[2] = countKey  (like:post:{id}:count)
+     * KEYS[3] = usersKey  (like:post:{id}:users)
+     * ARGV[1] = userId
+     * ARGV[2] = dbCount   (초기화 시 DB에서 조회한 카운트)
+     * ARGV[3] = dbUserIds (초기화 시 DB에서 조회한 유저 ID 쉼표 구분)
+     *
+     * 반환값: 1 = 좋아요 추가, 0 = 좋아요 취소
+     */
+    private static final DefaultRedisScript<Long> INIT_AND_TOGGLE_SCRIPT;
 
     static {
-        TOGGLE_SCRIPT = new DefaultRedisScript<>();
-        TOGGLE_SCRIPT.setScriptText("""
-                if redis.call('exists', KEYS[1]) == 1 then
-                    redis.call('del', KEYS[1])
-                    local count = redis.call('decr', KEYS[2])
-                    if count < 0 then
-                        redis.call('set', KEYS[2], '0')
-                    end
-                    return 0
-                else
-                    redis.call('set', KEYS[1], '1')
-                    redis.call('incr', KEYS[2])
-                    return 1
-                end
-                """);
-        TOGGLE_SCRIPT.setResultType(Long.class);
+        INIT_AND_TOGGLE_SCRIPT = new DefaultRedisScript<>();
+        INIT_AND_TOGGLE_SCRIPT.setScriptText(
+                "if redis.call('exists', KEYS[1]) == 0 then\n" +
+                        "    redis.call('set', KEYS[1], '1')\n" +
+                        "    redis.call('set', KEYS[2], ARGV[2])\n" +
+                        "    if ARGV[3] ~= '' then\n" +
+                        "        local ids = {}\n" +
+                        "        for id in string.gmatch(ARGV[3], '[^,]+') do\n" +
+                        "            table.insert(ids, id)\n" +
+                        "        end\n" +
+                        "        redis.call('sadd', KEYS[3], table.unpack(ids))\n" +
+                        "    end\n" +
+                        "end\n" +
+                        "local isMember = redis.call('sismember', KEYS[3], ARGV[1])\n" +
+                        "if isMember == 1 then\n" +
+                        "    redis.call('srem', KEYS[3], ARGV[1])\n" +
+                        "    local count = redis.call('decr', KEYS[2])\n" +
+                        "    if count < 0 then redis.call('set', KEYS[2], '0') end\n" +
+                        "    return 0\n" +
+                        "else\n" +
+                        "    redis.call('sadd', KEYS[3], ARGV[1])\n" +
+                        "    redis.call('incr', KEYS[2])\n" +
+                        "    return 1\n" +
+                        "end"
+        );
+        INIT_AND_TOGGLE_SCRIPT.setResultType(Long.class);
     }
+
+    // ─────────────────────────────────────────────────────────────
+    //  좋아요 토글 (메인 API)
+    // ─────────────────────────────────────────────────────────────
 
     @Transactional
     public PostLikeResponseDto toggleLike(Long postId, String email) {
         log.info("=== toggleLike 호출 - postId: {}, email: {}", postId, email);
 
         User user = findUser(email);
-        Post post = findPost(postId);
+        findPost(postId); // 존재 여부 검증
 
-        initRedisIfAbsent(postId);
-        boolean liked = executeToggle(postId, user.getId());
-        syncPostLikesToDB(liked, user, post, postId);
+        // DB 초기값 조회 (Redis에 없을 때만 실제 사용됨)
+        long dbCount = postLikeRepository.countByPostId(postId);
+        String dbUserIds = buildUserIdsString(postId);
 
-        int likeCount = getLikeCountFromRedis(postId);
+        // Redis: 초기화 + 토글 원자적 실행
+        Long result = redisTemplate.execute(
+                INIT_AND_TOGGLE_SCRIPT,
+                List.of(initKey(postId), countKey(postId), usersKey(postId)),
+                String.valueOf(user.getId()),
+                String.valueOf(dbCount),
+                dbUserIds
+        );
+        boolean liked = (result != null && result == 1L);
+
+        // DB: post_likes 이력 + posts.like_count 동시 반영
+        syncToDB(liked, user, postId);
+
+        int likeCount = getLikeCount(postId);
         log.info("=== 좋아요 결과 - liked: {}, likeCount: {}", liked, likeCount);
         return new PostLikeResponseDto(liked, likeCount);
     }
 
-    // ✅ 유저 조회
-    private User findUser(String email) {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
-    }
+    // ─────────────────────────────────────────────────────────────
+    //  좋아요 수 조회 — Redis 우선, Cold Start 시 DB fallback
+    // ─────────────────────────────────────────────────────────────
 
-    // ✅ 게시글 조회
-    private Post findPost(Long postId) {
-        return postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
-    }
+    public int getLikeCount(Long postId) {
+        String key = countKey(postId);
 
-    // ✅ Redis countKey 초기화 (없을 때만)
-    private void initRedisIfAbsent(Long postId) {
-        String countKey = "like:post:" + postId + ":count";
-        Boolean isNew = redisTemplate.opsForValue()
-                .setIfAbsent(countKey, String.valueOf(
-                        postLikeRepository.countByPostId(postId)));
+        String countStr = redisTemplate.opsForValue().get(key);
 
-        if (Boolean.TRUE.equals(isNew)) {
-            syncUserKeysToRedis(postId);
+        if (countStr != null) {
+            return Math.max(0, Integer.parseInt(countStr));
         }
+
+        int dbCount = postRepository.findById(postId)
+                .map(Post::getLikeCount)
+                .orElse(0);
+        log.debug("=== redisValue: {}", countStr);
+        return dbCount;
     }
 
-    // ✅ 기존 좋아요 유저 Redis 동기화
-    private void syncUserKeysToRedis(Long postId) {
-        postLikeRepository.findByPost_Id(postId).forEach(pl -> {
-            String uKey = "like:post:" + postId + ":user:" + pl.getUser().getId();
-            redisTemplate.opsForValue().setIfAbsent(uKey, "1");
-        });
+    // ─────────────────────────────────────────────────────────────
+    //  특정 유저의 좋아요 여부 확인
+    // ─────────────────────────────────────────────────────────────
+
+    public boolean isLikedByUser(Long postId, Long userId) {
+        Boolean isMember = redisTemplate.opsForSet()
+                .isMember(usersKey(postId), String.valueOf(userId));
+        if (isMember != null) return isMember;
+        return Boolean.TRUE.equals(isMember) ||
+                postLikeRepository.findByUserIdAndPostId(userId, postId).isPresent();
+
     }
 
-    // ✅ Lua 스크립트로 원자적 토글
-    private boolean executeToggle(Long postId, Long userId) {
-        String userKey = "like:post:" + postId + ":user:" + userId;
-        String countKey = "like:post:" + postId + ":count";
-        Long result = redisTemplate.execute(TOGGLE_SCRIPT, List.of(userKey, countKey));
-        return result != null && result == 1;
-    }
-
-    // ✅ post_likes DB 즉시 반영
-    private void syncPostLikesToDB(boolean liked, User user, Post post, Long postId) {
-        if (liked) {
-            if (postLikeRepository.findByUserIdAndPostId(user.getId(), postId).isEmpty()) {
-                postLikeRepository.save(new PostLike(user, post));
-            }
-        } else {
-            postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
-        }
-    }
-
-    // ✅ Redis에서 likeCount 조회
-    private int getLikeCountFromRedis(Long postId) {
-        String countKey = "like:post:" + postId + ":count";
-        String countStr = redisTemplate.opsForValue().get(countKey);
-        return countStr != null ? Math.max(0, Integer.parseInt(countStr)) : 0;
-    }
+    // ─────────────────────────────────────────────────────────────
+    //  좋아요 목록 조회 (DB 기준 이력)
+    // ─────────────────────────────────────────────────────────────
 
     @Transactional(readOnly = true)
     public List<PostLike> getLikes(Long postId) {
         return postLikeRepository.findByPost_Id(postId);
     }
-}
 
+    // ─────────────────────────────────────────────────────────────
+    //  내부 헬퍼
+    // ─────────────────────────────────────────────────────────────
+
+    private User findUser(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+    }
+
+    private Post findPost(Long postId) {
+        return postRepository.findById(postId)
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
+    }
+
+    /**
+     * DB의 좋아요 유저 목록을 쉼표 구분 문자열로 반환
+     * Lua 초기화 시 Redis Set에 삽입할 초기값으로 사용
+     */
+    private String buildUserIdsString(Long postId) {
+        List<PostLike> likes = postLikeRepository.findByPost_Id(postId);
+        if (likes.isEmpty()) return "";
+        StringBuilder sb = new StringBuilder();
+        for (PostLike pl : likes) {
+            if (sb.length() > 0) sb.append(',');
+            sb.append(pl.getUser().getId());
+        }
+        return sb.toString();
+    }
+
+    /**
+     * post_likes 이력 + posts.like_count 동시 반영
+     *
+     * posts.like_count는 increaseLikeCount / decreaseLikeCount로
+     * DB 자체 연산(+1, -1)을 사용 → 동시 요청에서도 덮어쓰기 없이 안전
+     */
+    private void syncToDB(boolean liked, User user, Long postId) {
+        if (liked) {
+            boolean exists = postLikeRepository
+                    .findByUserIdAndPostId(user.getId(), postId)
+                    .isPresent();
+            if (!exists) {
+                Post post = postRepository.getReferenceById(postId);
+                postLikeRepository.save(new PostLike(user, post));
+                postRepository.increaseLikeCount(postId); // UPDATE SET likeCount = likeCount + 1
+            }
+        } else {
+            int deleted = postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
+            if (deleted > 0) {
+                postRepository.decreaseLikeCount(postId); // UPDATE SET likeCount = likeCount - 1 WHERE likeCount > 0
+            }
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    //  Redis Key 생성
+    // ─────────────────────────────────────────────────────────────
+
+    private String countKey(Long postId)  { return PREFIX + postId + ":count"; }
+    private String usersKey(Long postId)  { return PREFIX + postId + ":users"; }
+    private String initKey(Long postId)   { return PREFIX + postId + ":init";  }
+}
 
