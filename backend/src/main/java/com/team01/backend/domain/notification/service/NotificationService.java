@@ -2,9 +2,9 @@ package com.team01.backend.domain.notification.service;
 
 import com.team01.backend.domain.notification.entity.Notification;
 import com.team01.backend.domain.notification.event.CommentCreatedEvent;
-import com.team01.backend.domain.notification.repository.SseEmitterRepository;
+import com.team01.backend.domain.notification.event.ReplyCreatedEvent;
 import com.team01.backend.domain.notification.repository.NotificationRepository;
-import com.team01.backend.domain.user.repository.UserRepository;
+import com.team01.backend.domain.notification.repository.SseEmitterRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
@@ -20,7 +20,6 @@ public class NotificationService { // 알림을 실제로 보내는 역할, 다�
 
     private final NotificationRepository notificationRepository;
     private final SseEmitterRepository sseEmitterRepository;
-    private final UserRepository userRepository;
 
     @Async
     @EventListener
@@ -35,6 +34,28 @@ public class NotificationService { // 알림을 실제로 보내는 역할, 다�
         // 2. SSE 전송
         List<SseEmitter> emitters =
                 sseEmitterRepository.findByUserId(event.getPostOwnerId());
+
+        for (SseEmitter emitter : emitters) {
+            try {
+                emitter.send(notification);
+            } catch (IOException e) {
+                emitter.complete();
+            }
+        }
+    }
+    @Async
+    @EventListener
+    public void handleNotification(ReplyCreatedEvent event) {
+
+        // 1. 실제 DB 저장
+
+        Notification notification = notificationRepository.save(
+                new Notification(event.getCommentWriterId(), event.getReplyWriterId(), event.getCommentId(),"답글이 달렸습니다." + event.getReplyContent()) //targetId를 postId로 저장
+        );
+
+        // 2. SSE 전송
+        List<SseEmitter> emitters =
+                sseEmitterRepository.findByUserId(event.getCommentWriterId());
 
         for (SseEmitter emitter : emitters) {
             try {

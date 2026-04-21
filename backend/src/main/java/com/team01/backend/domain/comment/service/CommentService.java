@@ -7,6 +7,7 @@ import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.notification.event.CommentCreatedEvent;
+import com.team01.backend.domain.notification.event.ReplyCreatedEvent;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
@@ -121,7 +122,6 @@ public class CommentService {
                 throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다");
             }
         }
-
         Comment comment = new Comment(post, user, reqDto.content(), parent);
 
         commentRepository.save(comment);
@@ -135,6 +135,12 @@ public class CommentService {
                 new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId(),contentLimit)
         );
 
+        // 답글이라면 답글 생성 이벤트도 발행
+        if(parent!=null){
+             eventPublisher.publishEvent(
+                     new ReplyCreatedEvent(postId, parent.getId(), parent.getUser().getId(), comment.getId(), user.getId(), contentLimit)
+             );
+        }
         return CommentResponseDto.from(comment);
     }
 
