@@ -10,6 +10,7 @@ import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.security.JwtTokenProvider;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -55,14 +56,13 @@ public class PostControllerTest {
                         post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
-                                        {
-                                            "email": "%s",
-                                            "password": "%s"
-                                        }
-                                        """.formatted(email, password)))
+                                    {
+                                        "email": "%s",
+                                        "password": "%s"
+                                    }
+                                    """.formatted(email, password)))
                 .andReturn().getResponse().getContentAsString();
 
-        // JsonPath를 사용하여 토큰 추출
         return JsonPath.read(loginResponse, "$.data");
     }
 
@@ -73,8 +73,7 @@ public class PostControllerTest {
 
     @BeforeEach
     void setToken() {
-        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
-
+        user1Token = jwtTokenProvider.createAccessToken("user1@test.com", "ROLE_USER");
     }
 
     @Test
@@ -393,7 +392,7 @@ public class PostControllerTest {
     void t8() throws Exception {
         ResultActions resultActions = mvc
                 .perform(get("/posts/1")
-                        .header("Authorization", "Bearer " + user1Token))
+                        .cookie(new Cookie("accessToken", user1Token)))
                 .andDo(print());
 
         resultActions
@@ -416,7 +415,7 @@ public class PostControllerTest {
     void t9() throws Exception {
         ResultActions resultActions = mvc
                 .perform(get("/posts/999")
-                        .header("Authorization", "Bearer " + user1Token))
+                        .cookie(new Cookie("accessToken", user1Token)))
                 .andDo(print());
 
         resultActions
@@ -488,7 +487,7 @@ public class PostControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(get("/posts/%d".formatted(post.getId()))
-                        .header("Authorization", "Bearer " + user1Token))
+                        .cookie(new Cookie("accessToken", user1Token)))
                 .andDo(print());
 
         resultActions
@@ -715,5 +714,18 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.posts").isEmpty())
                 .andExpect(jsonPath("$.data.totalElements").value(0));
+    }
+
+    @Test
+    @DisplayName("게시글 상세 조회 실패 - 비로그인 사용자")
+    void t25() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/posts/1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
     }
 }

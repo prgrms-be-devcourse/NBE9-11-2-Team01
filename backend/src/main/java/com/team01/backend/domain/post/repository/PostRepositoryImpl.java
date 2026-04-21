@@ -57,17 +57,10 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
         return post.category.id.eq(categoryId);
     }
 
-    // 검색어 유효성 검사 및 XSS 방지 처리 후 제목 검색 조건 반환 (null이면 전체 조회, 공백이면 빈 리스트 반환)
+    // sanitize 로직 제거, Filter에서 이미 처리됨
     private BooleanExpression containsKeyword(String keyword) {
         if (keyword == null) return null;
         if (keyword.isBlank()) return Expressions.FALSE;
-        String sanitized = keyword.trim()
-                .replace("<", "")
-                .replace(">", "")
-                .replace("&", "");
-
-        // sanitized 후 빈 문자열 체크 추가
-        if (sanitized.isBlank()) return Expressions.FALSE;
-        return post.title.containsIgnoreCase(sanitized);
+        return post.title.containsIgnoreCase(keyword.trim());
     }
 }
