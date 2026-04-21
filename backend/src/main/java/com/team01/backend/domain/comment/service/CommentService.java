@@ -135,12 +135,13 @@ public class CommentService {
 
         String contentLimit = comment.getContent();
         contentLimit = contentLimit.length()>maxLength ? contentLimit.substring(0,maxLength)+"..." : contentLimit;
-        eventPublisher.publishEvent(
-                new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId(),contentLimit)
-        );
-
-        // 답글이라면 답글 생성 이벤트도 발행
-        if(parent!=null){
+        if(!post.getAuthor().getId().equals(user.getId())){ // 자기 글에 댓글 작성한 경우에는 발행하지 X
+            eventPublisher.publishEvent(
+                    new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId(),contentLimit)
+            );
+        }
+        // 답글이라면 답글 생성 이벤트도 발행 + 동일인이라면 발행하지 X
+        if(parent!=null&& !parent.getUser().getId().equals(user.getId())){
              eventPublisher.publishEvent(
                      new ReplyCreatedEvent(postId, parent.getId(), parent.getUser().getId(), comment.getId(), user.getId(), contentLimit)
              );

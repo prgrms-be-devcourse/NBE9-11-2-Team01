@@ -1,5 +1,8 @@
 package com.team01.backend.domain.post.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
@@ -16,19 +19,23 @@ import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
-import org.springframework.security.access.AccessDeniedException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -39,8 +46,11 @@ public class PostService {
     private final UserRepository userRepository;
     private final BoardRepository boardRepository;
     private final CategoryRepository categoryRepository;
+    private final RedisTemplate<String, String> redisTemplate;
+    private final ObjectMapper objectMapper;
 
     private static final int PAGE_SIZE = 20;
+
 
     // 페이징 공통 메서드(헬퍼 메서드)
     private Pageable toPageable(int page) {
@@ -75,11 +85,6 @@ public class PostService {
         }
     }
 
-//    @Transactional
-//    public Post write(User author, String title, String content) {
-//        Post post = new Post(author, title, content);
-//        return postRepository.save(post);
-//    }
 
     @Transactional
     public Post write(String email, String title, String content, Long boardId, Long categoryId) {
@@ -89,12 +94,15 @@ public class PostService {
 
         // 게시판, 카테고리 조회
         Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 게시판입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new RuntimeException("존재하지 않는 카테고리입니다."));
+                .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 카테고리입니다."));
 
         Post post = new Post(author, title, content, board, category);
+
+        evictTop5Cache(post.getBoard().getId());
+
         return postRepository.save(post);
     }
 
@@ -188,6 +196,8 @@ public class PostService {
         }
 
         post.delete();
+
+        evictTop5Cache(post.getBoard().getId());
     }
 
     @Transactional(readOnly = true)
@@ -201,5 +211,41 @@ public class PostService {
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
+    }
+
+    public List<PostResponseDto> getTop5Posts(Long boardId) {
+        String cacheKey = "top5:board:" + boardId;
+
+        // 1. 캐시에서 JSON 문자열 조회
+        String cachedJson = redisTemplate.opsForValue().get(cacheKey);
+
+        try {
+            if (cachedJson != null) {
+                // JSON 문자열을 List<PostResponseDto>로 역직렬화
+                return objectMapper.readValue(cachedJson, new TypeReference<List<PostResponseDto>>() {});
+            }
+
+            // 캐시 부재 시 DB 조회
+            List<Post> posts = postRepository.findTop5ByBoardId(boardId, PageRequest.of(0, 5));
+            List<PostResponseDto> response = posts.stream().map(PostResponseDto::new).collect(Collectors.toList());
+
+            // 객체를 JSON 문자열로 직렬화하여 저장
+            String json = objectMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(cacheKey, json, Duration.ofMinutes(10));
+
+            return response;
+
+        } catch (JsonProcessingException e) {
+            // 직렬화 실패 시 로그 기록 후 DB 결과 반환 (캐시 없이 반환)
+            return postRepository.findTop5ByBoardId(boardId, PageRequest.of(0, 5))
+                    .stream().map(PostResponseDto::new).collect(Collectors.toList());
+        }
+    }
+
+    // redis 캐시 삭제 (글 등록, 글 삭제, likeCount 변경 메서드에서 사용됨)
+    private void evictTop5Cache(Long boardId) {
+        String cacheKey = "top5:board:" + boardId;
+        redisTemplate.delete(cacheKey);
+        log.info("캐시 무효화 완료: {}", cacheKey);
     }
 }
