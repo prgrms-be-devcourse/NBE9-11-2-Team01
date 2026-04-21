@@ -4,7 +4,10 @@ import com.team01.backend.domain.post.dto.*;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -12,56 +15,60 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-
+@Tag(name = "게시글", description = "게시글 관련 API")
+@Validated
 @RestController
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
 
+    // 검증 로직 분리
+    private void validateLogin(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+    }
+
     // 게시판별 글 목록 조회
+    @Operation(summary = "게시판별 글 목록 조회", description = "키워드 검색, 카테고리 필터, 페이징 지원")
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(required = false) @Size(max = 50) String keyword,
             @RequestParam(required = false) Long categoryId
     ) {
-        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
-        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
-
         PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
     // 게시판별, 카테고리별 글 목록 조회
+    @Operation(summary = "게시판별-카테고리별 글 목록 조회", description = "키워드 검색, 페이징 지원")
     @GetMapping("/boards/{boardId}/categories/{categoryId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByCategory(
             @PathVariable Long boardId,
             @PathVariable Long categoryId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) String keyword
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(required = false) @Size(max = 50) String keyword
     ) {
-        // 페이지 번호 유효성 검증 (1 이상)
-        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
-        // 검색어 길이 검증 (50자 이하)
-        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
-
         PostPageResponseDto posts = postService.getPostsByBoardAndCategory(boardId, categoryId, page, keyword);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
 
     // 게시글 상세 조회
+    @Operation(summary = "게시글 상세 조회", description = "비로그인 사용자 접근 불가, 작성자 여부 포함")
     @GetMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostDetailResponseDto>> getPostById(
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        String email = userDetails != null ? userDetails.getUsername() : null;
+        validateLogin(userDetails);
+
+        String email = userDetails.getUsername();
         PostDetailResponseDto post = postService.getPostById(postId, email);
         return ResponseEntity.ok(ApiResponse.ofSuccess(post));
     }
