@@ -108,12 +108,15 @@ public class BaseInitData {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         Post post1 = new Post(author1, "첫 번째 게시글입니다.", "내용 1", board, category);
+        post1.initLikeCount(12);
         postRepository.save(post1);
 
         Post post2 = new Post(author2, "두 번째 게시글입니다.", "내용 2", board, category);
+        post2.initLikeCount(30);
         postRepository.save(post2);
 
         Post post3 = new Post(author2, "세 번째 게시글입니다.", "내용 3", board, category);
+        post3.initLikeCount(20);
         postRepository.save(post3);
     }
 
