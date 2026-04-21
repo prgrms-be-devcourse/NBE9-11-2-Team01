@@ -1,10 +1,13 @@
 package com.team01.backend.domain.comment.service;
 
 import com.team01.backend.domain.comment.dto.CommentDeleteResponseDto;
+import com.team01.backend.domain.comment.dto.CommentLikeToggleResponseDto;
 import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.entity.Comment;
+import com.team01.backend.domain.comment.entity.CommentLike;
+import com.team01.backend.domain.comment.repository.CommentLikeRepository;
 import com.team01.backend.domain.comment.repository.CommentRepository;
 import com.team01.backend.domain.notification.event.CommentCreatedEvent;
 import com.team01.backend.domain.notification.event.ReplyCreatedEvent;
@@ -29,6 +32,7 @@ import java.util.stream.Collectors;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -42,16 +46,16 @@ public class CommentService {
     @Transactional
     public void writeInitComment(Long postId, User tempUser, String content,  Long parentId) {
         Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없어요"));
+                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
         if (post.isDeleted()) {
-            throw new EntityNotFoundException("게시글을 찾을 수 없어요");
+            throw new EntityNotFoundException("게시글을 찾을 수 없습니다.");
         }
 
         // parentId 있으면 부모 댓글 찾기, 없으면 null
         Comment parent = null;
         if (parentId != null) {
             parent = commentRepository.findById(parentId)
-                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없어요"));
+                    .orElseThrow(() -> new EntityNotFoundException("부모 댓글을 찾을 수 없습니다."));
         }
 
         commentRepository.save(new Comment(post, tempUser, content,  parent));
@@ -91,7 +95,7 @@ public class CommentService {
     public CommentResponseDto writeComment(Long postId, CommentRequestDto reqDto, String email){
 
         User user = userRepository.findByEmail(email)  // ✅ DB 접근은 Service에서
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         // 게시글 존재 확인
         Post post = postRepository.findById(postId)
@@ -119,7 +123,7 @@ public class CommentService {
 
             // 답글의 대댓글 방지
             if (parent.getParent() != null) {
-                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다");
+                throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다.");
             }
         }
         Comment comment = new Comment(post, user, reqDto.content(), parent);
@@ -148,7 +152,7 @@ public class CommentService {
     public CommentResponseDto updateComment(Long commentId, CommentRequestDto reqDto, String email){
 
         User user = userRepository.findByEmail(email)  // ✅ DB 접근은 Service에서
-                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없어요"));
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         //댓글 존재 확인 -> code:404
         Comment comment = commentRepository.findById(commentId)
@@ -156,7 +160,7 @@ public class CommentService {
 
         //삭제된 댓글을 수정할 수 없음.
         if (comment.isDeleted()) {
-            throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없어요");
+            throw new IllegalArgumentException("삭제된 댓글은 수정할 수 없습니다.");
         }
 
         if(!comment.getUser().getId().equals(user.getId())){
@@ -176,10 +180,9 @@ public class CommentService {
      * ============================================================================================================
      */
     @Transactional
-    public CommentDeleteResponseDto deleteComment(Long commentId, User loginUser) {
-        if (loginUser == null) {
-            throw new AccessDeniedException("로그인이 필요합니다.");
-        }
+    public CommentDeleteResponseDto deleteComment(Long commentId, String email) {
+        User loginUser = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
 
         Comment comment = commentRepository.findByIdWithPost(commentId)
                 .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
@@ -197,6 +200,39 @@ public class CommentService {
         }
 
         comment.softDelete();
+        commentRepository.saveAndFlush(comment);
         return CommentDeleteResponseDto.of(commentId);
+    }
+
+    /*
+     * ============================================================================================================
+     * 댓글 좋아요 토글 — 미등록 시 좋아요, 이미 누른 상태면 취소 (인스타/유튜브 댓글과 동일 UX).
+     * 동시에 같은 댓글을 누를 때 {@code likeCount} 경쟁 상태를 막기 위해 댓글 행에 비관적 락을 겁니다.
+     * ============================================================================================================
+     */
+    @Transactional
+    public CommentLikeToggleResponseDto toggleCommentLike(Long commentId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+
+        Comment comment = commentLikeRepository.findCommentByIdAndPostForUpdate(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+
+        if (comment.isDeleted()) {
+            throw new IllegalArgumentException("삭제된 댓글에는 좋아요를 할 수 없습니다.");
+        }
+        if (comment.getPost().isDeleted()) {
+            throw new EntityNotFoundException("게시글을 찾을 수 없습니다.");
+        }
+
+        int removed = commentLikeRepository.deleteByComment_IdAndUser_Id(commentId, user.getId());
+        if (removed > 0) {
+            comment.decrementLikeCount();
+            return new CommentLikeToggleResponseDto(commentId, comment.getLikeCount(), false);
+        }
+
+        commentLikeRepository.save(new CommentLike(comment, user));
+        comment.incrementLikeCount();
+        return new CommentLikeToggleResponseDto(commentId, comment.getLikeCount(), true);
     }
 }

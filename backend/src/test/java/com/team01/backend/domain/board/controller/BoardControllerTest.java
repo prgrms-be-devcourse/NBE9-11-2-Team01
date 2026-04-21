@@ -62,4 +62,20 @@ public class BoardControllerTest {
                 .andExpect(jsonPath("$.data").isArray())
                 .andExpect(jsonPath("$.data.length()").value(3));
     }
+
+    @Test
+    @DisplayName("게시판 목록 조회 - 게시판별 게시글 수 포함")
+    void t3() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/boards"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(handler().handlerType(BoardController.class))
+                .andExpect(handler().methodName("getAllBoards"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0].postCount").exists())
+                .andExpect(jsonPath("$.data[0].postCount").isNumber());
+    }
 }
