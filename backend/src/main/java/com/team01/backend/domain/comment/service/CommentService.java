@@ -9,12 +9,15 @@ import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.comment.entity.CommentLike;
 import com.team01.backend.domain.comment.repository.CommentLikeRepository;
 import com.team01.backend.domain.comment.repository.CommentRepository;
+import com.team01.backend.domain.notification.event.CommentCreatedEvent;
+import com.team01.backend.domain.notification.event.ReplyCreatedEvent;
 import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,7 @@ public class CommentService {
     private final CommentLikeRepository commentLikeRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     // 댓글 수 조회
     public long count() {
@@ -122,11 +126,25 @@ public class CommentService {
                 throw new IllegalArgumentException("답글에는 답글을 달 수 없습니다.");
             }
         }
-
         Comment comment = new Comment(post, user, reqDto.content(), parent);
 
         commentRepository.save(comment);
 
+        // 댓글 달림 이벤트 발행
+        int maxLength = 10; //알림에서 보여줄 내용 글자수 제한
+
+        String contentLimit = comment.getContent();
+        contentLimit = contentLimit.length()>maxLength ? contentLimit.substring(0,maxLength)+"..." : contentLimit;
+        eventPublisher.publishEvent(
+                new CommentCreatedEvent(postId, post.getAuthor().getId(), comment.getId(), user.getId(),contentLimit)
+        );
+
+        // 답글이라면 답글 생성 이벤트도 발행
+        if(parent!=null){
+             eventPublisher.publishEvent(
+                     new ReplyCreatedEvent(postId, parent.getId(), parent.getUser().getId(), comment.getId(), user.getId(), contentLimit)
+             );
+        }
         return CommentResponseDto.from(comment);
     }
 
