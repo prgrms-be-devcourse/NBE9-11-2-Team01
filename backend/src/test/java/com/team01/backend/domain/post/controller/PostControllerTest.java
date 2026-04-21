@@ -716,4 +716,17 @@ public class PostControllerTest {
                 .andExpect(jsonPath("$.data.posts").isEmpty())
                 .andExpect(jsonPath("$.data.totalElements").value(0));
     }
+
+    @Test
+    @DisplayName("게시글 상세 조회 실패 - 비로그인 사용자")
+    void t25() throws Exception {
+        ResultActions resultActions = mvc
+                .perform(get("/posts/1"))
+                .andDo(print());
+
+        resultActions
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("UNAUTHORIZED"));
+    }
 }

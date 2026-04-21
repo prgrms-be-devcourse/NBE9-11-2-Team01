@@ -61,7 +61,12 @@ public class PostController {
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        String email = userDetails != null ? userDetails.getUsername() : null;
+        // 비로그인 사용자에 대한 예외 처리
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+
+        String email = userDetails.getUsername();
         PostDetailResponseDto post = postService.getPostById(postId, email);
         return ResponseEntity.ok(ApiResponse.ofSuccess(post));
     }
