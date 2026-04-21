@@ -61,7 +61,7 @@ public class PostLikeService {
                         "        for id in string.gmatch(ARGV[3], '[^,]+') do\n" +
                         "            table.insert(ids, id)\n" +
                         "        end\n" +
-                        "        redis.call('sadd', KEYS[3], table.unpack(ids))\n" +
+                        "        redis.call('sadd', KEYS[3], unpack(ids))\n" +
                         "    end\n" +
                         "end\n" +
                         "local isMember = redis.call('sismember', KEYS[3], ARGV[1])\n" +
@@ -191,18 +191,12 @@ public class PostLikeService {
      */
     private void syncToDB(boolean liked, User user, Long postId) {
         if (liked) {
-            boolean exists = postLikeRepository
-                    .findByUserIdAndPostId(user.getId(), postId)
-                    .isPresent();
-            if (!exists) {
-                Post post = postRepository.getReferenceById(postId);
-                postLikeRepository.save(new PostLike(user, post));
-                postRepository.increaseLikeCount(postId); // UPDATE SET likeCount = likeCount + 1
-            }
+            postLikeRepository.mergeInsert(user.getId(), postId);
+            postRepository.increaseLikeCount(postId);
         } else {
             int deleted = postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
             if (deleted > 0) {
-                postRepository.decreaseLikeCount(postId); // UPDATE SET likeCount = likeCount - 1 WHERE likeCount > 0
+                postRepository.decreaseLikeCount(postId);
             }
         }
     }
