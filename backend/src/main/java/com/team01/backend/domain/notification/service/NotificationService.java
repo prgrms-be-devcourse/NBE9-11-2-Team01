@@ -1,5 +1,6 @@
 package com.team01.backend.domain.notification.service;
 
+import com.team01.backend.domain.notification.dto.NotificationReadResponseDto;
 import com.team01.backend.domain.notification.dto.NotificationResponseDto;
 import com.team01.backend.domain.notification.entity.Notification;
 import com.team01.backend.domain.notification.event.CommentCreatedEvent;
@@ -12,6 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
@@ -77,5 +79,18 @@ public class NotificationService { // 알림을 실제로 보내는 역할, 다�
         return notificationRepository.findByReceiverIdOrderByCreatedAtDesc(user.getId()).stream()
                 .map(NotificationResponseDto::new).toList();
 
+    }
+
+    public NotificationReadResponseDto read(Long notificationId, String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new EntityNotFoundException("유저를 찾을 수 없습니다."));
+
+        Notification notification = notificationRepository.findById(notificationId).orElseThrow(EntityNotFoundException:: new);
+        if(!notification.getReceiverId().equals(user.getId())){
+            throw new AccessDeniedException("권한이 없습니다");
+        }
+        notification.read();
+        notificationRepository.save(notification);
+        return new NotificationReadResponseDto(notification);
     }
 }
