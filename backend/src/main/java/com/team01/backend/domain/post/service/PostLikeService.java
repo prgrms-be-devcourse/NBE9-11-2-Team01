@@ -191,18 +191,12 @@ public class PostLikeService {
      */
     private void syncToDB(boolean liked, User user, Long postId) {
         if (liked) {
-            boolean exists = postLikeRepository
-                    .findByUserIdAndPostId(user.getId(), postId)
-                    .isPresent();
-            if (!exists) {
-                Post post = postRepository.getReferenceById(postId);
-                postLikeRepository.save(new PostLike(user, post));
-                postRepository.increaseLikeCount(postId); // UPDATE SET likeCount = likeCount + 1
-            }
+            postLikeRepository.mergeInsert(user.getId(), postId);
+            postRepository.increaseLikeCount(postId);
         } else {
             int deleted = postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
             if (deleted > 0) {
-                postRepository.decreaseLikeCount(postId); // UPDATE SET likeCount = likeCount - 1 WHERE likeCount > 0
+                postRepository.decreaseLikeCount(postId);
             }
         }
     }
