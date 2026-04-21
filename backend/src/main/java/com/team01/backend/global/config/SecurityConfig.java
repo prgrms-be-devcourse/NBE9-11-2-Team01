@@ -59,6 +59,11 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) // [과제] REST API이므로 CSRF 보안은 비활성화합니다.
+
+            .headers(headers -> headers
+                    .frameOptions(frameOptions -> frameOptions.disable())
+            )
+
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // [과제] 세션을 사용하지 않습니다.
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/auth/**").permitAll() // 로그인, 회원가입은 모두 허용합니다.
@@ -66,6 +71,7 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll() // Swagger 허용
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/h2-console/**").permitAll()
                 .anyRequest().authenticated() // 그 외의 요청은 인증이 필요합니다.
             )
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))

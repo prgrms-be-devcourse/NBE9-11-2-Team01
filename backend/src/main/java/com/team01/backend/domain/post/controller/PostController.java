@@ -58,6 +58,14 @@ public class PostController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 
+    // 인기글 5개 조회 api
+    @GetMapping("boards/{boardId}/posts/top5")
+    public ResponseEntity<ApiResponse<List<PostResponseDto>>> getTop5Posts(
+            @PathVariable Long boardId
+    ) {
+        List<PostResponseDto> posts = postService.getTop5Posts(boardId);
+        return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
+    }
 
     // 게시글 상세 조회
     @Operation(summary = "게시글 상세 조회", description = "비로그인 사용자 접근 불가, 작성자 여부 포함")
