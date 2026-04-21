@@ -19,10 +19,12 @@ public record PostDetailResponseDto(
         String content,
         String author,
         int likeCount,
+
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime modifiedAt,
+
         List<CommentReadResponseDto> comments,
         boolean isOwner
 ) {
