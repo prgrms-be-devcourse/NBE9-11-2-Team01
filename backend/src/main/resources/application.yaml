@@ -38,7 +38,3 @@ springdoc:
 jwt:
   secret: "human-evolution-project-secret-key-for-jwt-token-2026"
 
-
-
-
-
