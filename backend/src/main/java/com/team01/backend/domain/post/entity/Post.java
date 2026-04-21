@@ -15,7 +15,6 @@ import java.util.List;
 
 @Entity
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @Table(indexes = {
         // 게시판별 게시글 목록 조회 최적화 (board_id + isDeleted 필터링, createdAt 정렬)

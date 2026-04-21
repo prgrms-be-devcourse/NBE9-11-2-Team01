@@ -5,6 +5,7 @@ import com.team01.backend.domain.post.entity.Post;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.global.response.ApiResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -12,27 +13,30 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-
+@Validated
 @RestController
 @RequiredArgsConstructor
 public class PostController {
     private final PostService postService;
 
+    // 검증 로직 분리
+    private void validateLogin(UserDetails userDetails) {
+        if (userDetails == null) {
+            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
+        }
+    }
+
     // 게시판별 글 목록 조회
     @GetMapping("/boards/{boardId}/posts")
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByBoardId(
             @PathVariable Long boardId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(required = false) @Size(max = 50) String keyword,
             @RequestParam(required = false) Long categoryId
     ) {
-        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
-        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
-
         PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
@@ -42,14 +46,9 @@ public class PostController {
     public ResponseEntity<ApiResponse<PostPageResponseDto>> getPostsByCategory(
             @PathVariable Long boardId,
             @PathVariable Long categoryId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(required = false) String keyword
+            @RequestParam(defaultValue = "1") @Min(1) int page,
+            @RequestParam(required = false) @Size(max = 50) String keyword
     ) {
-        // 페이지 번호 유효성 검증 (1 이상)
-        if (page < 1) throw new IllegalArgumentException("페이지 번호는 1 이상이어야 합니다.");
-        // 검색어 길이 검증 (50자 이하)
-        if (keyword != null && keyword.length() > 50) throw new IllegalArgumentException("검색어는 50자 이하이어야 합니다.");
-
         PostPageResponseDto posts = postService.getPostsByBoardAndCategory(boardId, categoryId, page, keyword);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
@@ -61,10 +60,7 @@ public class PostController {
             @PathVariable Long postId,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        // 비로그인 사용자에 대한 예외 처리
-        if (userDetails == null) {
-            throw new IllegalArgumentException("로그인이 필요한 서비스입니다.");
-        }
+        validateLogin(userDetails);
 
         String email = userDetails.getUsername();
         PostDetailResponseDto post = postService.getPostById(postId, email);
