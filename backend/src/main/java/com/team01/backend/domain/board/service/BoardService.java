@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -31,12 +33,20 @@ public class BoardService {
 
     // 게시판 목록 조회
     public List<BoardResponse> getAllBoards() {
-        return boardRepository.findAllByIsDeletedFalse()
+        List<Board> boards = boardRepository.findAllByIsDeletedFalse();
+
+        // 게시판별 게시글 수 한 번에 조회 (N+1 방지)
+        Map<Long, Long> postCountMap = postRepository.countByBoardGrouped()
                 .stream()
+                .collect(Collectors.toMap(
+                        row -> (Long) row[0],
+                        row -> (Long) row[1]
+                ));
+
+        return boards.stream()
                 .map(board -> BoardResponse.from(
                         board,
-                        // 삭제된 게시글 제외한 게시판별 게시글 수
-                        postRepository.countByBoardIdAndIsDeletedFalse(board.getId())
+                        postCountMap.getOrDefault(board.getId(), 0L)
                 ))
                 .toList();
     }

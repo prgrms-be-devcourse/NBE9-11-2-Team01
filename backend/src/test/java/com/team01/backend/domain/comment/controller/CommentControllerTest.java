@@ -82,7 +82,7 @@ public class CommentControllerTest {
 
         User author = userRepository.findByEmail("user1@test.com").get();
         // 테스트용 토큰 발급
-        String token = jwtTokenProvider.createToken(author.getEmail(), author.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(author.getEmail(), author.getRole().name());
         String content = "새로운 댓글";
 
         ResultActions resultActions = mvc
@@ -113,7 +113,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 생성 - 내용이 없을 시 예외")
     void t2() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         ResultActions resultActions = mvc
                 .perform(
@@ -142,7 +142,7 @@ public class CommentControllerTest {
     void t3() throws Exception {
 
         Long postId = 999L;
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         ResultActions resultActions = mvc
                 .perform(
@@ -169,7 +169,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 작성 실패 - 삭제된 게시글")
     void t4() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         ReflectionTestUtils.setField(testPost, "isDeleted", true);
         postRepository.saveAndFlush(testPost);
@@ -199,7 +199,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 작성 실패 - 500자 초과")
     void t5() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
         // 501자 문자열 생성
         String longContent = "a".repeat(501);
 
@@ -228,7 +228,7 @@ public class CommentControllerTest {
     @DisplayName("대댓글 생성 - 1번 댓글에 대댓글 작성")
     void t6() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         // 1. 먼저 부모 댓글 생성
         String createResponse = mvc
@@ -281,7 +281,7 @@ public class CommentControllerTest {
     @DisplayName("대댓글 생성 실패 - 대댓글에 답글 달기 불가")
     void t7() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
         // 1. 부모 댓글 생성
         String parentResponse = mvc
                 .perform(
@@ -347,7 +347,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 작성 실패 - 다른 게시글의 댓글에 대댓글 작성")
     void t8() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         String createResponse = mvc
                 .perform(
@@ -389,7 +389,7 @@ public class CommentControllerTest {
     @DisplayName("댓글 수정 - 1번 댓글 수정")
     void t9() throws Exception {
 
-        String token = jwtTokenProvider.createToken(testUser.getEmail(), testUser.getRole().name());
+        String token = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         ResultActions createResult = mvc
                 .perform(
@@ -595,7 +595,8 @@ public class CommentControllerTest {
                 .build());
 
         assertThrows(AccessDeniedException.class,
-                () -> commentService.deleteComment(commentId, other));
+                () -> commentService.deleteComment(commentId, other.getEmail()));
+
     }
 
     @Test
