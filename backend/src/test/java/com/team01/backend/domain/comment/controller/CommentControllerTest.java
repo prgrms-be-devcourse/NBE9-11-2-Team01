@@ -596,6 +596,7 @@ public class CommentControllerTest {
 
         assertThrows(AccessDeniedException.class,
                 () -> commentService.deleteComment(commentId, other.getEmail()));
+
     }
 
     @Test

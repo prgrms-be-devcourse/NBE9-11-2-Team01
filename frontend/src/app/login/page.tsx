@@ -8,13 +8,6 @@ type LoginRequest = {
   password: string;
 };
 
-type LoginApiResponse = {
-  success: boolean;
-  code: string | null;
-  message: string | null;
-  data: string | null;
-};
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function getApiEndpoint() {
@@ -39,7 +32,7 @@ export default function LoginPage() {
     };
   }, []);
 
-  async function connectNotification(token: string) {
+  async function connectNotification() {
     if (subscribeAbortRef.current) {
       subscribeAbortRef.current.abort();
       subscribeAbortRef.current = null;
@@ -53,8 +46,8 @@ export default function LoginPage() {
       method: "GET",
       headers: {
         Accept: "text/event-stream",
-        Authorization: `Bearer ${token}`,
       },
+      credentials: "include",
       signal: controller.signal,
       cache: "no-store",
     });
@@ -138,6 +131,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           email: form.email.trim(),
           password: form.password,
@@ -149,15 +143,11 @@ export default function LoginPage() {
         throw new Error(responseText || "로그인 요청에 실패했습니다.");
       }
 
-      const loginResult = (await response.json()) as LoginApiResponse;
-      const token = loginResult?.data;
-      if (!token) {
-        throw new Error("로그인 토큰을 받지 못했습니다.");
-      }
+      await response.json().catch(() => null);
 
       setSuccessMessage("로그인 완료");
       setIsLoggedIn(true);
-      await connectNotification(token);
+      await connectNotification();
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
