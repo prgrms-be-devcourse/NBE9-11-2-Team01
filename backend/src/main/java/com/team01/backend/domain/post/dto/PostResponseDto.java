@@ -12,8 +12,11 @@ public record PostResponseDto(
         Long categoryId,
         String categoryName,
         int likeCount,
+
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
+
+
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime modifiedAt
 ) {
