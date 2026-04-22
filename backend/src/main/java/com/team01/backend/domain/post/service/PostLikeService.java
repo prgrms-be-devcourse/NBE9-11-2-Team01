@@ -200,9 +200,6 @@ public class PostLikeService {
 
             // 좋아요 수 변경 시 캐시 무효화
             evictTop5Cache(boardId);
-
-            postLikeRepository.mergeInsert(user.getId(), postId);
-            postRepository.increaseLikeCount(postId);
         } else {
             int deleted = postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
             if (deleted > 0) {
