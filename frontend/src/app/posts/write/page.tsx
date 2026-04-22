@@ -93,7 +93,7 @@ export default function PostWritePage() {
           }
           setCategoryId(lockedCategoryId);
         } else {
-          setCategoryId(json.data.length > 0 ? String(json.data[0].id) : "");
+          setCategoryId("");
         }
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "카테고리 조회 중 오류가 발생했습니다.");
@@ -149,86 +149,99 @@ export default function PostWritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-6 py-8">
-      <main className="mx-auto w-full max-w-4xl rounded-xl border border-zinc-200 bg-white p-6">
-        <header className="mb-6">
-          <p className="text-sm text-zinc-500">게시글 작성</p>
-          <h1 className="mt-1 text-xl font-semibold text-zinc-900">새 게시글 등록</h1>
+    <div className="min-h-screen bg-gray-50 px-4 py-8">
+      <main className="mx-auto w-full max-w-3xl">
+        <header className="mb-6 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시글 작성</p>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">새 게시글 등록</h1>
         </header>
 
         {errorMessage && (
-          <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          <div className="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {errorMessage}
           </div>
         )}
 
-        <form className="flex flex-col gap-4" onSubmit={onSubmit}>
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700">카테고리</span>
-            <select
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              disabled={isLoadingMeta || isSubmitting || categories.length === 0 || Boolean(lockedCategoryId)}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500 disabled:cursor-not-allowed disabled:bg-zinc-100"
-            >
-              {categories.length === 0 ? (
-                <option value="">선택 가능한 카테고리가 없습니다</option>
-              ) : (
-                categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
+          <form className="flex flex-col gap-5" onSubmit={onSubmit}>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-700">카테고리</label>
+              <div className="relative">
+                <select
+                  value={categoryId}
+                  onChange={(e) => setCategoryId(e.target.value)}
+                  disabled={isLoadingMeta || isSubmitting || categories.length === 0 || Boolean(lockedCategoryId)}
+                  className={`h-11 w-full appearance-none rounded-xl border border-gray-200 bg-gray-50 pl-3 pr-10 text-sm text-gray-900 outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:opacity-60 ${Boolean(lockedCategoryId) ? "appearance-none" : ""}`}
+                >
+                  {categories.length === 0 ? (
+                    <option value="">선택 가능한 카테고리가 없습니다</option>
+                  ) : (
+                    <>
+                      <option value="" hidden>카테고리를 선택해주세요</option>
+                      {categories.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                {!lockedCategoryId && (
+                  <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              {lockedCategoryId && (
+                <p className="text-xs text-gray-400">선택된 카테고리로만 작성할 수 있습니다.</p>
               )}
-            </select>
-          </label>
+            </div>
 
-          {lockedCategoryId && (
-            <p className="-mt-2 text-xs text-zinc-500">선택된 카테고리로만 작성할 수 있습니다.</p>
-          )}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-700">제목</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={100}
+                placeholder="제목을 입력하세요"
+                disabled={isLoadingMeta || isSubmitting}
+                className="h-11 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 disabled:bg-gray-50 disabled:opacity-60"
+              />
+            </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700">제목</span>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={100}
-              placeholder="제목을 입력하세요"
-              disabled={isLoadingMeta || isSubmitting}
-              className="h-11 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
-            />
-          </label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-700">내용</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="내용을 입력하세요"
+                disabled={isLoadingMeta || isSubmitting}
+                className="min-h-64 rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 disabled:bg-gray-50 disabled:opacity-60"
+              />
+            </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700">내용</span>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              disabled={isLoadingMeta || isSubmitting}
-              className="min-h-64 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
-            />
-          </label>
-
-          <div className="mt-2 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              disabled={isSubmitting}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={isLoadingMeta || isSubmitting}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "등록 중..." : "등록"}
-            </button>
-          </div>
-        </form>
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={isLoadingMeta || isSubmitting}
+                className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? "등록 중..." : "✏️ 등록"}
+              </button>
+            </div>
+          </form>
+        </div>
       </main>
     </div>
   );

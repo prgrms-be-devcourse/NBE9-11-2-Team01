@@ -6,6 +6,12 @@
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { profileImageUrl } from "@/lib/profileImage";
+
+type Board = {
+  id: number;
+  boardName: string;
+};
 
 type Post = {
   id: number;
@@ -65,6 +71,7 @@ export default function PostListPage() {
   const keyword = searchParams.get("keyword")?.trim() ?? "";
   const categoryId = searchParams.get("categoryId")?.trim() ?? "";
 
+  const [boardName, setBoardName] = useState("");
   const [searchInput, setSearchInput] = useState(keyword);
   const sort = searchParams.get("sort")?.trim() ?? "latest";
   const [postPage, setPostPage] = useState<PostPage | null>(null);
@@ -151,6 +158,25 @@ export default function PostListPage() {
     fetchPosts();
   }, [fetchPosts]);
 
+  useEffect(() => {
+    const fetchBoardName = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/boards`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as ApiResponse<Board[]>;
+        if (!json.success) return;
+        const found = json.data.find((b) => String(b.id) === boardId);
+        if (found) setBoardName(found.boardName);
+      } catch {
+        // 게시판명 조회 실패는 무시
+      }
+    };
+    fetchBoardName();
+  }, [boardId]);
+
   const pageNumbers = useMemo(() => {
     if (!postPage || postPage.totalPages <= 0) {
       return [] as number[];
@@ -190,8 +216,8 @@ export default function PostListPage() {
 
         <header className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시판</p>
-            <h1 className="mt-1 text-2xl font-bold text-gray-900">게시글 목록</h1>
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시글 목록</p>
+            <h1 className="mt-1 text-2xl font-bold text-gray-900">{boardName || `게시판 #${boardId}`}</h1>
           </div>
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
@@ -316,17 +342,14 @@ export default function PostListPage() {
                       </div>
                       <div className="shrink-0 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {post.profileImage ? (
-                            <img src={post.profileImage} alt={post.author} className="h-6 w-6 rounded-full object-cover" />
-                          ) : (
-                            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gray-200 text-xs font-medium text-gray-600">
-                              {post.author.charAt(0)}
-                            </div>
-                          )}
+                          <img src={profileImageUrl(post.profileImage)} alt={post.author} className="h-6 w-6 rounded-full object-cover" />
                           <p className="text-sm font-medium text-gray-700">{post.author}</p>
                         </div>
                         <div className="mt-1 flex items-center justify-end gap-2 text-xs text-gray-400">
-                          <span>♥ {post.likeCount}</span>
+                          <span className="flex items-center gap-1">
+                          <span>❤️</span>
+                          <span>좋아요 {post.likeCount}</span>
+                        </span>
                           <span>·</span>
                           <span>{formatDate(post.createdAt)}</span>
                         </div>
