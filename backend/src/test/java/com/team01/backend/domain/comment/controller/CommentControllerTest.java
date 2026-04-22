@@ -28,7 +28,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -66,11 +70,13 @@ public class CommentControllerTest {
     private User testUser;
     private Post testPost;
     private Post testPost2;
+    private String accessToken;
 
     @BeforeEach
     void setUp() {
 
         testUser = userRepository.findByEmail("user1@test.com").orElseThrow();
+        accessToken = jwtTokenProvider.createAccessToken(testUser.getEmail(), testUser.getRole().name());
 
         // BaseInitData에서 만든 게시글 조회
         testPost = postRepository.findById(1L).orElseThrow();
@@ -444,11 +450,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "원댓글" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -458,11 +465,20 @@ public class CommentControllerTest {
         root.softDelete();
         commentRepository.saveAndFlush(root);
 
-        mvc.perform(get("/posts/%d/comments".formatted(testPost.getId())))
+        String response = mvc.perform(get("/posts/%d/comments".formatted(testPost.getId()))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data[0].content").value(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Integer> rootIds = JsonPath.read(response, "$.data[*].id");
+        int rootIndex = rootIds.indexOf((int) rootId);
+        assertTrue(rootIndex >= 0);
+        String rootContent = JsonPath.read(response, "$.data[%d].content".formatted(rootIndex));
+        assertEquals(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER, rootContent);
     }
 
     @Test
@@ -472,11 +488,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content(""" 
                                         { "content": "루트" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -486,11 +503,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "답글", "parentId": %d }
                                         """.formatted(rootId))
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -500,10 +518,24 @@ public class CommentControllerTest {
         reply.softDelete();
         commentRepository.saveAndFlush(reply);
 
-        mvc.perform(get("/posts/%d/comments".formatted(testPost.getId())))
+        String response = mvc.perform(get("/posts/%d/comments".formatted(testPost.getId()))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].content").value("루트"))
-                .andExpect(jsonPath("$.data[0].replies[0].content").value(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Integer> rootIds = JsonPath.read(response, "$.data[*].id");
+        int rootIndex = rootIds.indexOf((int) rootId);
+        assertTrue(rootIndex >= 0);
+        String rootContent = JsonPath.read(response, "$.data[%d].content".formatted(rootIndex));
+        assertEquals("루트", rootContent);
+
+        List<Integer> replyIds = JsonPath.read(response, "$.data[%d].replies[*].id".formatted(rootIndex));
+        int replyIndex = replyIds.indexOf((int) replyId);
+        assertTrue(replyIndex >= 0);
+        String replyContent = JsonPath.read(response, "$.data[%d].replies[%d].content".formatted(rootIndex, replyIndex));
+        assertEquals(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER, replyContent);
     }
 
     @Test
@@ -513,11 +545,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "부모" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -530,6 +563,7 @@ public class CommentControllerTest {
         mvc.perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "불가 답글", "parentId": %d }
                                         """.formatted(rootId))
@@ -550,26 +584,36 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "삭제할 댓글" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         long commentId = ((Number) JsonPath.read(createResponse, "$.data.id")).longValue();
 
-        mvc.perform(delete("/comments/%d".formatted(commentId)))
+        mvc.perform(delete("/comments/%d".formatted(commentId))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.id").value(commentId))
                 .andExpect(jsonPath("$.data.message").value(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER));
 
-        mvc.perform(get("/posts/%d/comments".formatted(testPost.getId())))
+        String response = mvc.perform(get("/posts/%d/comments".formatted(testPost.getId()))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data[0].id").value(commentId))
-                .andExpect(jsonPath("$.data[0].content").value(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER));
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        List<Integer> ids = JsonPath.read(response, "$.data[*].id");
+        int commentIndex = ids.indexOf((int) commentId);
+        assertTrue(commentIndex >= 0);
+        String deletedContent = JsonPath.read(response, "$.data[%d].content".formatted(commentIndex));
+        assertEquals(CommentDeleteResponseDto.DELETED_CONTENT_PLACEHOLDER, deletedContent);
     }
 
     @Test
@@ -579,11 +623,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "남의 댓글이 아님" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -607,19 +652,23 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "두번삭제" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
         long commentId = ((Number) JsonPath.read(createResponse, "$.data.id")).longValue();
 
-        mvc.perform(delete("/comments/%d".formatted(commentId))).andExpect(status().isOk());
+        mvc.perform(delete("/comments/%d".formatted(commentId))
+                        .cookie(new Cookie("accessToken", accessToken)))
+                .andExpect(status().isOk());
 
-        mvc.perform(delete("/comments/%d".formatted(commentId)))
+        mvc.perform(delete("/comments/%d".formatted(commentId))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
@@ -633,11 +682,12 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
+                                .cookie(new Cookie("accessToken", accessToken))
                                 .content("""
                                         { "content": "글삭제후" }
                                         """)
                 )
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andReturn()
                 .getResponse()
                 .getContentAsString();
@@ -646,7 +696,8 @@ public class CommentControllerTest {
         ReflectionTestUtils.setField(testPost, "isDeleted", true);
         postRepository.saveAndFlush(testPost);
 
-        mvc.perform(delete("/comments/%d".formatted(commentId)))
+        mvc.perform(delete("/comments/%d".formatted(commentId))
+                        .cookie(new Cookie("accessToken", accessToken)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("NOT_FOUND"));
