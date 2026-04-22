@@ -25,20 +25,22 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webmvc")
 	implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-web")
-	implementation("org.springframework.boot:spring-boot-starter-mail")
-    implementation("org.springframework.boot:spring-boot-starter-data-redis")
-	
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
+
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
+
+    implementation ("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation ("org.springframework.boot:spring-boot-starter-json")
+    implementation ("com.fasterxml.jackson.core:jackson-databind")
+    implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
 	
-    implementation("com.icegreen:greenmail:2.1.0") 	// [추가] 가상 메일 서버 (테스트 및 개발용)
-	
+	implementation("com.icegreen:greenmail:2.1.0") 	// [추가] 가상 메일 서버 (테스트 및 개발용)
+
     annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")
     annotationProcessor("jakarta.persistence:jakarta.persistence-api")
-
-    implementation ("org.springframework.boot:spring-boot-starter-data-redis")
 
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-devtools")
