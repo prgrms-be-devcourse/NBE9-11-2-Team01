@@ -62,6 +62,18 @@ export default function BoardManagementPage() {
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const visibleBoards = boards.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+  const validateBoardInput = (name: string, description: string) => {
+    if (name.length < 2) {
+      alert('이름은 2자 이상이어야 합니다.');
+      return false;
+    }
+    if (description.length < 5) {
+      alert('설명은 5자 이상이어야 합니다.');
+      return false;
+    }
+    return true;
+  };
+
   const startEdit = (board: Board) => { //수정 폼 작성 중 
     if (board.isDeleted) return; // 삭제된 게시판은 수정, 삭제 불가
     setEditingBoardId(board.id);
@@ -79,10 +91,7 @@ export default function BoardManagementPage() {
   const handleEdit = async (id: number) => { //실제 수정 요청 
     const name = editingName.trim();
     const description = editingDescription.trim();
-    if (!name) return;
-    if (!description) return;
-    if(name.length<2) return;
-    if(description.length<5) return;
+    if (!validateBoardInput(name, description)) return;
 
     try {
       await fetch(`${baseUrl}/${id}`, {
@@ -122,7 +131,7 @@ export default function BoardManagementPage() {
   const handleRegister = async () => {
     const name = newBoardName.trim();
     const description = newBoardDescription.trim();
-    if (!name) return;
+    if (!validateBoardInput(name, description)) return;
 
     try {
       await fetch(baseUrl, {
@@ -189,7 +198,7 @@ export default function BoardManagementPage() {
                   <>
                     {editingBoardId === board.id ? (
                       <>
-                        <button onClick={() => handleEdit(board.id)} disabled={!editingName.trim()} className="px-4 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed">저장</button>
+                        <button onClick={() => handleEdit(board.id)} className="px-4 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm hover:bg-gray-200">저장</button>
                         <button onClick={cancelEdit} className="px-4 py-1.5 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">취소</button>
                       </>
                     ) : (
@@ -228,7 +237,7 @@ export default function BoardManagementPage() {
               className="w-full h-20 resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:ring-1 focus:ring-gray-300"
             />
             <div className="flex justify-end">
-              <button onClick={handleRegister} disabled={!newBoardName.trim()} className="w-20 px-3 py-2.5 bg-[#2D2D2D] text-white rounded-lg hover:bg-black transition-colors disabled:opacity-40 disabled:cursor-not-allowed">등록</button>
+              <button onClick={handleRegister} className="w-20 px-3 py-2.5 bg-[#2D2D2D] text-white rounded-lg hover:bg-black transition-colors">등록</button>
             </div>
           </div>
         </div>
