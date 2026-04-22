@@ -121,6 +121,8 @@ public class PostLikeService {
 
         String countStr = redisTemplate.opsForValue().get(key);
 
+        findPost(postId);
+
         if (countStr != null) {
             return Math.max(0, Integer.parseInt(countStr));
         }

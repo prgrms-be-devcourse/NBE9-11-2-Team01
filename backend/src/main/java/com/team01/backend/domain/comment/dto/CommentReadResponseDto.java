@@ -2,6 +2,7 @@ package com.team01.backend.domain.comment.dto;
 
 // COMMENT-02 댓글(답글) 조회 — 응답 전용(작성·수정용 CommentResponseDto와 분리)
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.team01.backend.domain.comment.entity.Comment;
 
@@ -17,7 +18,9 @@ public record CommentReadResponseDto(
         String content,
         String author,
         int likeCount,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
+        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime modifiedAt,
         List<CommentReadResponseDto> replies
 ) {

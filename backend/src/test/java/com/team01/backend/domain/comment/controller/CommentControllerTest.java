@@ -13,6 +13,7 @@ import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
 import com.team01.backend.global.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -89,7 +90,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)  // ✅
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "%s"
@@ -119,7 +120,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                     {
                                         "content": ""
@@ -148,7 +149,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(postId))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "댓글 내용"
@@ -178,7 +179,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                         {
                                             "content": "댓글 내용"
@@ -207,7 +208,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "%s"
@@ -235,7 +236,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "부모 댓글"
@@ -256,7 +257,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "%s",
@@ -287,7 +288,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "부모 댓글"
@@ -305,7 +306,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "대댓글",
@@ -324,7 +325,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "대댓글의 대댓글",
@@ -340,7 +341,7 @@ public class CommentControllerTest {
                 .andExpect(status().isBadRequest())             // 400
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("INVALID_INPUT"))
-                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다"));
+                .andExpect(jsonPath("$.message").value("답글에는 답글을 달 수 없습니다."));
     }
 
     @Test
@@ -353,7 +354,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "1번 게시글 댓글"
@@ -368,7 +369,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost2.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                 {
                                     "content": "잘못된 대댓글",
@@ -395,7 +396,7 @@ public class CommentControllerTest {
                 .perform(
                         post("/posts/%d/comments".formatted(testPost.getId()))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                     {
                                         "content": "원래 댓글"
@@ -414,7 +415,7 @@ public class CommentControllerTest {
                 .perform(
                         put("/comments/%d".formatted(commentId))
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(new Cookie("accessToken", token))
                                 .content("""
                                     {
                                         "content": "%s"
