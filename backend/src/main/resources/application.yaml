@@ -39,8 +39,8 @@ springdoc:
   # 1. 설정 임포트 (외부 설정 파일 불러오기)
   config:
     import:
-      - optional:classpath:application-secret.yaml
-      - optional:classpath:application-mail.yaml
+        - classpath:application-secret.yaml  # optional 제거
+        - classpath:application-mail.yaml    # optional 제거
 
   # 2. 이메일 발송용 설정
 
