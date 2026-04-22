@@ -1,3 +1,6 @@
+/**
+ * 게시글 상세 페이지
+ */
 "use client";
 
 import Link from "next/link";
@@ -8,6 +11,7 @@ type Comment = {
   id: number;
   content: string;
   author: string;
+  profileImage: string | null;
   likeCount: number;
   createdAt: string;
   modifiedAt: string;
@@ -23,7 +27,9 @@ type PostDetail = {
   title: string;
   content: string;
   author: string;
+  profileImage: string | null;
   likeCount: number;
+  isLiked: boolean;
   createdAt: string;
   modifiedAt: string;
   comments: Comment[];
@@ -126,7 +132,20 @@ function CommentItem({
     <li className={`rounded-md border border-zinc-200 bg-white p-3 ${depth > 0 ? "ml-5" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-zinc-900">{comment.author}</p>
+          <div className="flex items-center gap-1.5">
+            {comment.profileImage ? (
+              <img
+                src={comment.profileImage}
+                alt={comment.author}
+                className="h-5 w-5 rounded-full object-cover"
+              />
+            ) : (
+              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium text-zinc-600">
+                {comment.author.charAt(0)}
+              </div>
+            )}
+            <p className="text-sm font-medium text-zinc-900">{comment.author}</p>
+          </div>
 
           {isEditing ? (
             <div className="mt-2 flex gap-2">
@@ -308,7 +327,7 @@ export default function PostDetailPage() {
       setPost(json.data);
       setEditingTitle(json.data.title);
       setEditingContent(json.data.content);
-      setPostLiked(false);
+      setPostLiked(json.data.isLiked);
     } catch (error) {
       if (error instanceof Error) {
         setErrorMessage(error.message);
@@ -698,7 +717,20 @@ export default function PostDetailPage() {
                     <>
                       <h2 className="mt-2 text-xl font-semibold text-zinc-900">{post.title}</h2>
                       <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-zinc-500">
-                        <span>작성자 {post.author}</span>
+                        <span className="flex items-center gap-1.5">
+                          {post.profileImage ? (
+                            <img
+                              src={post.profileImage}
+                              alt={post.author}
+                              className="h-5 w-5 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-5 w-5 items-center justify-center rounded-full bg-zinc-200 text-xs font-medium text-zinc-600">
+                              {post.author.charAt(0)}
+                            </div>
+                          )}
+                          {post.author}
+                        </span>
                         <span>작성일 {formatDate(post.createdAt)}</span>
                         <span>수정일 {formatDate(post.modifiedAt)}</span>
                       </div>

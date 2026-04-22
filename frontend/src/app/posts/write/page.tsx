@@ -1,3 +1,6 @@
+/**
+ * 게시글 작성 페이지
+ */
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
@@ -20,6 +23,13 @@ type PostWriteResponse = {
   id: number;
 };
 
+type MyPageResponse = {
+  email: string;
+  nickname: string;
+  profileImage: string;
+  role: string;
+};
+
 function getApiBaseUrl() {
   return process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 }
@@ -28,6 +38,7 @@ export default function PostWritePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const boardId = searchParams.get("boardId")?.trim() ?? "";
+  const lockedCategoryId = searchParams.get("categoryId")?.trim() ?? "";
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [title, setTitle] = useState("");
@@ -38,44 +49,61 @@ export default function PostWritePage() {
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (!boardId) {
-      setErrorMessage("게시판 정보가 없습니다. 게시판 목록에서 다시 접근해 주세요.");
-      setIsLoadingMeta(false);
+    const init = async () => {
+      if (!boardId) {
+        setErrorMessage("게시판 정보가 없습니다. 게시판 목록에서 다시 접근해 주세요.");
+        setIsLoadingMeta(false);
+        return;
+      }
+
+    // 로그인 여부 확인
+    const meRes = await fetch(`${getApiBaseUrl()}/api/users/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+    if (!meRes.ok) {
+      router.push(`/login?next=/posts/write?boardId=${boardId}`);
       return;
     }
 
-    const fetchCategories = async () => {
-      setIsLoadingMeta(true);
-      setErrorMessage("");
+    // 카테고리 조회
+    setIsLoadingMeta(true);
+    setErrorMessage("");
 
-      try {
-        const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/categories`, {
-          method: "GET",
-          credentials: "include",
-        });
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/categories`, {
+        method: "GET",
+        credentials: "include",
+      });
 
-        if (!res.ok) {
-          throw new Error(`카테고리 정보를 불러오지 못했습니다. (${res.status})`);
-        }
-
-        const json = (await res.json()) as ApiResponse<Category[]>;
-
-        if (!json.success) {
-          throw new Error(json.message ?? "카테고리 목록 조회에 실패했습니다.");
-        }
-
-    
-        setCategories(json.data);
-        setCategoryId(json.data.length > 0 ? String(json.data[0].id) : "");
-      } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "카테고리 조회 중 오류가 발생했습니다.");
-      } finally {
-        setIsLoadingMeta(false);
+      if (!res.ok) {
+        throw new Error(`카테고리 정보를 불러오지 못했습니다. (${res.status})`);
       }
-    };
 
-    fetchCategories();
-  }, [boardId]);
+      const json = (await res.json()) as ApiResponse<Category[]>;
+      if (!json.success) {
+        throw new Error(json.message ?? "카테고리 목록 조회에 실패했습니다.");
+      }
+
+      setCategories(json.data);
+      if (lockedCategoryId) {
+          const exists = json.data.some((category) => String(category.id) === lockedCategoryId);
+          if (!exists) {
+            throw new Error("선택한 카테고리를 찾을 수 없습니다. 카테고리를 다시 확인해 주세요.");
+          }
+          setCategoryId(lockedCategoryId);
+        } else {
+          setCategoryId(json.data.length > 0 ? String(json.data[0].id) : "");
+        }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "카테고리 조회 중 오류가 발생했습니다.");
+    } finally {
+      setIsLoadingMeta(false);
+    }
+  };
+
+  init();
+}, [boardId, lockedCategoryId, router]);
 
   const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -140,8 +168,8 @@ export default function PostWritePage() {
             <select
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
-              disabled={isLoadingMeta || isSubmitting || categories.length === 0}
-              className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
+              disabled={isLoadingMeta || isSubmitting || categories.length === 0 || Boolean(lockedCategoryId)}
+              className="h-10 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500 disabled:cursor-not-allowed disabled:bg-zinc-100"
             >
               {categories.length === 0 ? (
                 <option value="">선택 가능한 카테고리가 없습니다</option>
@@ -154,6 +182,10 @@ export default function PostWritePage() {
               )}
             </select>
           </label>
+
+          {lockedCategoryId && (
+            <p className="-mt-2 text-xs text-zinc-500">선택된 카테고리로만 작성할 수 있습니다.</p>
+          )}
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="font-medium text-zinc-700">제목</span>
