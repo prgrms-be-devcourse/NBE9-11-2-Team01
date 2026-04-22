@@ -59,6 +59,15 @@ public class AuthController {
         // ApiResponse 생성자(boolean, String, String, T) 순서에 맞춤
         return ResponseEntity.ok(new ApiResponse<>(true, null, "검증 완료", isValid));
     }
+	
+	/**
+     * 아이디 찾기 API: 닉네임을 통해 이메일 정보를 반환합니다.
+     */
+    @PostMapping("/find-id")
+    public ResponseEntity<ApiResponse<String>> findId(@Valid @RequestBody FindIdRequest request) {
+        return ResponseEntity.ok(new ApiResponse<>(true, authService.findId(request), "아이디 찾기 완료", null));
+    }
+	
 
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody PasswordResetRequest request) {
