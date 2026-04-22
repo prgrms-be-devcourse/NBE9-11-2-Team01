@@ -1,243 +1,317 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { FormEvent, Suspense, useState } from "react";
+import { m, AnimatePresence } from "framer-motion";
+import { Loader2, X } from "lucide-react";
+import { apiPostJson, apiPutJson } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
+import { GlassPanel } from "@/components/shell/GlassPanel";
 
-type LoginRequest = {
-  email: string;
-  password: string;
-};
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+function LoginForm() {
+  const router = useRouter();
+  const params = useSearchParams();
+  const { refresh } = useAuth();
+  const registered = params.get("registered");
 
-function getApiEndpoint() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
-  const loginPath = process.env.NEXT_PUBLIC_LOGIN_PATH ?? "/api/auth/login";
-  return `${baseUrl}${loginPath}`;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [findOpen, setFindOpen] = useState(false);
+  const [findNick, setFindNick] = useState("");
+  const [findResult, setFindResult] = useState("");
+  const [findBusy, setFindBusy] = useState(false);
+
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetPw, setResetPw] = useState("");
+  const [resetBusy, setResetBusy] = useState(false);
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!EMAIL_RE.test(email.trim())) {
+      setError("올바른 이메일 형식이 아닙니다.");
+      return;
+    }
+    if (password.length < 4) {
+      setError("비밀번호는 최소 4자 이상입니다.");
+      return;
+    }
+    setLoading(true);
+    try {
+      await apiPostJson<unknown, { email: string; password: string }>(
+        "/api/auth/login",
+        { email: email.trim(), password },
+      );
+      await refresh();
+      router.push("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "로그인에 실패했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function doFindId() {
+    setFindResult("");
+    if (!findNick.trim()) return;
+    setFindBusy(true);
+    try {
+      const r = await apiPostJson<string, { nickname: string }>(
+        "/api/auth/find-id",
+        { nickname: findNick.trim() },
+      );
+      setFindResult(r.data ?? "");
+    } catch (err) {
+      setFindResult(
+        err instanceof Error ? err.message : "아이디를 찾을 수 없습니다.",
+      );
+    } finally {
+      setFindBusy(false);
+    }
+  }
+
+  async function doReset() {
+    setError("");
+    if (!EMAIL_RE.test(resetEmail.trim()) || resetPw.length < 4) return;
+    setResetBusy(true);
+    try {
+      await apiPutJson<unknown, { email: string; newPassword: string }>(
+        "/api/auth/reset-password",
+        { email: resetEmail.trim(), newPassword: resetPw },
+      );
+      setResetOpen(false);
+      setResetEmail("");
+      setResetPw("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "재설정에 실패했습니다.");
+    } finally {
+      setResetBusy(false);
+    }
+  }
+
+  const inputClass =
+    "w-full rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-900 outline-none ring-neutral-900/10 placeholder:text-neutral-400 focus:ring-2";
+
+  return (
+    <>
+      <div className="flex flex-1 items-center justify-center bg-white px-4 py-14 sm:px-6">
+        <m.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.4 }}
+          className="w-full max-w-md"
+        >
+          <GlassPanel className="p-8 sm:p-10">
+            <h1 className="text-2xl font-bold text-neutral-900">로그인</h1>
+            <p className="mt-2 text-sm text-neutral-600">
+              이메일과 비밀번호로 입장하세요.
+            </p>
+            {registered && (
+              <p className="mt-4 rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-2 text-sm text-neutral-800">
+                회원가입이 완료되었습니다. 로그인해 주세요.
+              </p>
+            )}
+
+            <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  아이디 (이메일)
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={inputClass}
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-medium text-neutral-700">
+                  비밀번호
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className={inputClass}
+                  autoComplete="current-password"
+                />
+              </div>
+              {error && (
+                <p className="text-sm text-neutral-700">{error}</p>
+              )}
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-semibold text-white disabled:opacity-50"
+                >
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  로그인
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFindOpen(true)}
+                  className="h-12 rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                >
+                  아이디 찾기
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setResetOpen(true)}
+                  className="h-12 rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                >
+                  비밀번호 재설정
+                </button>
+              </div>
+            </form>
+
+            <p className="mt-8 text-center text-sm text-neutral-600">
+              계정이 없으신가요?{" "}
+              <Link
+                href="/signup"
+                className="font-medium text-neutral-900 underline-offset-4 hover:underline"
+              >
+                회원가입
+              </Link>
+            </p>
+          </GlassPanel>
+        </m.div>
+      </div>
+
+      <AnimatePresence>
+        {findOpen && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            onClick={() => setFindOpen(false)}
+          >
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  아이디 찾기
+                </h2>
+                <button
+                  type="button"
+                  aria-label="닫기"
+                  onClick={() => setFindOpen(false)}
+                  className="rounded-lg p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="mt-2 text-sm text-neutral-600">
+                가입 시 입력한 닉네임으로 이메일을 찾습니다.
+              </p>
+              <input
+                value={findNick}
+                onChange={(e) => setFindNick(e.target.value)}
+                placeholder="닉네임"
+                className={`${inputClass} mt-4`}
+              />
+              {findResult && (
+                <p className="mt-3 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800">
+                  {findResult.includes("@")
+                    ? `가입된 아이디: ${findResult}`
+                    : findResult}
+                </p>
+              )}
+              <button
+                type="button"
+                disabled={findBusy}
+                onClick={() => void doFindId()}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {findBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                확인
+              </button>
+            </m.div>
+          </m.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {resetOpen && (
+          <m.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+            onClick={() => setResetOpen(false)}
+          >
+            <m.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-md rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-neutral-900">
+                  비밀번호 재설정
+                </h2>
+                <button
+                  type="button"
+                  aria-label="닫기"
+                  onClick={() => setResetOpen(false)}
+                  className="rounded-lg p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="mt-2 text-sm text-neutral-600">
+                이메일과 새 비밀번호를 입력하세요.
+              </p>
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="이메일"
+                className={`${inputClass} mt-4`}
+              />
+              <input
+                type="password"
+                value={resetPw}
+                onChange={(e) => setResetPw(e.target.value)}
+                placeholder="새 비밀번호 (4자 이상)"
+                className={`${inputClass} mt-3`}
+              />
+              <button
+                type="button"
+                disabled={resetBusy}
+                onClick={() => void doReset()}
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {resetBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                재설정
+              </button>
+            </m.div>
+          </m.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
 }
 
 export default function LoginPage() {
-  const [form, setForm] = useState<LoginRequest>({ email: "", password: "" });
-  const [errorMessage, setErrorMessage] = useState("");
-  const [successMessage, setSuccessMessage] = useState("");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const subscribeAbortRef = useRef<AbortController | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (subscribeAbortRef.current) {
-        subscribeAbortRef.current.abort();
-      }
-    };
-  }, []);
-
-  async function connectNotification() {
-    if (subscribeAbortRef.current) {
-      subscribeAbortRef.current.abort();
-      subscribeAbortRef.current = null;
-    }
-
-    const controller = new AbortController();
-    subscribeAbortRef.current = controller;
-    const subscribeUrl = "http://localhost:8080/subscribe";
-
-    const response = await fetch(subscribeUrl, {
-      method: "GET",
-      headers: {
-        Accept: "text/event-stream",
-      },
-      credentials: "include",
-      signal: controller.signal,
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const responseText = await response.text();
-      throw new Error(responseText || "알림 연결에 실패했습니다.");
-    }
-
-    if (!response.body) {
-      throw new Error("알림 스트림 응답 본문이 없습니다.");
-    }
-
-    alert("연결 완료");
-
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder("utf-8");
-    let buffer = "";
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) {
-        break;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-      const events = buffer.split("\n\n");
-      buffer = events.pop() ?? "";
-
-      for (const eventBlock of events) {
-        const dataLines = eventBlock
-          .split("\n")
-          .filter((line) => line.startsWith("data:"))
-          .map((line) => line.slice(5).trim());
-
-        if (!dataLines.length) {
-          continue;
-        }
-
-        const rawData = dataLines.join("\n");
-        try {
-          const parsed = JSON.parse(rawData) as { content?: string };
-          alert(parsed.content ?? rawData);
-        } catch {
-          alert(rawData);
-        }
-      }
-    }
-  }
-
-  const validationError = useMemo(() => {
-    if (!form.email.trim()) {
-      return "이메일은 필수 입력 값입니다.";
-    }
-    if (!EMAIL_REGEX.test(form.email)) {
-      return "올바른 이메일 형식이 아닙니다.";
-    }
-    if (!form.password) {
-      return "비밀번호는 필수 입력 값입니다.";
-    }
-    if (form.password.length < 4) {
-      return "비밀번호는 최소 4글자 이상이어야 합니다.";
-    }
-    return "";
-  }, [form]);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErrorMessage("");
-    setSuccessMessage("");
-
-    if (validationError) {
-      setErrorMessage(validationError);
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const response = await fetch(getApiEndpoint(), {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          email: form.email.trim(),
-          password: form.password,
-        }),
-      });
-
-      if (!response.ok) {
-        const responseText = await response.text();
-        throw new Error(responseText || "로그인 요청에 실패했습니다.");
-      }
-
-      await response.json().catch(() => null);
-
-      setSuccessMessage("로그인 완료");
-      setIsLoggedIn(true);
-      await connectNotification();
-    } catch (error) {
-      if (error instanceof Error) {
-        setErrorMessage(error.message);
-      } else {
-        setErrorMessage("알 수 없는 오류가 발생했습니다.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 px-6 py-10 font-sans dark:bg-black">
-      <main className="w-full max-w-md rounded-xl bg-white p-8 shadow-sm dark:bg-zinc-950">
-        <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">로그인</h1>
-        <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
-          이메일과 비밀번호를 입력해 주세요.
-        </p>
-
-        {!isLoggedIn && (
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
-              >
-                이메일
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={form.email}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    email: event.target.value,
-                  }))
-                }
-                placeholder="example@email.com"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-200"
-              >
-                비밀번호
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={form.password}
-                onChange={(event) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    password: event.target.value,
-                  }))
-                }
-                placeholder="최소 4글자"
-                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none transition focus:border-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-
-            {errorMessage && (
-              <p className="text-sm text-red-600 dark:text-red-400">{errorMessage}</p>
-            )}
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
-            >
-              {isSubmitting ? "로그인 요청 중..." : "로그인"}
-            </button>
-          </form>
-        )}
-
-        {successMessage && (
-          <p className="mt-6 text-sm text-green-600 dark:text-green-400">{successMessage}</p>
-        )}
-
-        <Link
-          href="/"
-          className="mt-5 inline-block text-sm text-zinc-600 underline-offset-4 hover:underline dark:text-zinc-300"
-        >
-          메인 화면으로 돌아가기
-        </Link>
-      </main>
-    </div>
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
   );
 }
