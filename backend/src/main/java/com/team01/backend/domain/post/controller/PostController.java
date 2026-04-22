@@ -61,6 +61,7 @@ public class PostController {
     }
 
     // 인기글 5개 조회 api
+    @Operation(summary = "실시간 인기글 조회", description = "게시판별 \"좋아요\"를 많이 받은 5개의 게시물 노출")
     @GetMapping("boards/{boardId}/posts/top5")
     public ResponseEntity<ApiResponse<List<PostResponseDto>>> getTop5Posts(
             @PathVariable Long boardId
@@ -102,6 +103,7 @@ public class PostController {
     }
 
     // 글 작성 api
+    @Operation(summary = "글 작성", description = "비로그인 사용자 접근 불가")
     @PostMapping("/posts")
     public ResponseEntity<ApiResponse<PostWriteResponse>> write(
             @RequestBody @Valid PostWriteReqBody reqBody,
@@ -145,6 +147,7 @@ public class PostController {
     }
 
     // 글 수정 api
+    @Operation(summary = "글 수정", description = "비로그인 사용자 접근 불가, 원글 작성자만 수정 가능")
     @PutMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<PostModifyResponse>> modify(
             @PathVariable("postId") Long postId,
@@ -169,6 +172,7 @@ public class PostController {
     }
 
     // 글 삭제 api
+    @Operation(summary = "글 삭제", description = "비로그인 사용자 접근 불가, 원글 작성자만 삭제 가능")
     @DeleteMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<Void>> delete(
             @PathVariable("postId") Long postId,
