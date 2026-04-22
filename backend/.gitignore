@@ -41,5 +41,5 @@ out/
 src/main/generated/
 
 ### PASSWORD KEY ###
-application-secret.yml
-application-*-secret.yml
+application-secret.yaml
+application-*-secret.yaml
