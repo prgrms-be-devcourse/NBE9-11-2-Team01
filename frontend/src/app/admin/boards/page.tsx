@@ -2,21 +2,6 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-// 요청하신 Board 인터페이스 정의
-interface Board {
-  id: number;
-  boardName: string;
-  description: string;
-  createdAt: string;
-  modifiedAt: string;
-  isDeleted: boolean;
-}
-
-interface AdminBoardListResponseDto {
-  exist: Board[];
-  deleted: Board[];
-}
-
 const ITEMS_PER_PAGE = 4;
 const baseUrl = "http://localhost:8080/admin/boards";
 

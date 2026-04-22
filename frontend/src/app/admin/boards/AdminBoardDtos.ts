@@ -2,7 +2,7 @@ interface AdminBoardResponseDto{
     data:AdminBoardListDto,
     success:boolean
 }
-interface AdminBoardDto {
+interface Board {
     id: number;
     boardName: string;
     description: string;
@@ -12,6 +12,6 @@ interface AdminBoardDto {
   }
   
   interface AdminBoardListDto {
-    exist: AdminBoardDto[];
-    deleted: AdminBoardDto[];
+    exist: Board[];
+    deleted: Board[];
   }
