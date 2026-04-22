@@ -7,6 +7,8 @@ import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.global.response.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "댓글", description = "댓글 관련 API")
 @RestController
 @RequiredArgsConstructor
 public class CommentController {
@@ -29,6 +32,7 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(list));
     }
 
+    @Operation(summary = "댓글 작성", description = "특정 게시글에 댓글 또는 대댓글을 작성합니다.")
     @PostMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<CommentResponseDto>> writeComment(
             @PathVariable Long postId,
@@ -41,6 +45,7 @@ public class CommentController {
         return ResponseEntity.ok(ApiResponse.ofSuccess(resDto));
     }
 
+    @Operation(summary = "댓글 수정", description = "작성한 댓글을 수정합니다. 본인 댓글만 수정 가능합니다.")
     @PutMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentResponseDto>> updateComment(
             @PathVariable Long commentId,
