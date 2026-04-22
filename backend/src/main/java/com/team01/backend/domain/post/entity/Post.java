@@ -6,7 +6,6 @@ import com.team01.backend.domain.comment.entity.Comment;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.global.entity.BaseEntity;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -66,9 +65,5 @@ public class Post extends BaseEntity {
         this.isDeleted = true;
 
     }
-
-    // top5 조회를 위한 임시 메서드
-    public void initLikeCount(int likeCount) {
-        this.likeCount = likeCount;
-    }
+    
 }
