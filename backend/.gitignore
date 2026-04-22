@@ -39,3 +39,7 @@ out/
 ### Custom ###
 .DS_Store
 src/main/generated/
+
+### PASSWORD KEY ###
+application-secret.yml
+application-*-secret.yml

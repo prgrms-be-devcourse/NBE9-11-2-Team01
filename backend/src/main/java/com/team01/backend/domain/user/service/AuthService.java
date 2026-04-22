@@ -24,6 +24,7 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+	private final MailService mailService;
 
     /**
      * [메서드: signUp]
@@ -42,8 +43,8 @@ public class AuthService {
         // 2. 관리자 여부 확인 및 권한 할당
         Role role = Role.USER;
         if (request.isAdmin()) {
-            // 기획된 관리자 비밀 토큰과 일치하는지 확인
-            if (!"ADMIN_SECRET_TOKEN".equals(request.getAdminToken())) {
+            // 기획된 관리자 비밀 토큰과 일치하는지 확인 (BaseInitData와 동일값 설정)
+            if (!"user_admin-2026".equals(request.getAdminToken())) {
                 throw new IllegalArgumentException("관리자 인증 토큰이 일치하지 않습니다.");
             }
             role = Role.ADMIN;
@@ -140,12 +141,15 @@ public class AuthService {
         return user.getEmail();
     }
 
-    /**
-     * [신규] 비밀번호 재설정
-     * 탈퇴한 회원의 데이터 오염을 방지하기 위해 활성 계정만 변경을 허용합니다.
-     */
+	// 비밀번호 재설정 로직
     @Transactional
     public void resetPassword(PasswordResetRequest request) {
+        // [보안 필수] 인증 코드 검증 단계
+        boolean isVerified = mailService.verifyCode(request.getEmail(), request.getVerificationCode());
+        if (!isVerified) {
+            throw new IllegalArgumentException("인증 코드가 일치하지 않거나 만료되었습니다.");
+        }
+
         User user = userRepository.findByEmailAndRoleNot(request.getEmail(), Role.WITHDRAWN)
                 .orElseThrow(() -> new EntityNotFoundException("사용자를 찾을 수 없거나 이미 탈퇴한 계정입니다."));
         

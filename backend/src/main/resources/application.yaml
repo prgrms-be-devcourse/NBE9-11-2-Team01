@@ -1,43 +1,15 @@
+# 메인 설정 파일
 spring:
-  application:
-    name: backend
+  # 1. 설정 임포트 (외부 설정 파일 불러오기)
+  config:
+    import:
+      - optional:classpath:application-secret.yaml
+      - optional:classpath:application-mail.yaml
 
-  profiles:
-    active: dev
-
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-      naming:
-        # 엔티티 필드명 그대로 DB 컬럼명(카멜케이스, 언더스코어 변환 없음)
-        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
-
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-        highlight_sql: true
-        use_sql_comments: true
+  # 2. 이메일 발송용 설정
 
 
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-
-
-# Swagger UI 활성화
-springdoc:
-  swagger-ui:
-    enabled: true
-  api-docs:
-    enabled: true
-
-
-# [신규 추가] JWT 보안 설정을 위한 비밀키
-jwt:
-  secret: "human-evolution-project-secret-key-for-jwt-token-2026"
-
-
-
+# 4. 기타 설정 (spring 블록 밖)
+custom:
+  cookie:
+    secure: ${COOKIE_SECURE:true} # 환경 변수가 없으면 기본값 true
