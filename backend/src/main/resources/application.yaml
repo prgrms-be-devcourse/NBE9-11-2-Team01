@@ -27,6 +27,12 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # 1. 설정 임포트 (외부 설정 파일 불러오기)
+  config:
+    import:
+        - classpath:application-secret.yaml  # optional 제거
+        - classpath:application-mail.yaml    # optional 제거
+
 
 # Swagger UI 활성화
 springdoc:
@@ -36,11 +42,7 @@ springdoc:
     enabled: true
 
 
-  # 1. 설정 임포트 (외부 설정 파일 불러오기)
-  config:
-    import:
-        - classpath:application-secret.yaml  # optional 제거
-        - classpath:application-mail.yaml    # optional 제거
+
 
   # 2. 이메일 발송용 설정
 
