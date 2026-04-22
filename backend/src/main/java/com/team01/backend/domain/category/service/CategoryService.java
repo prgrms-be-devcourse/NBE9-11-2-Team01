@@ -57,4 +57,11 @@ public class CategoryService {
                                 .toList();
 
     }
+
+    // 게시판별 카테고리 목록 조회 (글쓰기 페이지 카테고리 드롭다운용)
+    public List<CategoryResponseDto> listByBoardId(Long boardId) {
+        return categoryRepository.findByBoardId(boardId).stream()
+                .map(CategoryResponseDto::new)
+                .toList();
+    }
 }

@@ -66,4 +66,9 @@ public class Post extends BaseEntity {
 
     }
     
+
+    // top5 조회를 위한 임시 메서드
+    public void initLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
 }
