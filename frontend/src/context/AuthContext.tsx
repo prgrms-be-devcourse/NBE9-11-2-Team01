@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const r = await apiGet<MyPageUser>("/api/users/me");
+      const r = await apiGet<MyPageUser>("/users/me");
       setUser(r.data ?? null);
     } catch {
       setUser(null);
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     try {
-      await apiPostJson<unknown, Record<string, never>>("/api/auth/logout", {});
+      await apiPostJson<unknown, Record<string, never>>("/auth/logout", {});
     } catch {
       /* ignore */
     }

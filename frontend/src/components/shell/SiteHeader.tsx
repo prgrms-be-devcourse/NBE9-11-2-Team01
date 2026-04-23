@@ -1,22 +1,39 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { LogOut, Menu, X } from "lucide-react";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { SignalLogo } from "@/components/brand/SignalLogo";
 import { Avatar } from "@/components/profile/Avatar";
+import { apiGet } from "@/lib/api";
+import type { Board } from "@/lib/types";
 
 const nav = [
   { href: "/", label: "홈" },
-  { href: "/#boards", label: "게시판" },
   { href: "/#community", label: "시그널 피드" },
-];
+] as const;
 
 export function SiteHeader() {
   const { user, loading, logout } = useAuth();
   const [open, setOpen] = useState(false);
+  const [boards, setBoards] = useState<Board[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await apiGet<Board[]>("/boards");
+        if (!cancelled) setBoards(r.data ?? []);
+      } catch {
+        if (!cancelled) setBoards([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <m.header
@@ -38,6 +55,47 @@ export function SiteHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
+          <Link
+            href="/"
+            className="text-sm font-medium text-neutral-600 transition hover:text-neutral-900"
+          >
+            홈
+          </Link>
+          <div className="group relative flex items-center">
+            <Link
+              href="/#boards"
+              className="inline-flex items-center gap-0.5 text-sm font-medium text-neutral-600 transition hover:text-neutral-900"
+            >
+              게시판
+              <ChevronDown
+                className="h-3.5 w-3.5 opacity-50 transition group-hover:rotate-180"
+                aria-hidden
+              />
+            </Link>
+            <div
+              className="pointer-events-none absolute left-0 top-full z-[60] pt-1.5 opacity-0 transition-opacity duration-150 group-hover:pointer-events-auto group-hover:opacity-100"
+              role="navigation"
+              aria-label="게시판 목록"
+            >
+              <div className="min-w-[220px] rounded-xl border border-neutral-200 bg-white py-1.5 shadow-lg">
+                {boards.length === 0 ? (
+                  <p className="px-4 py-3 text-xs text-neutral-500">
+                    등록된 게시판이 없습니다.
+                  </p>
+                ) : (
+                  boards.map((b) => (
+                    <Link
+                      key={b.id}
+                      href={`/boards/${b.id}/posts`}
+                      className="block px-4 py-2.5 text-sm text-neutral-700 transition hover:bg-neutral-50 hover:text-neutral-900"
+                    >
+                      {b.boardName}
+                    </Link>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
           {nav.map((item) => (
             <Link
               key={item.href}
@@ -115,6 +173,34 @@ export function SiteHeader() {
             className="overflow-hidden border-t border-neutral-200 bg-white md:hidden"
           >
             <div className="flex flex-col gap-1 px-4 py-4">
+              <Link
+                href="/"
+                className="rounded-xl px-3 py-2.5 text-neutral-700"
+                onClick={() => setOpen(false)}
+              >
+                홈
+              </Link>
+              <Link
+                href="/#boards"
+                className="rounded-xl px-3 py-2.5 text-neutral-700"
+                onClick={() => setOpen(false)}
+              >
+                게시판
+              </Link>
+              {boards.length > 0 && (
+                <div className="ml-2 flex flex-col border-l border-neutral-200 pl-3">
+                  {boards.map((b) => (
+                    <Link
+                      key={b.id}
+                      href={`/boards/${b.id}/posts`}
+                      className="rounded-lg py-1.5 text-sm text-neutral-600"
+                      onClick={() => setOpen(false)}
+                    >
+                      {b.boardName}
+                    </Link>
+                  ))}
+                </div>
+              )}
               {nav.map((item) => (
                 <Link
                   key={item.href}

@@ -312,7 +312,7 @@ export default function PostDetailPage() {
 
   const fetchMe = useCallback(async () => {
     try {
-      const res = await fetch(`${getApiBaseUrl()}/api/users/me`, {
+      const res = await fetch(`${getApiBaseUrl()}/users/me`, {
         method: "GET",
         credentials: "include",
       });
