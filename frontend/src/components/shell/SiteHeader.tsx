@@ -11,7 +11,6 @@ import { apiGet } from "@/lib/api";
 import type { Board } from "@/lib/types";
 
 const nav = [
-  { href: "/", label: "홈" },
   { href: "/#community", label: "시그널 피드" },
 ] as const;
 

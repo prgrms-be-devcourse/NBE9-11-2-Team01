@@ -21,6 +21,43 @@ import { SignalLogo } from "@/components/brand/SignalLogo";
 import { Avatar } from "@/components/profile/Avatar";
 import { useAuth } from "@/context/AuthContext";
 
+// 게시판 이름에 따른 아이콘 및 테마 설정
+const getBoardTheme = (name: string) => {
+  if (name.includes("자유")) {
+    return {
+      Icon: MessageCircle,
+      iconWrap: "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+      wash: "from-blue-100/40",
+    };
+  }
+  if (name.includes("채용") || name.includes("공고")) {
+    return {
+      Icon: Briefcase,
+      iconWrap: "border-indigo-200/80 bg-indigo-50 text-indigo-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+      wash: "from-indigo-100/40",
+    };
+  }
+  if (name.includes("면접")) {
+    return {
+      Icon: UsersRound,
+      iconWrap: "border-emerald-200/80 bg-emerald-50 text-emerald-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+      wash: "from-emerald-100/40",
+    };
+  }
+  if (name.includes("자소서") || name.includes("피드백")) {
+    return {
+      Icon: FileEdit,
+      iconWrap: "border-amber-200/80 bg-amber-50 text-amber-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+      wash: "from-amber-100/40",
+    };
+  }
+  return {
+    Icon: LayoutGrid,
+    iconWrap: "border-slate-200/80 bg-slate-50 text-slate-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+    wash: "from-slate-100/40",
+  };
+};
+
 const container = {
   hidden: { opacity: 0 },
   show: {
@@ -37,51 +74,6 @@ const item = {
     transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
   },
 };
-
-const boardShortcutCards: readonly {
-  title: string;
-  description: string;
-  Icon: LucideIcon;
-  iconWrap: string;
-  wash: string;
-}[] = [
-  {
-    title: "자유 게시판",
-    description:
-      "취업 준비의 고단함부터 소소한 일상까지, 우리들만의 솔직한 이야기를 나누는 공간입니다.",
-    Icon: MessageCircle,
-    iconWrap:
-      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-blue-100/40",
-  },
-  {
-    title: "취업 공고",
-    description:
-      "꿈을 향한 첫걸음, 최신 채용 공고를 확인하고 당신의 커리어를 시작하세요.",
-    Icon: Briefcase,
-    iconWrap:
-      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-blue-100/35",
-  },
-  {
-    title: "자소서 피드백",
-    description:
-      "혼자 쓰면 막막한 자기소개서, 합격 선배와 동료들의 꼼꼼한 첨삭으로 완성도를 높여보세요.",
-    Icon: FileEdit,
-    iconWrap:
-      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-blue-100/35",
-  },
-  {
-    title: "멘토링",
-    description:
-      "현직자의 생생한 직무 조언부터 커리어 로드맵까지, 앞서간 선배들의 노하우를 직접 들어보세요.",
-    Icon: UsersRound,
-    iconWrap:
-      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-blue-100/35",
-  },
-];
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
@@ -112,7 +104,6 @@ export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col bg-white">
       <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-16 lg:pt-24">
-        {/* 배경 장식 요소 추가 (선택사항) */}
         <div className="absolute left-1/2 top-0 -z-10 h-[600px] w-full -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_0%,rgba(37,99,235,0.08)_0%,rgba(255,255,255,0)_100%)]" />
         
         <m.div
@@ -147,7 +138,7 @@ export default function HomePage() {
                   href="/signup"
                   className="inline-flex h-13 items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 active:scale-95"
                 >
-                  무료로 시작하기
+                  시작하기
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
@@ -256,7 +247,7 @@ export default function HomePage() {
           </m.div>
         </m.div>
       </section>
-      {/* BOARDS SECTION: 입체적인 버튼 디자인 */}
+
       <section id="boards" className="scroll-mt-20 bg-slate-50/50 px-4 pb-32 pt-24 sm:px-6">
         <div className="mx-auto max-w-6xl">
           <div className="mb-16 flex flex-col items-center text-center sm:items-start sm:text-left">
@@ -283,53 +274,52 @@ export default function HomePage() {
             variants={container}
             className="grid gap-8 sm:grid-cols-2"
           >
-            {boardShortcutCards.map((card, idx) => {
-              const linkedBoard = boards[idx];
-              const canLink = boardsReady && !err && linkedBoard !== undefined;
-
-              return (
-                <m.div key={card.title} variants={item}>
-                  <article className="group relative flex h-full flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white p-10 transition-all duration-300 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-900/5">
-                    <div className={`absolute inset-0 bg-gradient-to-br ${card.wash} to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100`} />
-                    
-                    <div className="relative mb-8 flex items-start justify-between">
-                      <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${card.iconWrap}`}>
-                        <card.Icon className="h-7 w-7" strokeWidth={2} />
+            {boardsReady ? (
+              boards.map((board, idx) => {
+                const theme = getBoardTheme(board.boardName);
+                return (
+                  <m.div key={board.id} variants={item}>
+                    <article className="group relative flex h-full flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white p-10 transition-all duration-300 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-900/5">
+                      <div className={`absolute inset-0 bg-gradient-to-br ${theme.wash} to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100`} />
+                      
+                      <div className="relative mb-8 flex items-start justify-between">
+                        <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${theme.iconWrap}`}>
+                          <theme.Icon className="h-7 w-7" strokeWidth={2} />
+                        </div>
+                        <span className="text-4xl font-black text-slate-100 transition-colors group-hover:text-blue-100">
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
                       </div>
-                      <span className="text-4xl font-black text-slate-100 transition-colors group-hover:text-blue-100">
-                        {String(idx + 1).padStart(2, "0")}
-                      </span>
-                    </div>
 
-                    <div className="relative flex-1">
-                      <h3 className="text-2xl font-black tracking-tight text-slate-900">{card.title}</h3>
-                      <p className="mt-4 text-base font-medium leading-relaxed text-slate-500">{card.description}</p>
-                    </div>
+                      <div className="relative flex-1">
+                        <h3 className="text-2xl font-black tracking-tight text-slate-900">{board.boardName}</h3>
+                        <p className="mt-4 text-base font-medium leading-relaxed text-slate-500">
+                          {board.description || "새로운 시그널을 확인하고 동료들과 소통해 보세요."}
+                        </p>
+                      </div>
 
-                    <div className="relative mt-10">
-                      {canLink ? (
+                      <div className="relative mt-10">
                         <Link
-                          href={`/boards/${linkedBoard.id}/posts`}
+                          href={`/boards/${board.id}/posts`}
                           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4.5 text-sm font-bold text-white transition-all hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200"
                         >
                           입장하기
                           <ArrowRight className="h-4 w-4" />
                         </Link>
-                      ) : (
-                        <div className="flex w-full items-center justify-center rounded-2xl bg-slate-100 py-4.5 text-sm font-bold text-slate-400">
-                          {err ? "연결 불가" : "준비 중..."}
-                        </div>
-                      )}
-                    </div>
-                  </article>
-                </m.div>
-              );
-            })}
+                      </div>
+                    </article>
+                  </m.div>
+                );
+              })
+            ) : (
+              // 데이터 로딩 중 스켈레톤
+              [1, 2, 3, 4].map((n) => (
+                <div key={n} className="h-80 animate-pulse rounded-[2.5rem] bg-slate-100" />
+              ))
+            )}
           </m.div>
         </div>
       </section>
-
-     
 
       <section
         id="community"
@@ -338,31 +328,18 @@ export default function HomePage() {
         <div className="mx-auto max-w-6xl">
           <h2 className="text-xl font-bold text-neutral-900">시그널 피드</h2>
           <p className="mt-2 max-w-2xl text-neutral-600">
-            인기 글·실시간 알림은 API와 연동되면 이 영역에 표시됩니다. 합격시그널
-            메인에서 보여 줄 레이아웃만 준비된 상태입니다.
+            인기 글·실시간 알림은 API와 연동되면 이 영역에 표시됩니다.
           </p>
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <GlassPanel className="p-6">
-              <p className="text-sm font-semibold text-neutral-500">
-                오늘 많이 본 글
-              </p>
-              <p className="mt-2 text-lg font-semibold text-neutral-900">
-                면접·자소서 인기글
-              </p>
-              <p className="mt-2 text-sm text-neutral-600">
-                게시글 목록 API 연동 후 자동으로 채워집니다.
-              </p>
+              <p className="text-sm font-semibold text-neutral-500">오늘 많이 본 글</p>
+              <p className="mt-2 text-lg font-semibold text-neutral-900">면접·자소서 인기글</p>
+              <p className="mt-2 text-sm text-neutral-600">게시글 목록 API 연동 후 자동으로 채워집니다.</p>
             </GlassPanel>
             <GlassPanel className="p-6">
-              <p className="text-sm font-semibold text-neutral-500">
-                방금 올라온 이야기
-              </p>
-              <p className="mt-2 text-lg font-semibold text-neutral-900">
-                새 글 피드
-              </p>
-              <p className="mt-2 text-sm text-neutral-600">
-                알림(SSE) 연결 시 실시간으로 갱신할 수 있어요.
-              </p>
+              <p className="text-sm font-semibold text-neutral-500">방금 올라온 이야기</p>
+              <p className="mt-2 text-lg font-semibold text-neutral-900">새 글 피드</p>
+              <p className="mt-2 text-sm text-neutral-600">알림(SSE) 연결 시 실시간으로 갱신할 수 있어요.</p>
             </GlassPanel>
           </div>
         </div>

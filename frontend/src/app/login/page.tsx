@@ -189,14 +189,14 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setFindOpen(true)}
-                  className="h-12 rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-800 hover:bg-blue-50"
+                  className="h-12 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 hover:bg-blue-50"
                 >
                   아이디 찾기
                 </button>
                 <button
                   type="button"
                   onClick={() => setResetOpen(true)}
-                  className="h-12 rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-800 hover:bg-blue-50"
+                  className="h-12 rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-gray-800 hover:bg-blue-50"
                 >
                   비밀번호 재설정
                 </button>

@@ -3,6 +3,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { XMarkIcon, BellAlertIcon } from '@heroicons/react/24/outline';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { apiUrl } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -18,11 +20,12 @@ const NotificationContext = createContext({
 export const NotificationProvider = ({ children }: { children: React.ReactNode }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    // 백엔드 주소 확인 (8080)
-    const eventSource = new EventSource('http://localhost:8080/subscribe', { withCredentials: true });
+    if (loading || !user) return;
 
+    const eventSource = new EventSource(apiUrl('http://localhost:8080/subscribe'), { withCredentials: true });
     eventSource.onmessage = (event) => {
       // SseEmitter에서 더미 데이터를 보낼 때 "connected!" 같은 문자열이 올 수 있으므로 예외처리
       if (!event.data.includes('{')) return;
@@ -65,7 +68,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
     };
 
     return () => eventSource.close();
-  }, []);
+  }, [loading, user]);
 
   const removeNotification = (id: string) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
