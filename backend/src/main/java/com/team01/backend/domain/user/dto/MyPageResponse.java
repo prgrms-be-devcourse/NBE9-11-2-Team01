@@ -14,4 +14,5 @@ public class MyPageResponse {
     private String nickname;     // 사용자 활동 닉네임
     private String profileImage; // 사용자 프로필 이미지 경로
     private String role;         // 사용자 권한 (USER 또는 ADMIN)
+    private LocalDateTime createdAt; // [수정] UserService의 요청을 수용하기 위한 필드 추가
 }
