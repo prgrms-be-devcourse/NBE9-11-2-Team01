@@ -45,9 +45,6 @@ src/main/generated/
 
 ### PASSWORD KEY ###
 application-secret.yaml
-<<<<<<< HEAD
-application-*-secret.yaml
-=======
 application-*-secret.yaml
 application-mail.yaml
->>>>>>> e44cb97959a3d163b2498fe80b9d092e6678a340
+

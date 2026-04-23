@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
  * [최종 업데이트] 환경별 보안 설정 및 이메일 인증 기능이 통합되었습니다.
  */
 @RestController
-@RequestMapping("auth")
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
 
