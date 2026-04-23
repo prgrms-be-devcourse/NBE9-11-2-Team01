@@ -90,9 +90,9 @@ public class BaseInitData {
         if(boardService.count() > 0){
             return;
         }
-        boardService.createBoard("name1", "description1");
-        boardService.createBoard("name2", "description2");
-        boardService.createBoard("name3", "description3");
+        boardService.createBoard("자유게시판", "취업 준비의 고단함부터 소소한 일상까지, 우리들만의 솔직한 이야기를 나누는 공간입니다.");
+        boardService.createBoard("취업 공고", "꿈을 향한 첫걸음, 최신 채용 공고를 확인하고 당신의 커리어를 시작하세요.");
+        boardService.createBoard("자소서 피드백", "혼자 쓰면 막막한 자기소개서, 합격 선배와 동료들의 꼼꼼한 첨삭으로 완성도를 높여보세요.");
 
         //4번 게시판 삭제
         boardService.createBoard("name4", "description4");
