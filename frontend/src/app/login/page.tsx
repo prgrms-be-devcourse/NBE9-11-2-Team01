@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { Loader2, X } from "lucide-react";
-import { apiPostJson, apiPutJson } from "@/lib/api";
+import { apiPostEmpty, apiPostJson } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { GlassPanel } from "@/components/shell/GlassPanel";
 
@@ -29,8 +29,11 @@ function LoginForm() {
 
   const [resetOpen, setResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [resetPw, setResetPw] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
+  const [resetSendBusy, setResetSendBusy] = useState(false);
+  const [resetErr, setResetErr] = useState("");
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,7 +49,7 @@ function LoginForm() {
     setLoading(true);
     try {
       await apiPostJson<unknown, { email: string; password: string }>(
-        "/api/auth/login",
+        "/auth/login",
         { email: email.trim(), password },
       );
       await refresh();
@@ -64,10 +67,10 @@ function LoginForm() {
     setFindBusy(true);
     try {
       const r = await apiPostJson<string, { nickname: string }>(
-        "/api/auth/find-id",
+        "/auth/find-id",
         { nickname: findNick.trim() },
       );
-      setFindResult(r.data ?? "");
+      setFindResult(String(r.data ?? r.code ?? ""));
     } catch (err) {
       setFindResult(
         err instanceof Error ? err.message : "아이디를 찾을 수 없습니다.",
@@ -77,20 +80,47 @@ function LoginForm() {
     }
   }
 
+  async function sendResetCode() {
+    setResetErr("");
+    if (!EMAIL_RE.test(resetEmail.trim())) return;
+    setResetSendBusy(true);
+    try {
+      await apiPostEmpty<unknown>(
+        `/auth/send-verification?email=${encodeURIComponent(resetEmail.trim())}`,
+      );
+    } catch (err) {
+      setResetErr(
+        err instanceof Error ? err.message : "인증 코드 발송에 실패했습니다.",
+      );
+    } finally {
+      setResetSendBusy(false);
+    }
+  }
+
   async function doReset() {
-    setError("");
-    if (!EMAIL_RE.test(resetEmail.trim()) || resetPw.length < 4) return;
+    setResetErr("");
+    if (
+      !EMAIL_RE.test(resetEmail.trim()) ||
+      resetPw.length < 8 ||
+      !resetCode.trim()
+    )
+      return;
     setResetBusy(true);
     try {
-      await apiPutJson<unknown, { email: string; newPassword: string }>(
-        "/api/auth/reset-password",
-        { email: resetEmail.trim(), newPassword: resetPw },
-      );
+      await apiPostJson<
+        unknown,
+        { email: string; verificationCode: string; newPassword: string }
+      >("/auth/reset-password", {
+        email: resetEmail.trim(),
+        verificationCode: resetCode.trim(),
+        newPassword: resetPw,
+      });
       setResetOpen(false);
       setResetEmail("");
+      setResetCode("");
       setResetPw("");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "재설정에 실패했습니다.");
+      setResetErr(err instanceof Error ? err.message : "재설정에 실패했습니다.");
     } finally {
       setResetBusy(false);
     }
@@ -275,7 +305,7 @@ function LoginForm() {
                 </button>
               </div>
               <p className="mt-2 text-sm text-neutral-600">
-                이메일과 새 비밀번호를 입력하세요.
+                이메일로 인증번호를 받은 뒤, 인증번호와 새 비밀번호를 입력하세요.
               </p>
               <input
                 type="email"
@@ -284,13 +314,32 @@ function LoginForm() {
                 placeholder="이메일"
                 className={`${inputClass} mt-4`}
               />
+              <button
+                type="button"
+                disabled={resetSendBusy}
+                onClick={() => void sendResetCode()}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 bg-neutral-50 py-3 text-sm font-semibold text-neutral-900 disabled:opacity-50"
+              >
+                {resetSendBusy && <Loader2 className="h-4 w-4 animate-spin" />}
+                인증번호 받기
+              </button>
+              <input
+                value={resetCode}
+                onChange={(e) => setResetCode(e.target.value)}
+                placeholder="이메일로 받은 인증번호"
+                className={`${inputClass} mt-3`}
+                autoComplete="one-time-code"
+              />
               <input
                 type="password"
                 value={resetPw}
                 onChange={(e) => setResetPw(e.target.value)}
-                placeholder="새 비밀번호 (4자 이상)"
+                placeholder="새 비밀번호 (8자 이상)"
                 className={`${inputClass} mt-3`}
               />
+              {resetErr && (
+                <p className="mt-3 text-sm text-neutral-700">{resetErr}</p>
+              )}
               <button
                 type="button"
                 disabled={resetBusy}
