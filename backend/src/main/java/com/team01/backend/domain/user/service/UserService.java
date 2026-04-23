@@ -36,6 +36,7 @@ public class UserService {
                 .email(user.getEmail())
                 .nickname(user.getNickname())
                 .profileImage(user.getProfileImage())
+                .createdAt(user.getCreatedAt())
                 .role(user.getRole().name())
                 .build();
     }
