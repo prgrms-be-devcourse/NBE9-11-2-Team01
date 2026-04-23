@@ -1,3 +1,5 @@
+# 메인 설정 파일
+
 spring:
   application:
     name: backend
@@ -25,6 +27,12 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
 
+  # 1. 설정 임포트 (외부 설정 파일 불러오기)
+  config:
+    import:
+        - classpath:application-secret.yaml  # optional 제거
+        - classpath:application-mail.yaml    # optional 제거
+
 
 # Swagger UI 활성화
 springdoc:
@@ -34,11 +42,12 @@ springdoc:
     enabled: true
 
 
-# [신규 추가] JWT 보안 설정을 위한 비밀키
-jwt:
-  secret: "human-evolution-project-secret-key-for-jwt-token-2026"
 
 
+  # 2. 이메일 발송용 설정
 
 
-
+# 4. 기타 설정 (spring 블록 밖)
+custom:
+  cookie:
+    secure: ${COOKIE_SECURE:true} # 환경 변수가 없으면 기본값 true
