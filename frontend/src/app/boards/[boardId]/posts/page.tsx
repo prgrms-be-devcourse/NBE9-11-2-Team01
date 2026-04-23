@@ -66,6 +66,7 @@ export default function PostListPage() {
   const boardId = params.boardId;
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [top5Posts, setTop5Posts] = useState<Post[]>([]);
 
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const keyword = searchParams.get("keyword")?.trim() ?? "";
@@ -159,6 +160,22 @@ export default function PostListPage() {
   }, [fetchPosts]);
 
   useEffect(() => {
+  const fetchTop5 = async () => {
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/posts/top5`, {
+        credentials: "include",
+      });
+      if (!res.ok) return;
+      const json = (await res.json()) as ApiResponse<Post[]>;
+      if (json.success) setTop5Posts(json.data ?? []);
+    } catch {
+      // 무시
+    }
+  };
+  fetchTop5();
+}, [boardId]);
+
+  useEffect(() => {
     const fetchBoardName = async () => {
       try {
         const res = await fetch(`${getApiBaseUrl()}/boards`, {
@@ -189,18 +206,23 @@ export default function PostListPage() {
     return Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
   }, [postPage]);
 
-  const categories = useMemo(() => {
-    const source = postPage?.posts ?? [];
-    const dedup = new Map<number, string>();
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
-    source.forEach((post) => {
-      if (!dedup.has(post.categoryId)) {
-        dedup.set(post.categoryId, post.categoryName);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/categories`, {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as ApiResponse<{ id: number; name: string }[]>;
+        if (json.success) setCategories(json.data);
+      } catch {
+        // 카테고리 조회 실패는 무시
       }
-    });
-
-    return Array.from(dedup.entries()).map(([id, name]) => ({ id, name }));
-  }, [postPage]);
+    };
+    fetchCategories();
+  }, [boardId]);
 
   const hasPosts = !!postPage && postPage.posts.length > 0;
 
@@ -274,6 +296,42 @@ export default function PostListPage() {
             </div>
           </div>
         </header>
+
+        {top5Posts.length > 0 && (
+          <section className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="border-b border-gray-100 px-5 py-3">
+              <p className="text-sm font-bold text-gray-900">🔥 인기글 Top5</p>
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {top5Posts.map((post, index) => (
+                <li key={post.id} className="group transition-colors hover:bg-yellow-50/50">
+                  <Link
+                    href={`/posts/${post.id}`}
+                    className="flex items-center gap-4 px-5 py-3"
+                  >
+                    <span className={`text-lg font-bold w-6 shrink-0 ${
+                      index === 0 ? "text-yellow-500" :
+                      index === 1 ? "text-gray-400" :
+                      index === 2 ? "text-amber-600" : "text-gray-300"
+                    }`}>
+                      {index + 1}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-gray-900 group-hover:text-gray-600">
+                        {post.title}
+                      </p>
+                      <p className="mt-0.5 text-xs text-gray-400">{post.categoryName}</p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-1 text-xs text-red-400">
+                      <span>❤️</span>
+                      <span>{post.likeCount}</span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         <section className="grid gap-5 md:grid-cols-[200px_1fr]">
 

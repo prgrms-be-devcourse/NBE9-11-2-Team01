@@ -108,18 +108,19 @@ public class BaseInitData {
 
         Board board = boardRepository.findById(1L)
                 .orElseThrow(() -> new RuntimeException("Board not found"));
-        Category category = categoryRepository.findById(1L)
+        Category category1 = categoryRepository.findById(1L)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        Category category2 = categoryRepository.findById(2L)
+                .orElseThrow(() -> new RuntimeException("Category not found"));
+        Category category3 = categoryRepository.findById(3L)
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
-        Post post1 = new Post(author1, "첫 번째 게시글입니다.", "내용 1", board, category);
-        postRepository.save(post1);
-
-        Post post2 = new Post(author2, "두 번째 게시글입니다.", "내용 2", board, category);
-        postRepository.save(post2);
-
-
-        Post post3 = new Post(author2, "세 번째 게시글입니다.", "내용 3", board, category);
-        postRepository.save(post3);
+        postRepository.save(new Post(author1, "첫 번째 게시글입니다.", "내용 1", board, category1));
+        postRepository.save(new Post(author2, "두 번째 게시글입니다.", "내용 2", board, category1));
+        postRepository.save(new Post(author2, "세 번째 게시글입니다.", "내용 3", board, category2));
+        postRepository.save(new Post(author1, "네 번째 게시글입니다.", "내용 4", board, category2));
+        postRepository.save(new Post(author1, "다섯 번째 게시글입니다.", "내용 5", board, category3));
+        postRepository.save(new Post(author2, "여섯 번째 게시글입니다.", "내용 6", board, category3));
     }
 
     @Transactional

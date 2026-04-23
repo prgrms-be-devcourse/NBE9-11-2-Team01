@@ -40,8 +40,8 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<Void>> login(@Valid @RequestBody LoginRequest request, HttpServletResponse response) {
         TokenDto tokenDto = authService.login(request);
-        setCookie(response, "accessToken", tokenDto.getAccessToken(), 60 * 60);
-        setCookie(response, "refreshToken", tokenDto.getRefreshToken(), 14 * 24 * 60 * 60);
+        setCookie(response, "accessToken", tokenDto.getAccessToken(), 15 * 60);        // 15분
+        setCookie(response, "refreshToken", tokenDto.getRefreshToken(), 7 * 24 * 60 * 60); // 7일
         return ResponseEntity.ok(new ApiResponse<>(true, null, "로그인 완료", null));
     }
 
@@ -65,7 +65,7 @@ public class AuthController {
      */
     @PostMapping("/find-id")
     public ResponseEntity<ApiResponse<String>> findId(@Valid @RequestBody FindIdRequest request) {
-        return ResponseEntity.ok(new ApiResponse<>(true, authService.findId(request), "아이디 찾기 완료", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, null, "아이디 찾기 완료", authService.findId(request)));
     }
 	
 
