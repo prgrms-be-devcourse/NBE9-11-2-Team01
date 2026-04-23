@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * API의 일관성과 유지보수 용이성을 확보하였습니다.
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 @RequiredArgsConstructor
 public class UserController {
 

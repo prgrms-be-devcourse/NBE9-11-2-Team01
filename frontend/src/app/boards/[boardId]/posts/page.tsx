@@ -6,11 +6,18 @@
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { KeyboardEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { profileImageUrl } from "@/lib/profileImage";
+
+type Board = {
+  id: number;
+  boardName: string;
+};
 
 type Post = {
   id: number;
   title: string;
   author: string;
+  profileImage: string | null;
   categoryId: number;
   categoryName: string;
   likeCount: number;
@@ -63,31 +70,37 @@ export default function PostListPage() {
   const page = Math.max(1, Number(searchParams.get("page") ?? "1") || 1);
   const keyword = searchParams.get("keyword")?.trim() ?? "";
   const categoryId = searchParams.get("categoryId")?.trim() ?? "";
-  const sort = searchParams.get("sort") ?? "latest"; // sort 변수 추가
 
+  const [boardName, setBoardName] = useState("");
   const [searchInput, setSearchInput] = useState(keyword);
+  const sort = searchParams.get("sort")?.trim() ?? "latest";
   const [postPage, setPostPage] = useState<PostPage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [boardName, setBoardName] = useState("");
 
   const updateQuery = useCallback(
     (next: { page?: number; keyword?: string; categoryId?: string; sort?: string }) => {
       const nextPage = next.page ?? page;
-      const nextKeyword = next.keyword !== undefined ? next.keyword : keyword;
-      const nextCategoryId = next.categoryId !== undefined ? next.categoryId : categoryId;
-      const nextSort = next.sort ?? sort;
+      const nextKeyword = next.keyword ?? keyword;
+      const nextCategoryId = next.categoryId ?? categoryId;
 
       const query = new URLSearchParams();
       query.set("page", String(Math.max(1, nextPage)));
 
-      if (nextKeyword) query.set("keyword", nextKeyword);
-      if (nextCategoryId) query.set("categoryId", nextCategoryId);
-      if (nextSort) query.set("sort", nextSort);
+      const nextSort = next.sort ?? sort;
+      query.set("sort", nextSort);
+
+      if (nextKeyword) {
+        query.set("keyword", nextKeyword);
+      }
+
+      if (nextCategoryId) {
+        query.set("categoryId", nextCategoryId);
+      }
 
       router.push(`/boards/${boardId}/posts?${query.toString()}`);
     },
-    [boardId, categoryId, keyword, page, router, sort]
+    [boardId, categoryId, keyword, page, router, sort],
   );
 
   const fetchPosts = useCallback(async () => {
@@ -96,10 +109,15 @@ export default function PostListPage() {
 
     try {
       const query = new URLSearchParams();
-      query.set("page", String(page - 1)); // API가 0-based index일 경우를 대비 (필요시 수정)
-      if (keyword) query.set("keyword", keyword);
-      if (categoryId) query.set("categoryId", categoryId);
-      if (sort) query.set("sort", sort);
+      query.set("page", String(page));
+      if (keyword) {
+        query.set("keyword", keyword);
+      }
+      if (categoryId) {
+        query.set("categoryId", categoryId);
+      }
+
+      query.set("sort", sort);
 
       const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/posts?${query.toString()}`, {
         method: "GET",
@@ -130,7 +148,7 @@ export default function PostListPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [boardId, categoryId, keyword, page, sort]);
+}, [boardId, categoryId, keyword, page, sort]);
 
   useEffect(() => {
     setSearchInput(keyword);
@@ -140,8 +158,29 @@ export default function PostListPage() {
     fetchPosts();
   }, [fetchPosts]);
 
+  useEffect(() => {
+    const fetchBoardName = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/boards`, {
+          method: "GET",
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as ApiResponse<Board[]>;
+        if (!json.success) return;
+        const found = json.data.find((b) => String(b.id) === boardId);
+        if (found) setBoardName(found.boardName);
+      } catch {
+        // 게시판명 조회 실패는 무시
+      }
+    };
+    fetchBoardName();
+  }, [boardId]);
+
   const pageNumbers = useMemo(() => {
-    if (!postPage || postPage.totalPages <= 0) return [];
+    if (!postPage || postPage.totalPages <= 0) {
+      return [] as number[];
+    }
 
     const groupIndex = Math.floor((postPage.currentPage - 1) / PAGE_GROUP_SIZE);
     const start = groupIndex * PAGE_GROUP_SIZE + 1;
@@ -174,6 +213,7 @@ export default function PostListPage() {
   return (
     <div className="min-h-screen bg-blue-50/40 px-4 py-8">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
+
         <header className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
           <div className="mb-4">
             <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시글 목록</p>
@@ -207,7 +247,7 @@ export default function PostListPage() {
                   onClick={() => updateQuery({ page: 1, keyword: "" })}
                   className="h-10 rounded-xl border border-gray-200 px-4 text-sm text-gray-500 transition-colors hover:bg-blue-50"
                 >
-                  검색 초기화
+                  초기화
                 </button>
               )}
             </div>
@@ -235,14 +275,15 @@ export default function PostListPage() {
           </div>
         </header>
 
-        <section className="grid gap-6 md:grid-cols-[220px_1fr]">
-          <aside className="rounded-xl border border-zinc-200 bg-white p-4 h-fit">
-            <p className="mb-3 text-sm font-semibold text-zinc-700">카테고리</p>
+        <section className="grid gap-5 md:grid-cols-[200px_1fr]">
+
+          <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">카테고리</p>
             <div className="flex flex-col gap-1">
               <button
                 type="button"
                 onClick={() => updateQuery({ page: 1, categoryId: "" })}
-                className={`rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium transition-colors ${
                   !categoryId ? "bg-black text-white" : "text-gray-600 hover:bg-blue-50"
                 }`}
               >
@@ -251,54 +292,67 @@ export default function PostListPage() {
               {categories.map((category) => {
                 const active = categoryId === String(category.id);
                 return (
-                  <button
+                  <Link
                     key={category.id}
-                    type="button"
-                    onClick={() => updateQuery({ page: 1, categoryId: String(category.id) })}
-                    className={`rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors ${
+                    href={`/boards/${boardId}/categories/${category.id}/posts`}
+                    className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                       active ? "bg-black text-white" : "text-gray-600 hover:bg-blue-50"
                     }`}
                   >
                     {category.name}
-                  </button>
+                  </Link>
                 );
               })}
             </div>
-            <p className="mt-4 text-[10px] leading-relaxed text-zinc-400">* 현재 페이지 데이터 기준 카테고리 노출</p>
           </aside>
 
-          <div className="rounded-xl border border-zinc-200 bg-white p-4">
-            <div className="mb-4 flex items-center justify-between text-sm text-zinc-500">
-              <span>총 {postPage?.totalElements ?? 0}개</span>
-              <span>페이지 {postPage?.currentPage ?? page}</span>
+          <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-gray-100 px-5 py-3">
+              <span className="text-sm text-gray-500">
+                총 <span className="font-semibold text-gray-900">{postPage?.totalElements ?? 0}</span>개
+              </span>
+              <span className="text-sm text-gray-400">
+                {postPage?.currentPage ?? page} / {postPage?.totalPages ?? 1} 페이지
+              </span>
             </div>
 
             {errorMessage && (
-              <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              <div className="m-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                 {errorMessage}
               </div>
             )}
 
             {isLoading ? (
-              <div className="py-12 text-center text-sm text-zinc-400">로딩 중...</div>
+              <div className="py-20 text-center text-sm text-gray-400">불러오는 중...</div>
             ) : !hasPosts ? (
-              <div className="py-12 text-center text-sm text-zinc-400">게시글이 없습니다.</div>
+              <div className="py-20 text-center text-sm text-gray-400">게시글이 없습니다.</div>
             ) : (
-              <ul className="divide-y divide-zinc-200 border-y border-zinc-200">
-                {postPage?.posts.map((post) => (
-                  <li key={post.id} className="group transition-colors hover:bg-blue-50/50">
+              <ul className="divide-y divide-gray-100">
+                {postPage.posts.map((post) => (
+                  <li key={post.id} className="group transition-colors hover:bg-gray-50">
                     <Link
-                      href={`/boards/${boardId}/posts/${post.id}`}
-                      className="flex items-center justify-between gap-4 px-3 py-4"
+                      href={`/posts/${post.id}`}
+                      className="flex items-center justify-between gap-4 px-5 py-4"
                     >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-zinc-900 group-hover:text-blue-600">{post.title}</p>
-                        <p className="mt-1 text-xs text-zinc-500">{post.categoryName}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-semibold text-gray-900 transition-colors group-hover:text-gray-600">
+                          {post.title}
+                        </p>
+                        <p className="mt-1 text-xs text-gray-400">{post.categoryName}</p>
                       </div>
-                      <div className="shrink-0 text-right text-xs text-zinc-500">
-                        <p className="font-medium text-zinc-700">{post.author}</p>
-                        <p>👍 {post.likeCount}</p>
-                        <p>{formatDate(post.createdAt)}</p>
+                      <div className="shrink-0 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <img src={profileImageUrl(post.profileImage)} alt={post.author} className="h-6 w-6 rounded-full object-cover" />
+                          <p className="text-sm font-medium text-gray-700">{post.author}</p>
+                        </div>
+                        <div className="mt-1 flex items-center justify-end gap-2 text-xs text-gray-400">
+                          <span className="flex items-center gap-1">
+                          <span>❤️</span>
+                          <span>좋아요 {post.likeCount}</span>
+                        </span>
+                          <span>·</span>
+                          <span>{formatDate(post.createdAt)}</span>
+                        </div>
                       </div>
                     </Link>
                   </li>
@@ -306,12 +360,12 @@ export default function PostListPage() {
               </ul>
             )}
 
-            <div className="mt-6 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between border-t border-gray-100 px-5 py-4">
+              <div className="flex items-center gap-1">
                 <button
                   type="button"
                   disabled={!postPage || postPage.currentPage <= 1}
-                  onClick={() => updateQuery({ page: page - 1 })}
+                  onClick={() => updateQuery({ page: Math.max(1, page - 1) })}
                   className="rounded-xl border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   이전
@@ -323,7 +377,7 @@ export default function PostListPage() {
                       key={number}
                       type="button"
                       onClick={() => updateQuery({ page: number })}
-                      className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
+                      className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
                         active ? "bg-black text-white" : "border border-gray-200 text-gray-600 hover:bg-blue-50"
                       }`}
                     >
@@ -342,7 +396,7 @@ export default function PostListPage() {
               </div>
 
               <Link
-                href={`/boards/${boardId}/write`}
+                href={`/posts/write?boardId=${boardId}`}
                 className="rounded-xl border border-black bg-black px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
               >
                 ✏️ 글쓰기

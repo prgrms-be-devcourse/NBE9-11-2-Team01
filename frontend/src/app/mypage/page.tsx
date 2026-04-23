@@ -31,7 +31,7 @@ export default function MyPage() {
 
   const load = useCallback(async () => {
     try {
-      const r = await apiGet<MyPageUser>("/api/users/me");
+      const r = await apiGet<MyPageUser>("/users/me");
       const u = r.data ?? null;
       setUser(u);
       if (u) {
@@ -83,13 +83,13 @@ export default function MyPage() {
     try {
       if (pendingImageData) {
         await apiPutJson<unknown, { profileImage: string }>(
-          "/api/users/me/profile-image",
+          "/users/me/profile-image",
           { profileImage: pendingImageData },
         );
         setPendingImageData(null);
       }
       await apiPutJson<unknown, { nickname: string; newPassword?: string }>(
-        "/api/users/me/info",
+        "/users/me/info",
         {
           nickname: nickname.trim(),
           ...(newPassword ? { newPassword } : {}),
@@ -110,7 +110,7 @@ export default function MyPage() {
   const withdraw = async () => {
     if (!confirm("정말 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.")) return;
     try {
-      await apiDelete("/api/auth/withdraw");
+      await apiDelete("/auth/withdraw");
       await logout();
       router.replace("/");
     } catch (err) {

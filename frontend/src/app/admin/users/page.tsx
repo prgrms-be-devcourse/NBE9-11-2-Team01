@@ -103,10 +103,10 @@ export default function UserManagementPage() {
                     <td className="px-6 py-3 font-bold text-gray-800 truncate text-sm">{user.nickname}</td>
                     <td className="px-6 py-3 text-sm text-gray-500 truncate">{user.email}</td>
                     <td className="px-6 py-3 text-center">
-                      <span className={`inline-block min-w-[70px] px-2 py-1 rounded-xl text-[10px] font-black border ${
-                        user.role === 'ADMIN' ? 'bg-blue-50 text-blue-700 border-blue-200' : 
-                        user.role === 'MANAGER' ? 'bg-blue-50 text-blue-600 border-blue-200' : 
-                        'bg-gray-50 text-gray-600 border-gray-200'
+                      <span className={`inline-block min-w-[70px] px-2 py-1 rounded-md text-[10px] font-black border ${
+                        user.role === 'ADMIN' ? 'bg-purple-50 text-purple-600 border-purple-100' : 
+                        user.role === 'MANAGER' ? 'bg-blue-50 text-blue-600 border-blue-100' : 
+                        'bg-gray-50 text-gray-500 border-gray-200'
                       }`}>
                         {user.role}
                       </span>

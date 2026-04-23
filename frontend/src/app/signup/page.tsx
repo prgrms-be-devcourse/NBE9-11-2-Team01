@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useRef, useState } from "react";
 import { m } from "framer-motion";
 import { Check, Loader2, X } from "lucide-react";
-import { apiGet, apiPostJson } from "@/lib/api";
+import { apiPostJson } from "@/lib/api";
 import { GlassPanel } from "@/components/shell/GlassPanel";
 import { profileImageUrl } from "@/lib/profileImage";
 
@@ -23,7 +23,7 @@ export default function SignupPage() {
   const [confirm, setConfirm] = useState("");
   const [profilePreview, setProfilePreview] = useState<string | null>(null);
   const [profileDataUrl, setProfileDataUrl] = useState<string | null>(null);
-  const [emailStatus, setEmailStatus] = useState<"idle" | "ok" | "bad" | "checking">(
+  const [emailStatus, setEmailStatus] = useState<"idle" | "ok" | "bad">(
     "idle",
   );
   const [msg, setMsg] = useState("");
@@ -44,25 +44,17 @@ export default function SignupPage() {
     reader.readAsDataURL(f);
   }, []);
 
-  const checkEmail = async () => {
+  const checkEmail = () => {
     setMsg("");
     if (!EMAIL_RE.test(email.trim())) {
       setMsg("올바른 이메일 형식인지 확인해 주세요.");
       setEmailStatus("bad");
       return;
     }
-    setEmailStatus("checking");
-    try {
-      const r = await apiGet<boolean>(
-        `/api/auth/check-email?email=${encodeURIComponent(email.trim())}`,
-      );
-      const ok = r.data === true;
-      setEmailStatus(ok ? "ok" : "bad");
-      if (!ok) setMsg("이미 사용 중이거나 사용할 수 없는 이메일입니다.");
-    } catch (e) {
-      setEmailStatus("bad");
-      setMsg(e instanceof Error ? e.message : "중복 확인에 실패했습니다.");
-    }
+    setEmailStatus("ok");
+    setMsg(
+      "형식은 올바릅니다. 이메일 중복 여부는 회원가입 시 서버에서 확인됩니다.",
+    );
   };
 
   const submit = async (e: React.FormEvent) => {
@@ -86,7 +78,7 @@ export default function SignupPage() {
     }
     setLoading(true);
     try {
-      await apiPostJson<unknown, Record<string, unknown>>("/api/auth/signup", {
+      await apiPostJson<unknown, Record<string, unknown>>("/auth/signup", {
         email: email.trim(),
         password,
         nickname: nickname.trim(),
@@ -182,11 +174,6 @@ export default function SignupPage() {
                   {emailStatus === "bad" && (
                     <p className="mt-1 flex items-center gap-1 text-xs text-neutral-600">
                       <X className="h-3.5 w-3.5" /> 확인이 필요합니다.
-                    </p>
-                  )}
-                  {emailStatus === "checking" && (
-                    <p className="mt-1 flex items-center gap-1 text-xs text-neutral-500">
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> 확인 중…
                     </p>
                   )}
                 </div>

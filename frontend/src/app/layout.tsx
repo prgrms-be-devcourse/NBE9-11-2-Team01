@@ -1,7 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { NotificationProvider } from "./notifications/NotificationProvider";// 추가
 import { AppShell } from "@/components/shell/AppShell";
 import "./globals.css";
 
@@ -17,11 +18,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "합격시그널 | 취업 준비 커뮤니티",
-  description:
-    "합격시그널 — 취업 준비생을 위한 커뮤니티. 채용·자소서·면접·멘토링 정보를 나누고, 합격까지 함께합니다.",
-  icons: {
-    icon: "/signal-logo.svg",
-  },
+  description: "합격시그널 — 취업 준비생을 위한 커뮤니티...",
+  icons: { icon: "/signal-logo.svg" },
 };
 
 export default function RootLayout({
@@ -36,7 +34,10 @@ export default function RootLayout({
     >
       <body className="min-h-full font-sans">
         <AuthProvider>
-          <AppShell>{children}</AppShell>
+          {/* NotificationProvider로 감싸주어 전역에서 유지되도록 설정 */}
+          <NotificationProvider>
+            <AppShell>{children}</AppShell>
+          </NotificationProvider>
         </AuthProvider>
       </body>
     </html>

@@ -65,29 +65,36 @@ public class CommentService {
 
     // COMMENT-02 댓글(답글) 조회
     @Transactional(readOnly = true)
-    public List<CommentReadResponseDto> getCommentsByPostId(Long postId) {
-        Post post = postRepository.findById(postId)
-                .orElseThrow(() -> new EntityNotFoundException("게시글을 찾을 수 없습니다."));
-        if (post.isDeleted()) {
-            throw new EntityNotFoundException("게시글을 찾을 수 없습니다.");
+    public List<CommentReadResponseDto> getCommentsByPostId(Long postId, String email) {
+        Long userId = null;
+        if (email != null) {
+            userId = userRepository.findByEmail(email)
+                    .map(User::getId)
+                    .orElse(null);
         }
-
+        // 기존 코드 유지
         List<Comment> roots = commentRepository
                 .findByPost_IdAndParentIsNullOrderByCreatedAtAsc(postId);
-        if (roots.isEmpty()) {
-            return List.of();
-        }
+        if (roots.isEmpty()) return List.of();
 
         List<Long> rootIds = roots.stream().map(Comment::getId).toList();
-        List<Comment> allReplies =
-                commentRepository.findByParent_IdInOrderByCreatedAtAsc(rootIds);
+        List<Comment> allReplies = commentRepository.findByParent_IdInOrderByCreatedAtAsc(rootIds);
+
+        // 모든 댓글 ID 수집
+        List<Long> allCommentIds = new java.util.ArrayList<>(rootIds);
+        allReplies.stream().map(Comment::getId).forEach(allCommentIds::add);
+
+        // 좋아요한 댓글 ID Set 조회
+        java.util.Set<Long> likedCommentIds = userId != null
+                ? new java.util.HashSet<>(commentLikeRepository.findLikedCommentIdsByUserId(userId, allCommentIds))
+                : java.util.Collections.emptySet();
+
         Map<Long, List<Comment>> repliesByParentId =
                 allReplies.stream().collect(Collectors.groupingBy(c -> c.getParent().getId()));
-        repliesByParentId.values().forEach(list -> list.sort(Comparator.comparing(Comment::getCreatedAt)));
 
         return roots.stream()
                 .map(root -> CommentReadResponseDto.from(
-                        root, repliesByParentId.getOrDefault(root.getId(), List.of())))
+                        root, repliesByParentId.getOrDefault(root.getId(), List.of()), likedCommentIds))
                 .toList();
     }
 

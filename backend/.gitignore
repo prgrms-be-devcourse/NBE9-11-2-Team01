@@ -33,9 +33,17 @@ out/
 /nbdist/
 /.nb-gradle/
 
+### ENV ###
+.env
+
 ### VS Code ###
 .vscode/
 
 ### Custom ###
 .DS_Store
 src/main/generated/
+
+### PASSWORD KEY ###
+application-secret.yaml
+application-*-secret.yaml
+application-mail.yaml

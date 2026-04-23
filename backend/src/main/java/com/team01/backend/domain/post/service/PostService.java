@@ -14,6 +14,7 @@ import com.team01.backend.domain.post.dto.PostPageResponseDto;
 import com.team01.backend.domain.post.dto.PostResponseDto;
 import com.team01.backend.domain.post.dto.PostSummaryDto;
 import com.team01.backend.domain.post.entity.Post;
+import com.team01.backend.domain.post.repository.PostLikeRepository;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.user.entity.User;
 import com.team01.backend.domain.user.repository.UserRepository;
@@ -48,6 +49,7 @@ public class PostService {
     private final CategoryRepository categoryRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final ObjectMapper objectMapper;
+    private final PostLikeRepository postLikeRepository;
 
     private static final int PAGE_SIZE = 20;
 
@@ -111,14 +113,14 @@ public class PostService {
     }
 
     // 게시판별 게시글 목록 페이징 조회 (키워드 검색, 카테고리 필터 포함)
-    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId, String sort) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        Pageable pageable = toPageable(page);  // 교체
+        Pageable pageable = toPageable(page);
 
         Page<PostResponseDto> postPage = postRepository
-                .searchByBoardId(boardId, keyword, categoryId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable, sort)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
@@ -131,8 +133,6 @@ public class PostService {
 
         validatePost(post);
 
-        List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId);
-
         // JWT 인증된 사용자면 조회, 비로그인(토큰 없음)이면 null
         User currentUser = (email != null)
                 ? userRepository.findByEmail(email).orElse(null)
@@ -141,7 +141,14 @@ public class PostService {
         // 작성자 본인 여부 확인 (비로그인이거나 작성자가 아니면 false)
         boolean isOwner = currentUser != null && post.getAuthor().getId().equals(currentUser.getId());
 
-        return PostDetailResponseDto.of(post, post.getBoard(), post.getCategory(), comments, isOwner);
+        // isLiked 추가
+        boolean isLiked = currentUser != null &&
+                postLikeRepository.findByUserIdAndPostId(currentUser.getId(), postId).isPresent();
+
+        List<CommentReadResponseDto> comments = commentService.getCommentsByPostId(postId,
+                currentUser != null ? currentUser.getEmail() : null);
+
+        return PostDetailResponseDto.of(post, post.getBoard(), post.getCategory(), comments, isOwner, isLiked);
     }
 
     public Optional<Post> findById(Long id) {
@@ -207,7 +214,7 @@ public class PostService {
 
         // categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
         Page<PostResponseDto> postPage = postRepository
-                .searchByBoardId(boardId, keyword, categoryId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable, "latest")
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
