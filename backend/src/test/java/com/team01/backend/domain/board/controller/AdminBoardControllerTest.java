@@ -1,6 +1,7 @@
 package com.team01.backend.domain.board.controller;
 
 import com.team01.backend.global.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -29,16 +30,18 @@ public class AdminBoardControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    //adminToken, user1Token의 경우 실행할 때마다 값이 달라져서 하드로 넣어서 테스트함
-    String adminToken = "";
-    String user1Token = "";
+    Cookie adminCookie;
+    Cookie user1Cookie;
 
     @BeforeEach
     void setToken(){
-        adminToken = jwtTokenProvider.createToken("admin@admin.com", "ROLE_ADMIN");
-        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
-    }
+        String adminAccessToken = jwtTokenProvider.createAccessToken("admin@admin.com", "ROLE_ADMIN");
+        adminCookie = new Cookie("accessToken", adminAccessToken);
 
+        String user1AccessToken = jwtTokenProvider.createAccessToken("user1@test.com", "ROLE_USER");
+        user1Cookie = new Cookie("accessToken",user1AccessToken);
+
+    }
     @Test
     @DisplayName("게시판 생성 테스트")
     void t1() throws  Exception{
@@ -46,7 +49,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -76,7 +79,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -101,7 +104,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -129,7 +132,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -155,7 +158,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -202,7 +205,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/%s".formatted(targetId))
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -227,7 +230,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/2")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -250,7 +253,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/admin/boards/6")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -274,7 +277,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/3")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -288,7 +291,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/6")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -304,7 +307,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         delete("/admin/boards/4")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))
@@ -322,7 +325,7 @@ public class AdminBoardControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         get("/admin/boards")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                 )
                 .andDo(print());
         resultActions.andExpect(handler().handlerType(AdminBoardController.class))

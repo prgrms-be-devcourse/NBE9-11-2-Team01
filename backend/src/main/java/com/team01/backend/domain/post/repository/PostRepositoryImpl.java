@@ -22,7 +22,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
     private final QPost post = QPost.post;
 
     @Override
-    public Page<Post> searchByBoardId(Long boardId, String keyword, Long categoryId, Pageable pageable) {
+    public Page<Post> searchByBoardId(Long boardId, String keyword, Long categoryId, Pageable pageable, String sort) {
         List<Post> posts = queryFactory
                 .selectFrom(post)
                 .join(post.author).fetchJoin()
@@ -33,7 +33,7 @@ public class PostRepositoryImpl implements PostRepositoryCustom {
                         containsKeyword(keyword),
                         eqCategoryId(categoryId)
                 )
-                .orderBy(post.createdAt.desc())
+                .orderBy("likes".equals(sort) ? post.likeCount.desc() : post.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();

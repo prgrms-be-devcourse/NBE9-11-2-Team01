@@ -47,12 +47,21 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 			.authorizeHttpRequests(auth -> auth
+				.requestMatchers("/auth/**").permitAll()      
+				.requestMatchers("/static/images/**").permitAll() // 프로필 이미지 보급로
+				.requestMatchers("/h2-console/**").permitAll()
+				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+				.anyRequest().authenticated()                    // /users/ 등은 인증 필요
+			/*
+			.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/auth/**").permitAll() // /api/auth/** -> /auth/**
 				.requestMatchers(HttpMethod.GET, "/boards/**").permitAll()
+				.requestMatchers("/static/images/**").permitAll() // 프로필 이미지 보급로
 				.requestMatchers("/h2-console/**").permitAll()
 				.requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/admin/**").hasRole("ADMIN")
 				.anyRequest().authenticated()
+				*/
 			)
             .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin))
             .addFilterBefore(new JwtAuthenticationFilter(jwtTokenProvider), UsernamePasswordAuthenticationFilter.class)

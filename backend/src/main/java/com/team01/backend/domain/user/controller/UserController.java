@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
  * API의 일관성과 유지보수 용이성을 확보하였습니다.
  */
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users") // [수정] /api/users에서 /users로 경로를 단일화했습니다.
 @RequiredArgsConstructor
 public class UserController {
 
@@ -53,7 +53,7 @@ public class UserController {
      */
     @PutMapping("/me/profile-image")
     public ResponseEntity<ApiResponse<Void>> updateProfileImage(
-            @RequestBody UserProfileImageRequest request,
+            @Valid @RequestBody UserProfileImageRequest request, // [보안강화] @Valid 추가
             Authentication authentication) {
         
         userService.updateProfileImage(authentication.getName(), request);
