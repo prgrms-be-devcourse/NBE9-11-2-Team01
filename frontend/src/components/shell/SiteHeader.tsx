@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { ChevronDown, LogOut, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { SignalLogo } from "@/components/brand/SignalLogo";
 import { Avatar } from "@/components/profile/Avatar";
@@ -135,6 +135,14 @@ export function SiteHeader() {
                 <LogOut className="h-4 w-4" />
                 로그아웃
               </button>
+              <Link
+                href="/notifications"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-neutral-200 text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
+                aria-label="알림 페이지로 이동"
+                title="알림"
+              >
+                <Bell className="h-5 w-5" />
+              </Link>
             </>
           ) : (
             <>
@@ -214,6 +222,13 @@ export function SiteHeader() {
               <hr className="my-2 border-neutral-200" />
               {!loading && user ? (
                 <>
+                  <Link
+                    href="/notifications"
+                    className="rounded-xl px-3 py-2.5 text-neutral-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    알림
+                  </Link>
                   <Link
                     href="/mypage"
                     className="rounded-xl px-3 py-2.5 font-medium text-neutral-900"
