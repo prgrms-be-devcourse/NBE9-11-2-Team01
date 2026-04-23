@@ -65,7 +65,7 @@ public class AuthController {
      */
     @PostMapping("/find-id")
     public ResponseEntity<ApiResponse<String>> findId(@Valid @RequestBody FindIdRequest request) {
-        return ResponseEntity.ok(new ApiResponse<>(true, authService.findId(request), "아이디 찾기 완료", null));
+        return ResponseEntity.ok(new ApiResponse<>(true, null, "아이디 찾기 완료", authService.findId(request)));
     }
 	
 
