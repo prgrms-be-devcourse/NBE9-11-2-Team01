@@ -33,7 +33,7 @@ public class User {
     @Column(unique = true, nullable = false)
     private String nickname;
 
-    @Column
+    @Column(columnDefinition = "TEXT")
     private String profileImage; // 프로필 이미지 경로 저장 필드
 
     @Enumerated(EnumType.STRING)
@@ -69,7 +69,7 @@ public class User {
     @PrePersist
     public void prePersist() {
         if (this.profileImage == null || this.profileImage.isBlank()) {
-            this.profileImage = "/static/images/default-profile.png";
+            this.profileImage = null;  // null로 두면 프론트에서 기본 이미지 처리
         }
     }
 
