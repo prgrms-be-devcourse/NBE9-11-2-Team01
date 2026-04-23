@@ -111,14 +111,14 @@ public class PostService {
     }
 
     // 게시판별 게시글 목록 페이징 조회 (키워드 검색, 카테고리 필터 포함)
-    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId) {
+    public PostPageResponseDto getPostsByBoardId(Long boardId, int page, String keyword, Long categoryId, String sort) {
         boardRepository.findByIdAndIsDeletedFalse(boardId)
                 .orElseThrow(() -> new EntityNotFoundException("존재하지 않는 게시판입니다."));
 
-        Pageable pageable = toPageable(page);  // 교체
+        Pageable pageable = toPageable(page);
 
         Page<PostResponseDto> postPage = postRepository
-                .searchByBoardId(boardId, keyword, categoryId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable, sort)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
@@ -207,7 +207,7 @@ public class PostService {
 
         // categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
         Page<PostResponseDto> postPage = postRepository
-                .searchByBoardId(boardId, keyword, categoryId, pageable)
+                .searchByBoardId(boardId, keyword, categoryId, pageable, "latest")
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);

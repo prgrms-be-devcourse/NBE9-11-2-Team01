@@ -41,9 +41,10 @@ public class PostController {
             @PathVariable Long boardId,
             @RequestParam(defaultValue = "1") @Min(1) int page,
             @RequestParam(required = false) @Size(max = 50) String keyword,
-            @RequestParam(required = false) Long categoryId
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "latest") String sort
     ) {
-        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId);
+        PostPageResponseDto posts = postService.getPostsByBoardId(boardId, page, keyword, categoryId, sort);
         return ResponseEntity.ok(ApiResponse.ofSuccess(posts));
     }
 

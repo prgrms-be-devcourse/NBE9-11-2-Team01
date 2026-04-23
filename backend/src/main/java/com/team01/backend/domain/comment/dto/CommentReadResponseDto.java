@@ -17,6 +17,7 @@ public record CommentReadResponseDto(
         Long id,
         String content,
         String author,
+        String profileImage,
         int likeCount,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
@@ -34,6 +35,7 @@ public record CommentReadResponseDto(
                 root.getId(),
                 CommentDeleteResponseDto.contentForRead(root),
                 root.getUser().getNickname(),
+                root.getUser().getProfileImage(),
                 root.getLikeCount(),
                 root.getCreatedAt(),
                 root.getModifiedAt(),
@@ -47,6 +49,7 @@ public record CommentReadResponseDto(
                 reply.getId(),
                 CommentDeleteResponseDto.contentForRead(reply),
                 reply.getUser().getNickname(),
+                reply.getUser().getProfileImage(),
                 reply.getLikeCount(),
                 reply.getCreatedAt(),
                 reply.getModifiedAt(),
