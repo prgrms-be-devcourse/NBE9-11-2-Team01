@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+  <rect width="64" height="64" rx="14" fill="#FAFAFA"/>
+  <rect x="1" y="1" width="62" height="62" rx="13" stroke="#E5E5E5" stroke-width="2"/>
+  <!-- radio signal arcs -->
+  <path d="M12 44c8-16 24-16 32 0" stroke="#171717" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M18 44c6-11 18-11 24 0" stroke="#171717" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M24 44c4-7 12-7 16 0" stroke="#171717" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="32" cy="45" r="3.2" fill="#171717"/>
+  <!-- pass check badge -->
+  <circle cx="46" cy="21" r="11.5" fill="#171717"/>
+  <path d="M40.5 21.5 43.8 25 51.5 17" stroke="#FFFFFF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

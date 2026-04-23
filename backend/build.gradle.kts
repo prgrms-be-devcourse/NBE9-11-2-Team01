@@ -27,6 +27,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("io.jsonwebtoken:jjwt-api:0.11.5")
     implementation("com.querydsl:querydsl-jpa:5.1.0:jakarta")
+	implementation("org.springframework.boot:spring-boot-starter-mail")
 
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.2")
 
@@ -34,6 +35,8 @@ dependencies {
     implementation ("org.springframework.boot:spring-boot-starter-json")
     implementation ("com.fasterxml.jackson.core:jackson-databind")
     implementation ("com.fasterxml.jackson.datatype:jackson-datatype-jsr310")
+	
+	implementation("com.icegreen:greenmail:2.1.0") 	// [추가] 가상 메일 서버 (테스트 및 개발용)
 
     annotationProcessor("com.querydsl:querydsl-apt:5.1.0:jakarta")
     annotationProcessor("jakarta.annotation:jakarta.annotation-api")

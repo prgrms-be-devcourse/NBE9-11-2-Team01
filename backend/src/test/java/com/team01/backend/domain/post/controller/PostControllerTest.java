@@ -1,6 +1,5 @@
 package com.team01.backend.domain.post.controller;
 
-import com.jayway.jsonpath.JsonPath;
 import com.team01.backend.domain.board.entity.Board;
 import com.team01.backend.domain.board.repository.BoardRepository;
 import com.team01.backend.domain.category.entity.Category;
@@ -49,31 +48,16 @@ public class PostControllerTest {
     @Autowired
     private BoardRepository boardRepository;
 
-
-    // 공통 사용 목적 토큰 추출 메서드
-    private String getAccessToken(String email, String password) throws Exception {
-        String loginResponse = mvc.perform(
-                        post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("""
-                                    {
-                                        "email": "%s",
-                                        "password": "%s"
-                                    }
-                                    """.formatted(email, password)))
-                .andReturn().getResponse().getContentAsString();
-
-        return JsonPath.read(loginResponse, "$.data");
-    }
-
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    String user1Token = "";
+    Cookie user1Cookie;
 
     @BeforeEach
     void setToken() {
-        user1Token = jwtTokenProvider.createAccessToken("user1@test.com", "ROLE_USER");
+        String user1AccessToken = jwtTokenProvider.createAccessToken("user1@test.com", "ROLE_USER");
+
+        user1Cookie = new Cookie("accessToken", user1AccessToken);
     }
 
     @Test
@@ -114,19 +98,17 @@ public class PostControllerTest {
     @Test
     @DisplayName("글 작성")
     void t3() throws Exception {
-        // 로그인 후 토큰 획득
-        String token = getAccessToken("user1@test.com", "1234");
 
         String title = "제목입니다.";
         String content = "내용입니다.";
         Long boardId = 1L;
         Long categoryId = 1L;
 
-        // 인증을 위해 헤더에 토큰 추가
+        // 쿠키로 인증
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -156,8 +138,6 @@ public class PostControllerTest {
     @DisplayName("글 작성 실패 - 제목이 입력되지 않은 경우")
     void t4() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         String title = "";
         String content = "내용입니다.";
         Long boardId = 1L;
@@ -167,7 +147,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -193,8 +173,6 @@ public class PostControllerTest {
     @DisplayName("글 작성, 내용이 입력되지 않은 경우")
     void t5() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         String title = "제목입니다.";
         String content = "";
         Long boardId = 1L;
@@ -203,7 +181,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -229,15 +207,13 @@ public class PostControllerTest {
     @DisplayName("글 작성 실패 - JSON 양식이 잘못된 경우")
     void t6() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         String title = "제목입니다.";
         String content = "내용입니다.";
 
         ResultActions resultActions = mvc
                 .perform(
                         post("/posts")
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                     {
@@ -262,8 +238,6 @@ public class PostControllerTest {
     @DisplayName("글 수정 성공 - 제목, 내용, 올바른 카테고리 변경")
     void t7_1() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         // 기존 게시글 정보 조회 (연관된 게시판 ID를 얻기 위해서)
         Long targetId = 1L;
         Post targetPost = postRepository.findById(targetId)
@@ -280,7 +254,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/posts/%d".formatted(targetId))
-                                .header("Authorization", "Bearer "+token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -314,8 +288,6 @@ public class PostControllerTest {
     @DisplayName("글 수정 실패 - 다른 게시판의 카테고리 ID를 전달한 경우")
     void t7_2() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         // 기존 게시글 준비
         Long targetId = 1L;
         Post targetPost = postRepository.findById(targetId).get();
@@ -330,7 +302,7 @@ public class PostControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         put("/posts/%d".formatted(targetId))
-                                .header("Authorization", "Bearer "+token)
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -360,13 +332,15 @@ public class PostControllerTest {
     @DisplayName("글 수정 실패 - 작성자가 아닌 경우 (인가 실패)")
     void t7_3() throws Exception {
         // 로그인 (user1이 작성한 글을 user2로 로그인해서 수정 시도)
-        String token = getAccessToken("user2@test.com", "1234");
+        String user2AccessToken = jwtTokenProvider.createAccessToken("user2@test.com", "ROLE_USER");
+        Cookie user2Cookie = new Cookie("accessToken", user2AccessToken);
+
         Long targetId = 1L; // 1번 게시글의 작성자는 user1
 
         ResultActions resultActions = mvc
                 .perform(
                         put("/posts/%d".formatted(targetId))
-                                .header("Authorization", "Bearer " + token)
+                                .cookie(user2Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(
                                         """
@@ -392,7 +366,7 @@ public class PostControllerTest {
     void t8() throws Exception {
         ResultActions resultActions = mvc
                 .perform(get("/posts/1")
-                        .cookie(new Cookie("accessToken", user1Token)))
+                .cookie(user1Cookie))
                 .andDo(print());
 
         resultActions
@@ -415,7 +389,7 @@ public class PostControllerTest {
     void t9() throws Exception {
         ResultActions resultActions = mvc
                 .perform(get("/posts/999")
-                        .cookie(new Cookie("accessToken", user1Token)))
+                        .cookie(user1Cookie))
                 .andDo(print());
 
         resultActions
@@ -429,16 +403,13 @@ public class PostControllerTest {
     @DisplayName("글 삭제 성공")
     void t10_1() throws Exception {
 
-        String token = getAccessToken("user1@test.com", "1234");
-
         Post post = postService.write("user1@test.com", "테스트 제목", "테스트 내용", 1L, 1L);
         Long targetId = post.getId();
 
         ResultActions resultActions = mvc
                 .perform(
                         delete("/posts/%d".formatted(targetId))
-                                .header("Authorization", "Bearer "+token))
-
+                                .cookie(user1Cookie))
                 .andDo(print());
 
         resultActions
@@ -458,13 +429,14 @@ public class PostControllerTest {
         Long targetId = post.getId();
 
         // actor : user2
-        String token = getAccessToken("user2@test.com", "1234");
+        String user2AccessToken = jwtTokenProvider.createAccessToken("user2@test.com", "ROLE_USER");
+        Cookie user2Cookie = new Cookie("accessToken", user2AccessToken);
 
         // 다른 유저가 삭제 요청
         ResultActions resultActions = mvc
                 .perform(
                         delete("/posts/%d".formatted(targetId))
-                                .header("Authorization", "Bearer " + token)) // 인증 헤더 추가
+                                .cookie(user2Cookie)) // 쿠키로 인증
                 .andDo(print());
 
         // 403 Forbidden 검증
@@ -487,7 +459,7 @@ public class PostControllerTest {
 
         ResultActions resultActions = mvc
                 .perform(get("/posts/%d".formatted(post.getId()))
-                        .cookie(new Cookie("accessToken", user1Token)))
+                        .cookie(user1Cookie))
                 .andDo(print());
 
         resultActions

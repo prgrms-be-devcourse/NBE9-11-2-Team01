@@ -8,6 +8,8 @@ import com.team01.backend.domain.category.repository.CategoryRepository;
 import com.team01.backend.domain.category.service.CategoryService;
 import com.team01.backend.domain.comment.service.CommentService;
 import com.team01.backend.domain.post.entity.Post;
+import com.team01.backend.domain.post.entity.PostLike;
+import com.team01.backend.domain.post.repository.PostLikeRepository;
 import com.team01.backend.domain.post.repository.PostRepository;
 import com.team01.backend.domain.post.service.PostService;
 import com.team01.backend.domain.user.dto.SignUpRequest;
@@ -47,6 +49,8 @@ public class BaseInitData {
     private CategoryService categoryService;
     @Autowired
     private AuthService authService;
+    @Autowired
+    private PostLikeRepository postLikeRepository;
 
     @Bean
     public ApplicationRunner initData() {
@@ -56,6 +60,7 @@ public class BaseInitData {
             self.setCategory();
             self.setPost();
             self.setComment();
+            self.setPostLike();
         };
     }
 
@@ -67,10 +72,10 @@ public class BaseInitData {
 
         authService.signUp(SignUpRequest.builder().email("user1@test.com").password("password1234").nickname("유저1").build());
         authService.signUp(SignUpRequest.builder().email("user2@test.com").password("password1234").nickname("유저2").build());
-        authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("passworda12345").nickname("admin").adminToken("user_admin-2026").build());
+        authService.signUp(SignUpRequest.builder().email("admin@admin.com").password("passworda12345").nickname("admin").admin(true).adminToken("ADMIN_SECRET_TOKEN").build());
 
         // 테스트용 유저 10명
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 30; i++) {
             authService.signUp(SignUpRequest.builder()
                     .email("test" + i + "@test.com")
                     .password("password1234")
@@ -108,15 +113,13 @@ public class BaseInitData {
                 .orElseThrow(() -> new RuntimeException("Category not found"));
 
         Post post1 = new Post(author1, "첫 번째 게시글입니다.", "내용 1", board, category);
-        post1.initLikeCount(12);
         postRepository.save(post1);
 
         Post post2 = new Post(author2, "두 번째 게시글입니다.", "내용 2", board, category);
-        post2.initLikeCount(30);
         postRepository.save(post2);
 
+
         Post post3 = new Post(author2, "세 번째 게시글입니다.", "내용 3", board, category);
-        post3.initLikeCount(20);
         postRepository.save(post3);
     }
 
@@ -153,5 +156,35 @@ public class BaseInitData {
 
         categoryService.create(2L, "카테고리 1");
         categoryService.create(2L, "카테고리 2");
+    }
+
+    @Transactional
+    public void setPostLike() {
+        if (postLikeRepository.count() > 0) return;
+
+        Post post1 = postRepository.findById(1L).orElseThrow();
+        Post post2 = postRepository.findById(2L).orElseThrow();
+        Post post3 = postRepository.findById(3L).orElseThrow();
+
+        // post1 좋아요 12개
+        for (long i = 3; i <= 14; i++) {
+            User user = userRepository.findById(i).orElseThrow();
+            postLikeRepository.save(new PostLike(user, post1));
+            postRepository.increaseLikeCount(post1.getId());
+        }
+
+        // post2 좋아요 30개
+        for (long i = 3; i <= 32; i++) {
+            User user = userRepository.findById(i).orElseThrow();
+            postLikeRepository.save(new PostLike(user, post2));
+            postRepository.increaseLikeCount(post2.getId());
+        }
+
+        // post3 좋아요 20개
+        for (long i = 3; i <= 22; i++) {
+            User user = userRepository.findById(i).orElseThrow();
+            postLikeRepository.save(new PostLike(user, post3));
+            postRepository.increaseLikeCount(post3.getId());
+        }
     }
 }

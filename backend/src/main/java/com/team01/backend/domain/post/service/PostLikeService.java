@@ -61,7 +61,7 @@ public class PostLikeService {
                         "        for id in string.gmatch(ARGV[3], '[^,]+') do\n" +
                         "            table.insert(ids, id)\n" +
                         "        end\n" +
-                        "        redis.call('sadd', KEYS[3], table.unpack(ids))\n" +
+                        "        redis.call('sadd', KEYS[3], unpack(ids))\n" +
                         "    end\n" +
                         "end\n" +
                         "local isMember = redis.call('sismember', KEYS[3], ARGV[1])\n" +
@@ -88,7 +88,8 @@ public class PostLikeService {
         log.info("=== toggleLike 호출 - postId: {}, email: {}", postId, email);
 
         User user = findUser(email);
-        findPost(postId); // 존재 여부 검증
+        Post post = findPost(postId); // 검증과 동시에 Post 객체 확보
+        Long boardId = post.getBoard().getId(); // 게시판 ID 확보
 
         // DB 초기값 조회 (Redis에 없을 때만 실제 사용됨)
         long dbCount = postLikeRepository.countByPostId(postId);
@@ -105,7 +106,7 @@ public class PostLikeService {
         boolean liked = (result != null && result == 1L);
 
         // DB: post_likes 이력 + posts.like_count 동시 반영
-        syncToDB(liked, user, postId);
+        syncToDB(liked, user, postId, boardId);
 
         int likeCount = getLikeCount(postId);
         log.info("=== 좋아요 결과 - liked: {}, likeCount: {}", liked, likeCount);
@@ -120,6 +121,8 @@ public class PostLikeService {
         String key = countKey(postId);
 
         String countStr = redisTemplate.opsForValue().get(key);
+
+        findPost(postId);
 
         if (countStr != null) {
             return Math.max(0, Integer.parseInt(countStr));
@@ -189,22 +192,31 @@ public class PostLikeService {
      * posts.like_count는 increaseLikeCount / decreaseLikeCount로
      * DB 자체 연산(+1, -1)을 사용 → 동시 요청에서도 덮어쓰기 없이 안전
      */
-    private void syncToDB(boolean liked, User user, Long postId) {
+    private void syncToDB(boolean liked, User user, Long postId, Long boardId) {
         if (liked) {
-            boolean exists = postLikeRepository
-                    .findByUserIdAndPostId(user.getId(), postId)
-                    .isPresent();
-            if (!exists) {
-                Post post = postRepository.getReferenceById(postId);
-                postLikeRepository.save(new PostLike(user, post));
-                postRepository.increaseLikeCount(postId); // UPDATE SET likeCount = likeCount + 1
-            }
+
+            postLikeRepository.mergeInsert(user.getId(), postId);
+            postRepository.increaseLikeCount(postId);
+
+            // 좋아요 수 변경 시 캐시 무효화
+            evictTop5Cache(boardId);
         } else {
             int deleted = postLikeRepository.deleteByUserIdAndPostId(user.getId(), postId);
             if (deleted > 0) {
-                postRepository.decreaseLikeCount(postId); // UPDATE SET likeCount = likeCount - 1 WHERE likeCount > 0
+                postRepository.decreaseLikeCount(postId);
+
+                // 좋아요 수 변경 시 캐시 무효화
+                evictTop5Cache(boardId);
             }
+
         }
+    }
+
+    // 캐시 무효화 로직
+    private void evictTop5Cache(Long boardId) {
+        String cacheKey = "top5:board:" + boardId;
+        redisTemplate.delete(cacheKey);
+        log.info("좋아요 변경으로 인한 캐시 무효화 완료: {}", cacheKey);
     }
 
     // ─────────────────────────────────────────────────────────────

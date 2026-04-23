@@ -53,7 +53,7 @@ class NotificationServiceTest {
                 new User("commenter@test.com", "pw", "commenter", null, Role.USER)
         );
 
-        Post post = postService.write( "title", "content", 1L, 2L); //user1
+        Post post = postService.write( "user1@test.com","title", "content", 1L, 2L); //user1
 
         SseEmitter emitter = mock(SseEmitter.class);
 

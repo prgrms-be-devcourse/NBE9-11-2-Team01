@@ -18,6 +18,7 @@ public record PostDetailResponseDto(
         String title,
         String content,
         String author,
+        String profileImage,
         int likeCount,
 
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -39,6 +40,7 @@ public record PostDetailResponseDto(
                 post.getTitle(),
                 post.getContent(),
                 post.getAuthor().getNickname(),
+                post.getAuthor().getProfileImage(),
                 post.getLikeCount(),
                 post.getCreatedAt(),
                 post.getModifiedAt(),

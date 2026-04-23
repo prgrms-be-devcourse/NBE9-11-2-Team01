@@ -1,6 +1,7 @@
 package com.team01.backend.domain.category.controller;
 
 import com.team01.backend.global.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import jakarta.transaction.Transactional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -30,13 +31,17 @@ public class CategoryControllerTest {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
-    String adminToken = "";
-    String user1Token = "";
+    Cookie adminCookie;
+    Cookie user1Cookie;
 
     @BeforeEach
     void setToken(){
-        adminToken = jwtTokenProvider.createToken("admin@admin.com", "ROLE_ADMIN");
-        user1Token = jwtTokenProvider.createToken("user1@test.com", "ROLE_USER");
+        String adminAccessToken = jwtTokenProvider.createAccessToken("admin@admin.com", "ROLE_ADMIN");
+        adminCookie = new Cookie("accessToken", adminAccessToken);
+
+        String user1AccessToken = jwtTokenProvider.createAccessToken("user1@test.com", "ROLE_USER");
+        user1Cookie = new Cookie("accessToken",user1AccessToken);
+
     }
 
     @Test
@@ -45,7 +50,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -72,7 +77,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -95,7 +100,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -120,7 +125,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -144,7 +149,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -168,7 +173,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -195,7 +200,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.post("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -217,7 +222,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/1")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -243,7 +248,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/2")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -265,7 +270,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/21")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -289,7 +294,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/2")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -313,7 +318,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.put("/admin/categories/1")
-                                .header("Authorization", "Bearer %s".formatted(user1Token))
+                                .cookie(user1Cookie)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("""
                                         {
@@ -336,7 +341,7 @@ public class CategoryControllerTest {
         ResultActions resultActions = mvc
                 .perform(
                         MockMvcRequestBuilders.get("/admin/categories")
-                                .header("Authorization", "Bearer %s".formatted(adminToken))
+                                .cookie(adminCookie)
                 )
                 .andDo(print());
         resultActions
