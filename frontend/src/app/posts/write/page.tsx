@@ -121,11 +121,11 @@ export default function PostWritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-6 py-8">
-      <main className="mx-auto w-full max-w-4xl rounded-xl border border-zinc-200 bg-white p-6">
-        <header className="mb-6">
-          <p className="text-sm text-zinc-500">게시글 작성</p>
-          <h1 className="mt-1 text-xl font-semibold text-zinc-900">새 게시글 등록</h1>
+    <div className="min-h-screen bg-blue-50/40 px-4 py-8">
+      <main className="mx-auto w-full max-w-3xl">
+        <header className="mb-6 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시글 작성</p>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">새 게시글 등록</h1>
         </header>
 
         {errorMessage && (
@@ -155,49 +155,50 @@ export default function PostWritePage() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700">제목</span>
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              maxLength={100}
-              placeholder="제목을 입력하세요"
-              disabled={isLoadingMeta || isSubmitting}
-              className="h-11 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
-            />
-          </label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-700">제목</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                maxLength={100}
+                placeholder="제목을 입력하세요"
+                disabled={isLoadingMeta || isSubmitting}
+                className="h-11 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-300 disabled:bg-gray-50 disabled:opacity-60"
+              />
+            </div>
 
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="font-medium text-zinc-700">내용</span>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="내용을 입력하세요"
-              disabled={isLoadingMeta || isSubmitting}
-              className="min-h-64 rounded-md border border-zinc-300 px-3 py-2 text-sm outline-none focus:border-zinc-500 disabled:bg-zinc-100"
-            />
-          </label>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-semibold text-gray-700">내용</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                placeholder="내용을 입력하세요"
+                disabled={isLoadingMeta || isSubmitting}
+                className="min-h-64 rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-300 disabled:bg-gray-50 disabled:opacity-60"
+              />
+            </div>
 
-          <div className="mt-2 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              disabled={isSubmitting}
-              className="rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={isLoadingMeta || isSubmitting}
-              className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {isSubmitting ? "등록 중..." : "등록"}
-            </button>
-          </div>
-        </form>
+            <div className="flex items-center justify-end gap-2 border-t border-gray-100 pt-4">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                취소
+              </button>
+              <button
+                type="submit"
+                disabled={isLoadingMeta || isSubmitting}
+                className="rounded-xl border border-black bg-black px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isSubmitting ? "등록 중..." : "✏️ 등록"}
+              </button>
+            </div>
+          </form>
       </main>
     </div>
+
   );
 }

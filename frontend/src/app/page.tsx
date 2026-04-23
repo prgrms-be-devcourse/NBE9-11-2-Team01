@@ -51,8 +51,8 @@ const boardShortcutCards: readonly {
       "취업 준비의 고단함부터 소소한 일상까지, 우리들만의 솔직한 이야기를 나누는 공간입니다.",
     Icon: MessageCircle,
     iconWrap:
-      "border-amber-200/80 bg-amber-50 text-amber-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-amber-100/35",
+      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+    wash: "from-blue-100/40",
   },
   {
     title: "취업 공고",
@@ -60,8 +60,8 @@ const boardShortcutCards: readonly {
       "꿈을 향한 첫걸음, 최신 채용 공고를 확인하고 당신의 커리어를 시작하세요.",
     Icon: Briefcase,
     iconWrap:
-      "border-sky-200/80 bg-sky-50 text-sky-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-sky-100/40",
+      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+    wash: "from-blue-100/35",
   },
   {
     title: "자소서 피드백",
@@ -69,8 +69,8 @@ const boardShortcutCards: readonly {
       "혼자 쓰면 막막한 자기소개서, 합격 선배와 동료들의 꼼꼼한 첨삭으로 완성도를 높여보세요.",
     Icon: FileEdit,
     iconWrap:
-      "border-violet-200/80 bg-violet-50 text-violet-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-violet-100/35",
+      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+    wash: "from-blue-100/35",
   },
   {
     title: "멘토링",
@@ -78,14 +78,15 @@ const boardShortcutCards: readonly {
       "현직자의 생생한 직무 조언부터 커리어 로드맵까지, 앞서간 선배들의 노하우를 직접 들어보세요.",
     Icon: UsersRound,
     iconWrap:
-      "border-emerald-200/80 bg-emerald-50 text-emerald-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
-    wash: "from-emerald-100/35",
+      "border-blue-200/80 bg-blue-50 text-blue-900 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)]",
+    wash: "from-blue-100/35",
   },
 ];
 
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const [boards, setBoards] = useState<Board[]>([]);
+  const [boardsReady, setBoardsReady] = useState(false);
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -97,6 +98,8 @@ export default function HomePage() {
       } catch (e) {
         if (!cancelled)
           setErr(e instanceof Error ? e.message : "게시판을 불러오지 못했습니다.");
+      } finally {
+        if (!cancelled) setBoardsReady(true);
       }
     })();
     return () => {
@@ -108,96 +111,100 @@ export default function HomePage() {
 
   return (
     <main className="flex flex-1 flex-col bg-white">
-      <section className="relative overflow-hidden px-4 pb-14 pt-10 sm:px-6 sm:pt-16 lg:pt-20">
+      <section className="relative overflow-hidden px-4 pb-20 pt-10 sm:px-6 sm:pt-16 lg:pt-24">
+        {/* 배경 장식 요소 추가 (선택사항) */}
+        <div className="absolute left-1/2 top-0 -z-10 h-[600px] w-full -translate-x-1/2 bg-[radial-gradient(50%_50%_at_50%_0%,rgba(37,99,235,0.08)_0%,rgba(255,255,255,0)_100%)]" />
+        
         <m.div
           variants={container}
           initial="hidden"
           animate="show"
           className="mx-auto max-w-6xl"
         >
-          <m.div variants={item} className="max-w-3xl">
-            <div className="flex flex-wrap items-center gap-4">
+          <m.div variants={item} className="max-w-3xl text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
               <SignalLogo
                 size={72}
-                className="h-16 w-16 shrink-0 rounded-2xl border border-neutral-200 bg-white shadow-md sm:h-[4.5rem] sm:w-[4.5rem]"
+                className="h-16 w-16 shrink-0 rounded-2xl border border-blue-100 bg-white shadow-xl shadow-blue-900/5 sm:h-[4.5rem] sm:w-[4.5rem]"
               />
-              <p className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-neutral-50 px-4 py-1.5 text-xs font-semibold tracking-wide text-neutral-600">
+              <p className="inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/50 px-4 py-1.5 text-xs font-bold tracking-wide text-blue-700">
                 취업 준비생 커뮤니티 · 합격시그널
               </p>
             </div>
-            <h1 className="mt-6 text-4xl font-bold leading-[1.15] tracking-tight text-neutral-900 sm:text-5xl lg:text-[3.25rem]">
-              합격까지, 함께 받는 시그널
-              <span className="mt-1 block text-xl font-semibold text-neutral-600 sm:text-2xl lg:text-[1.65rem]">
+            <h1 className="mt-8 text-4xl font-extrabold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.5rem]">
+              합격까지, 함께 받는 <span className="text-blue-600">시그널</span>
+              <span className="mt-2 block text-xl font-semibold text-slate-500 sm:text-2xl lg:text-[1.75rem]">
                 정보·경험·응원이 모이는 메인 허브
               </span>
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-neutral-600">
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 mx-auto sm:mx-0">
               채용 공고·자소서·면접·멘토링까지 한곳에서. 질문하고 답하고, 합격
               기록을 남기며 다음 목표까지 함께 가져가요.
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link
-                href="/signup"
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-900 px-7 text-sm font-semibold text-white shadow-md transition hover:bg-neutral-800"
-              >
-                무료로 시작하기
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex h-12 items-center rounded-full border border-neutral-300 bg-white px-7 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
-              >
-                로그인
-              </Link>
-            </div>
+            {!authLoading && !user && (
+              <div className="mt-10 flex flex-wrap justify-center gap-3 sm:justify-start">
+                <Link
+                  href="/signup"
+                  className="inline-flex h-13 items-center gap-2 rounded-xl bg-blue-600 px-8 py-4 text-sm font-bold text-white shadow-lg shadow-blue-200 transition hover:bg-blue-700 active:scale-95"
+                >
+                  무료로 시작하기
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex h-13 items-center rounded-xl border border-slate-200 bg-white px-8 py-4 text-sm font-bold text-slate-700 transition hover:bg-slate-50 active:scale-95"
+                >
+                  로그인
+                </Link>
+              </div>
+            )}
           </m.div>
 
           {!authLoading && (
             <m.div
               variants={item}
-              className="mx-auto mt-10 flex max-w-xl items-center gap-4 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 sm:max-w-2xl"
+              className="mx-auto mt-12 flex max-w-6xl items-center gap-5 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm sm:max-w-6xl"
             >
               <Avatar
                 src={user?.profileImage}
                 alt={user?.nickname ?? "프로필"}
                 size={72}
-                className="h-[72px] w-[72px] border-neutral-300"
+                className="h-[72px] w-[72px] ring-4 ring-blue-50"
               />
               <div className="min-w-0 flex-1">
                 {user ? (
                   <>
-                    <p className="font-semibold text-neutral-900">
-                      {user.nickname}님, 환영합니다.
+                    <p className="text-lg font-bold text-slate-900">
+                      <span className="text-black-600">{user.nickname}</span>님, 환영합니다!
                     </p>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      프로필 사진이 없으면 기본 이미지가 표시됩니다. 마이페이지에서
-                      바꿀 수 있어요.
+                    <p className="mt-1 text-sm text-slate-500 leading-tight">
+                      마이페이지에서 프로필 사진을 변경하고 나만의 합격 기록을 관리해보세요.
                     </p>
                     <Link
                       href="/mypage"
-                      className="mt-2 inline-block text-sm font-medium text-neutral-900 underline-offset-4 hover:underline"
+                      className="mt-3 inline-block text-sm font-bold text-blue-600 underline-offset-4 hover:underline"
                     >
-                      마이페이지
+                      마이페이지로 이동 &rarr;
                     </Link>
                   </>
                 ) : (
                   <>
-                    <p className="font-semibold text-neutral-900">
+                    <p className="font-bold text-slate-900">
                       합격시그널과 함께해요
                     </p>
-                    <p className="mt-1 text-sm text-neutral-600">
-                      로그인하면 내 프로필이 여기에 표시됩니다.
+                    <p className="mt-1 text-sm text-slate-500">
+                      로그인하면 내 프로필과 맞춤형 채용 정보를 확인 할 수 있습니다.
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-3 text-sm">
+                    <div className="mt-3 flex flex-wrap gap-4 text-sm">
                       <Link
                         href="/login"
-                        className="font-medium text-neutral-900 underline-offset-4 hover:underline"
+                        className="font-bold text-blue-600 underline-offset-4 hover:underline"
                       >
                         로그인
                       </Link>
                       <Link
                         href="/signup"
-                        className="text-neutral-600 underline-offset-4 hover:underline"
+                        className="font-bold text-slate-400 underline-offset-4 hover:underline"
                       >
                         회원가입
                       </Link>
@@ -210,7 +217,7 @@ export default function HomePage() {
 
           <m.div
             variants={item}
-            className="mt-12 grid gap-4 sm:grid-cols-3"
+            className="mt-16 grid gap-6 sm:grid-cols-3"
           >
             {[
               {
@@ -218,56 +225,53 @@ export default function HomePage() {
                 label: "커뮤니티",
                 value: "함께 성장",
                 sub: "준비생·선배가 한 공간에",
+                color: "text-blue-600"
               },
               {
                 icon: MessageCircle,
                 label: "누적 게시글",
                 value: String(totalPosts || "—"),
                 sub: "전체 게시판 합계",
+                color: "text-indigo-600"
               },
               {
                 icon: Target,
                 label: "목표",
                 value: "합격까지",
                 sub: "기록하고 피드백 받기",
+                color: "text-cyan-600"
               },
             ].map((stat, i) => (
-              <GlassPanel key={i} className="p-5">
-                <stat.icon className="h-8 w-8 text-neutral-700" />
-                <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+              <GlassPanel key={i} className="p-6 border-slate-100 bg-white/80 shadow-sm">
+                <stat.icon className={`h-9 w-9 ${stat.color}`} strokeWidth={1.5} />
+                <p className="mt-4 text-[11px] font-bold uppercase tracking-widest text-slate-400">
                   {stat.label}
                 </p>
-                <p className="mt-1 text-2xl font-bold text-neutral-900">
+                <p className="mt-1 text-2xl font-extrabold text-slate-900">
                   {stat.value}
                 </p>
-                <p className="mt-1 text-sm text-neutral-600">{stat.sub}</p>
+                <p className="mt-1 text-sm text-slate-500">{stat.sub}</p>
               </GlassPanel>
             ))}
           </m.div>
         </m.div>
       </section>
-
-      <section
-        id="boards"
-        className="scroll-mt-20 border-t border-neutral-200/80 bg-gradient-to-b from-neutral-50/90 to-white px-4 pb-24 pt-12 sm:px-6 sm:pt-16"
-      >
+      {/* BOARDS SECTION: 입체적인 버튼 디자인 */}
+      <section id="boards" className="scroll-mt-20 bg-slate-50/50 px-4 pb-32 pt-24 sm:px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-neutral-500">
-              Boards
-            </p>
-            <h2 className="mt-2 flex flex-wrap items-center gap-3 text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-              <span className="flex h-11 w-11 items-center justify-center rounded-2xl border border-neutral-200 bg-white shadow-sm">
-                <LayoutGrid className="h-5 w-5 text-neutral-700" strokeWidth={2} />
+          <div className="mb-16 flex flex-col items-center text-center sm:items-start sm:text-left">
+            <h2 className="flex items-center gap-3 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+              <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-200">
+                <LayoutGrid className="h-5 w-5 text-white" />
               </span>
               게시판 바로가기
             </h2>
-            <p className="mt-3 text-base leading-relaxed text-neutral-600">
+            <p className="mt-6 max-w-xl text-lg font-medium text-slate-500">
               주제별 보드로 들어가 대화를 시작해 보세요.
             </p>
             {err && (
-              <p className="mt-3 rounded-xl border border-amber-200/80 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
-                상단 통계용 게시판 수를 불러오지 못했습니다. {err}
+              <p className="mt-4 text-sm font-bold text-red-500 bg-red-50 px-4 py-2 rounded-lg">
+                {err}
               </p>
             )}
           </div>
@@ -277,55 +281,55 @@ export default function HomePage() {
             whileInView="show"
             viewport={{ once: true, margin: "-60px" }}
             variants={container}
-            className="mt-12 grid gap-6 sm:grid-cols-2 lg:gap-8"
+            className="grid gap-8 sm:grid-cols-2"
           >
-            {boardShortcutCards.map((card, idx) => (
-              <m.div key={card.title} variants={item}>
-                <article
-                  className="group relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-neutral-200/90 bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[0_12px_40px_-24px_rgba(15,23,42,0.18)]"
-                >
-                  <div
-                    className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${card.wash} via-transparent to-transparent opacity-90`}
-                    aria-hidden
-                  />
-                  <div className="relative flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 items-start gap-4">
-                      <span
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${card.iconWrap}`}
-                        aria-hidden
-                      >
-                        <card.Icon className="h-5 w-5" strokeWidth={2} />
-                      </span>
-                      <div className="min-w-0 pt-0.5">
-                        <p className="text-[11px] font-semibold tabular-nums text-neutral-400">
-                          {String(idx + 1).padStart(2, "0")}
-                        </p>
-                        <h3 className="mt-1 text-xl font-bold leading-snug tracking-tight text-neutral-900">
-                          {card.title}
-                        </h3>
+            {boardShortcutCards.map((card, idx) => {
+              const linkedBoard = boards[idx];
+              const canLink = boardsReady && !err && linkedBoard !== undefined;
+
+              return (
+                <m.div key={card.title} variants={item}>
+                  <article className="group relative flex h-full flex-col overflow-hidden rounded-[2.5rem] border border-slate-100 bg-white p-10 transition-all duration-300 hover:border-blue-200 hover:shadow-2xl hover:shadow-blue-900/5">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${card.wash} to-transparent opacity-0 transition-opacity duration-500 group-hover:opacity-100`} />
+                    
+                    <div className="relative mb-8 flex items-start justify-between">
+                      <div className={`flex h-16 w-16 items-center justify-center rounded-2xl border ${card.iconWrap}`}>
+                        <card.Icon className="h-7 w-7" strokeWidth={2} />
                       </div>
+                      <span className="text-4xl font-black text-slate-100 transition-colors group-hover:text-blue-100">
+                        {String(idx + 1).padStart(2, "0")}
+                      </span>
                     </div>
-                  </div>
-                  <p className="relative mt-5 flex-1 text-[15px] leading-[1.65] text-neutral-600">
-                    {card.description}
-                  </p>
-                  <div className="relative mt-6 flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="inline-flex h-10 items-center rounded-full border border-neutral-200 bg-neutral-50 px-5 text-sm font-semibold text-neutral-800 transition group-hover:border-neutral-300 group-hover:bg-white"
-                    >
-                      Button
-                    </button>
-                    <span className="text-xs font-medium text-neutral-400">
-                      연동 예정
-                    </span>
-                  </div>
-                </article>
-              </m.div>
-            ))}
+
+                    <div className="relative flex-1">
+                      <h3 className="text-2xl font-black tracking-tight text-slate-900">{card.title}</h3>
+                      <p className="mt-4 text-base font-medium leading-relaxed text-slate-500">{card.description}</p>
+                    </div>
+
+                    <div className="relative mt-10">
+                      {canLink ? (
+                        <Link
+                          href={`/boards/${linkedBoard.id}/posts`}
+                          className="flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-900 py-4.5 text-sm font-bold text-white transition-all hover:bg-blue-600 hover:shadow-xl hover:shadow-blue-200"
+                        >
+                          입장하기
+                          <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      ) : (
+                        <div className="flex w-full items-center justify-center rounded-2xl bg-slate-100 py-4.5 text-sm font-bold text-slate-400">
+                          {err ? "연결 불가" : "준비 중..."}
+                        </div>
+                      )}
+                    </div>
+                  </article>
+                </m.div>
+              );
+            })}
           </m.div>
         </div>
       </section>
+
+     
 
       <section
         id="community"

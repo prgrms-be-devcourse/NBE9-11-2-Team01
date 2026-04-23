@@ -151,7 +151,7 @@ function LoginForm() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-semibold text-white disabled:opacity-50"
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-black bg-black px-6 text-sm font-semibold text-white disabled:opacity-50"
                 >
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   로그인
@@ -159,14 +159,14 @@ function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setFindOpen(true)}
-                  className="h-12 rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                  className="h-12 rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-800 hover:bg-blue-50"
                 >
                   아이디 찾기
                 </button>
                 <button
                   type="button"
                   onClick={() => setResetOpen(true)}
-                  className="h-12 rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
+                  className="h-12 rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-800 hover:bg-blue-50"
                 >
                   비밀번호 재설정
                 </button>
@@ -235,7 +235,7 @@ function LoginForm() {
                 type="button"
                 disabled={findBusy}
                 onClick={() => void doFindId()}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-black bg-black py-3 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {findBusy && <Loader2 className="h-4 w-4 animate-spin" />}
                 확인
@@ -295,7 +295,7 @@ function LoginForm() {
                 type="button"
                 disabled={resetBusy}
                 onClick={() => void doReset()}
-                className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-neutral-900 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-black bg-black py-3 text-sm font-semibold text-white disabled:opacity-50"
               >
                 {resetBusy && <Loader2 className="h-4 w-4 animate-spin" />}
                 재설정

@@ -169,7 +169,7 @@ export default function SignupPage() {
                     <button
                       type="button"
                       onClick={() => void checkEmail()}
-                      className="shrink-0 rounded-xl border border-neutral-300 bg-neutral-100 px-4 text-sm font-medium text-neutral-900 transition hover:bg-neutral-200"
+                      className="shrink-0 rounded-xl border border-gray-200 bg-blue-50 px-4 text-sm font-medium text-black transition hover:bg-blue-100"
                     >
                       CHECK
                     </button>
@@ -243,14 +243,14 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-semibold text-white shadow-md disabled:opacity-50 sm:flex-none"
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-black bg-black px-6 text-sm font-semibold text-white shadow-sm disabled:opacity-50 sm:flex-none"
                 >
                   {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   회원가입
                 </button>
                 <Link
                   href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-800 transition hover:bg-neutral-50"
+                  className="inline-flex h-12 items-center justify-center rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-800 transition hover:bg-blue-50"
                 >
                   아이디 찾기
                 </Link>

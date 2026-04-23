@@ -2,7 +2,7 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827;
 }
 
 @theme inline {
@@ -19,6 +19,6 @@ body {
 }
 
 ::selection {
-  background: rgba(0, 0, 0, 0.12);
-  color: #000;
+  background: rgba(59, 130, 246, 0.2);
+  color: #111827;
 }

@@ -104,11 +104,11 @@ function CommentItem({
 }: CommentItemProps) {
   const replies = comment.replies ?? [];
   const [isRepliesOpen, setIsRepliesOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // 선언 누락 수정
   const isEditing = editingCommentId === comment.id;
   const isOwner = canManage(comment.author);
   const likeUi = getCommentLikeUi(comment);
 
-  // 하위 CommentItem에 전달할 공통 props
   const commentItemProps = {
     canManage,
     getCommentLikeUi,
@@ -134,25 +134,25 @@ function CommentItem({
                 type="text"
                 value={editingCommentContent}
                 onChange={(event) => setEditingCommentContent(event.target.value)}
-                className="h-9 flex-1 rounded-md border border-zinc-300 px-3 text-sm outline-none focus:border-zinc-500"
+                className="h-9 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
               />
               <button
                 type="button"
                 onClick={() => onSubmitCommentEdit(comment.id)}
-                className="rounded-md bg-zinc-900 px-3 text-xs text-white hover:bg-zinc-700"
+                className="rounded-xl bg-gray-900 px-3 text-xs text-white hover:bg-gray-700"
               >
                 저장
               </button>
               <button
                 type="button"
                 onClick={onCancelCommentEdit}
-                className="rounded-md border border-zinc-300 px-3 text-xs text-zinc-700 hover:bg-zinc-100"
+                className="rounded-xl border border-gray-200 px-3 text-xs text-gray-600 hover:bg-gray-100"
               >
                 취소
               </button>
             </div>
           ) : (
-            <p className="mt-1 whitespace-pre-wrap text-sm text-zinc-700">{comment.content}</p>
+            <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{comment.content}</p>
           )}
 
           <div className="mt-2 flex items-center gap-3 text-xs text-zinc-500">
@@ -168,11 +168,11 @@ function CommentItem({
         </div>
 
         {isOwner && !isEditing && (
-          <div className="flex items-center gap-1">
+          <div className="relative flex items-center gap-1">
             <button
               type="button"
-              onClick={() => onStartCommentEdit(comment)}
-              className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
+              onClick={() => setIsMenuOpen((prev) => !prev)}
+              className="rounded-xl p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-black"
             >
               수정
             </button>
@@ -183,11 +183,31 @@ function CommentItem({
             >
               삭제
             </button>
+            {isMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)} />
+                <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => { onStartCommentEdit(comment); setIsMenuOpen(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    수정
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { onDeleteComment(comment.id); setIsMenuOpen(false); }}
+                    className="w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-blue-50"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      {/* 답글 토글 버튼 - 답글 있을 때만 표시 */}
       {replies.length > 0 && (
         <button
           type="button"
@@ -198,7 +218,6 @@ function CommentItem({
         </button>
       )}
 
-      {/* 답글 목록 - 토글 상태에 따라 표시 */}
       {isRepliesOpen && replies.length > 0 && (
         <ul className="mt-3 space-y-2">
           {replies.map((reply) => (
@@ -225,26 +244,20 @@ export default function PostDetailPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [isAuthRequired, setIsAuthRequired] = useState(false);
-
   const [myNickname, setMyNickname] = useState<string | null>(null);
-
   const [commentContent, setCommentContent] = useState("");
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
-
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isPostLikeLoading, setIsPostLikeLoading] = useState(false);
   const [postLiked, setPostLiked] = useState(false);
-
   const [isEditingPost, setIsEditingPost] = useState(false);
   const [editingTitle, setEditingTitle] = useState("");
   const [editingContent, setEditingContent] = useState("");
   const [isSavingPostEdit, setIsSavingPostEdit] = useState(false);
-
   const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
   const [editingCommentContent, setEditingCommentContent] = useState("");
-  const [commentLikeUi, setCommentLikeUi] = useState
-    <Record<number, { liked: boolean; likeCount: number }>
-  >({});
+  const [commentLikeUi, setCommentLikeUi] = useState<Record<number, { liked: boolean; likeCount: number }>>({});
+  const [isPostMenuOpen, setIsPostMenuOpen] = useState(false); // 선언 누락 수정
 
   const loginHref = useMemo(() => {
     const query = new URLSearchParams();
@@ -605,11 +618,11 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 px-6 py-8">
-      <main className="mx-auto flex w-full max-w-4xl flex-col gap-4">
-        <header className="rounded-xl border border-zinc-200 bg-white px-5 py-4">
-          <p className="text-xs text-zinc-500">{post?.boardName ?? "게시판"}</p>
-          <h1 className="mt-1 text-2xl font-semibold text-zinc-900">게시글 상세</h1>
+    <div className="min-h-screen bg-blue-50/40 px-4 py-8">
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-5">
+        <header className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">{post?.boardName ?? "게시판"}</p>
+          <h1 className="mt-1 text-2xl font-bold text-gray-900">게시글 상세</h1>
         </header>
 
         {errorMessage && (
@@ -624,14 +637,14 @@ export default function PostDetailPage() {
             <div className="mt-3 flex gap-2">
               <Link
                 href={loginHref}
-                className="inline-flex rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
+                className="inline-flex rounded-xl border border-black bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
               >
                 로그인 하러 가기
               </Link>
               <button
                 type="button"
                 onClick={fetchPost}
-                className="inline-flex rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-blue-50"
               >
                 다시 시도
               </button>
@@ -654,9 +667,9 @@ export default function PostDetailPage() {
             <section className="rounded-xl border border-zinc-200 bg-white p-5">
               <div className="mb-4 flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <p className="inline-flex rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-600">
+                  <span className="inline-flex rounded-xl bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                     {post.categoryName}
-                  </p>
+                  </span>
 
                   {isEditingPost ? (
                     <div className="mt-2 space-y-2">
@@ -677,7 +690,7 @@ export default function PostDetailPage() {
                           type="button"
                           onClick={handleSavePostEdit}
                           disabled={isSavingPostEdit}
-                          className="rounded-md bg-zinc-900 px-3 py-1.5 text-xs text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-xl border border-black bg-black px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isSavingPostEdit ? "저장 중..." : "저장"}
                         </button>
@@ -688,7 +701,7 @@ export default function PostDetailPage() {
                             setEditingTitle(post.title);
                             setEditingContent(post.content);
                           }}
-                          className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-600 transition-colors hover:bg-blue-50"
                         >
                           취소
                         </button>
@@ -711,29 +724,47 @@ export default function PostDetailPage() {
                     type="button"
                     onClick={handleTogglePostLike}
                     disabled={isPostLikeLoading}
-                    className="rounded-md border border-zinc-300 px-3 py-1.5 text-sm text-zinc-700 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
+                      postLiked
+                        ? "border-black bg-black text-white"
+                        : "border-gray-200 text-gray-600 hover:bg-blue-50"
+                    }`}
                   >
                     {postLiked ? "♥" : "♡"} {post.likeCount}
                   </button>
 
                   {post.isOwner && !isEditingPost && (
-                    <>
+                    <div className="relative">
                       <button
                         type="button"
-                        onClick={() => setIsEditingPost(true)}
-                        className="rounded-md border border-zinc-300 px-3 py-1.5 text-xs text-zinc-700 hover:bg-zinc-100"
+                        onClick={() => setIsPostMenuOpen((prev) => !prev)}
+                        className="rounded-xl p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-black"
                       >
                         수정
                       </button>
-                      <button
-                        type="button"
-                        onClick={handleDeletePost}
-                        disabled={isDeletingPost}
-                        className="rounded-md border border-red-300 px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {isDeletingPost ? "삭제 중..." : "삭제"}
-                      </button>
-                    </>
+                      {isPostMenuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setIsPostMenuOpen(false)} />
+                          <div className="absolute right-0 z-20 mt-1 w-24 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => { setIsEditingPost(true); setIsPostMenuOpen(false); }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                            >
+                              수정
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { handleDeletePost(); setIsPostMenuOpen(false); }}
+                              disabled={isDeletingPost}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-700 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {isDeletingPost ? "삭제 중..." : "삭제"}
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -759,7 +790,7 @@ export default function PostDetailPage() {
                 <button
                   type="submit"
                   disabled={isCommentSubmitting}
-                  className="rounded-md bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-black bg-black px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCommentSubmitting ? "작성 중..." : "작성"}
                 </button>
@@ -792,9 +823,9 @@ export default function PostDetailPage() {
             <div>
               <Link
                 href={`/boards/${post.boardId}/posts`}
-                className="inline-flex rounded-md border border-zinc-300 px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-100"
+                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-blue-50"
               >
-                목록으로
+                목으로
               </Link>
             </div>
           </>

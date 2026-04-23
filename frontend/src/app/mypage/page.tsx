@@ -149,7 +149,7 @@ export default function MyPage() {
                   alt=""
                   className="h-full w-full object-cover"
                 />
-                <span className="absolute bottom-2 rounded-full bg-neutral-900/75 px-3 py-1 text-xs text-white">
+                <span className="absolute bottom-2 rounded-xl bg-black/75 px-3 py-1 text-xs text-white">
                   변경
                 </span>
               </button>
@@ -258,7 +258,7 @@ export default function MyPage() {
                 <button
                   type="submit"
                   disabled={saving}
-                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-neutral-900 px-6 text-sm font-semibold text-white disabled:opacity-50 sm:flex-none"
+                  className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-black bg-black px-6 text-sm font-semibold text-white disabled:opacity-50 sm:flex-none"
                 >
                   {saving && <Loader2 className="h-4 w-4 animate-spin" />}
                   정보 수정
@@ -266,13 +266,13 @@ export default function MyPage() {
                 <button
                   type="button"
                   onClick={() => void withdraw()}
-                  className="h-12 rounded-full border border-neutral-300 bg-white px-6 text-sm font-medium text-neutral-700 transition hover:bg-neutral-50"
+                  className="h-12 rounded-xl border border-gray-200 bg-white px-6 text-sm font-medium text-gray-700 transition hover:bg-blue-50"
                 >
                   회원 탈퇴
                 </button>
                 <Link
                   href="/"
-                  className="inline-flex h-12 items-center rounded-full border border-neutral-300 bg-white px-6 text-sm text-neutral-800 transition hover:bg-neutral-50"
+                  className="inline-flex h-12 items-center rounded-xl border border-gray-200 bg-white px-6 text-sm text-gray-800 transition hover:bg-blue-50"
                 >
                   홈으로
                 </Link>

@@ -139,7 +139,7 @@ export default function BoardManagementPage() {
 
   return (
     <main>
-      <div className="max-w-5xl mx-auto p-10 flex gap-10 bg-white min-h-screen flex-col pt-0"> 
+      <div className="max-w-5xl mx-auto p-10 flex gap-10 bg-white min-h-screen flex-col pt-0 rounded-2xl border border-gray-200"> 
         <div className="mb-2 h-[470px] space-y-4">
           {visibleBoards.map((board) => (
             <div 
@@ -154,13 +154,13 @@ export default function BoardManagementPage() {
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
                       placeholder="게시판 이름"
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-gray-300"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-200"
                     />
                     <input
                       value={editingDescription}
                       onChange={(e) => setEditingDescription(e.target.value)}
                       placeholder="게시판 설명"
-                      className="w-full rounded-md border border-gray-200 px-3 py-2 text-xs text-gray-600 outline-none focus:ring-2 focus:ring-gray-200"
+                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 outline-none focus:ring-2 focus:ring-blue-100"
                     />
                   </div>
                 ) : (
@@ -183,13 +183,13 @@ export default function BoardManagementPage() {
                   <>
                     {editingBoardId === board.id ? (
                       <>
-                        <button onClick={() => handleEdit(board.id)} className="px-4 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm hover:bg-gray-200">저장</button>
-                        <button onClick={cancelEdit} className="px-4 py-1.5 bg-white border border-gray-300 rounded-md text-sm hover:bg-gray-50">취소</button>
+                        <button onClick={() => handleEdit(board.id)} className="px-4 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-sm hover:bg-blue-100">저장</button>
+                        <button onClick={cancelEdit} className="px-4 py-1.5 bg-white border border-gray-200 rounded-xl text-sm hover:bg-blue-50">취소</button>
                       </>
                     ) : (
-                      <button onClick={() => startEdit(board)} className="px-4 py-1.5 bg-gray-100 border border-gray-300 rounded-md text-sm hover:bg-gray-200">수정</button>
+                      <button onClick={() => startEdit(board)} className="px-4 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-sm hover:bg-blue-100">수정</button>
                     )}
-                    <button onClick={() => softDelete(board.id)} className="px-4 py-1.5 bg-[#2D2D2D] text-white rounded-md text-sm hover:bg-black">삭제</button>
+                    <button onClick={() => softDelete(board.id)} className="px-4 py-1.5 bg-black text-white rounded-xl text-sm hover:bg-gray-800">삭제</button>
                   </>
                 )}
                 
@@ -200,9 +200,9 @@ export default function BoardManagementPage() {
 
         {/* 페이지네이션 */}
         <div className="mb-4 flex items-center justify-center gap-3">
-          <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="rounded-md border border-gray-300 px-4 py-2 text-sm disabled:opacity-40">Prev</button>
+          <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Prev</button>
           <span className="text-sm text-gray-600">{currentPage} / {totalPages}</span>
-          <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="rounded-md border border-gray-300 px-4 py-2 text-sm disabled:opacity-40">Next</button>
+          <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Next</button>
         </div>
 
         {/* 추가 섹션 */}
@@ -222,7 +222,7 @@ export default function BoardManagementPage() {
               className="w-full h-20 resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:ring-1 focus:ring-gray-300"
             />
             <div className="flex justify-end">
-              <button onClick={handleRegister} className="w-20 px-3 py-2.5 bg-[#2D2D2D] text-white rounded-lg hover:bg-black transition-colors">등록</button>
+              <button onClick={handleRegister} className="w-20 px-3 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors border border-black">등록</button>
             </div>
           </div>
         </div>

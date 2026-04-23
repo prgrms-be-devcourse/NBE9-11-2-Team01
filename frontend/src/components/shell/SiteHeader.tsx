@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { LogOut, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { SignalLogo } from "@/components/brand/SignalLogo";
 import { Avatar } from "@/components/profile/Avatar";
@@ -23,7 +23,7 @@ export function SiteHeader() {
       initial={{ y: -12, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
-      className="sticky top-0 z-50 border-b border-neutral-200/90 bg-white/85 backdrop-blur-md"
+      className="sticky top-0 z-50 border-b border-gray-200 bg-white/90 backdrop-blur-md"
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <Link
@@ -65,18 +65,26 @@ export function SiteHeader() {
               </div>
               <Link
                 href="/mypage"
-                className="inline-flex h-10 items-center rounded-full border border-neutral-300 bg-white px-4 text-sm font-medium text-neutral-900 transition hover:bg-neutral-50"
+                className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black transition hover:bg-blue-50"
               >
                 마이페이지
               </Link>
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-neutral-200 px-4 text-sm text-neutral-600 transition hover:border-neutral-400 hover:text-neutral-900"
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-4 text-sm text-gray-700 transition hover:border-gray-300 hover:text-black"
               >
                 <LogOut className="h-4 w-4" />
                 로그아웃
               </button>
+              <Link
+                href="/notifications"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 transition hover:border-gray-300 hover:bg-blue-50 hover:text-black"
+                aria-label="알림 페이지로 이동"
+                title="알림"
+              >
+                <Bell className="h-5 w-5" />
+              </Link>
             </>
           ) : (
             <>
@@ -88,7 +96,7 @@ export function SiteHeader() {
               </Link>
               <Link
                 href="/signup"
-                className="inline-flex h-10 items-center rounded-full bg-neutral-900 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                className="inline-flex h-10 items-center rounded-xl bg-black px-5 text-sm font-semibold text-white transition hover:bg-gray-800"
               >
                 회원가입
               </Link>
@@ -128,6 +136,13 @@ export function SiteHeader() {
               <hr className="my-2 border-neutral-200" />
               {!loading && user ? (
                 <>
+                  <Link
+                    href="/notifications"
+                    className="rounded-xl px-3 py-2.5 text-neutral-700"
+                    onClick={() => setOpen(false)}
+                  >
+                    알림
+                  </Link>
                   <Link
                     href="/mypage"
                     className="rounded-xl px-3 py-2.5 font-medium text-neutral-900"

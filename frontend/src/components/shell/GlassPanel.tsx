@@ -11,7 +11,7 @@ export function GlassPanel({
 }) {
   return (
     <div
-      className={`rounded-3xl border border-neutral-200/80 bg-white/90 shadow-[0_4px_24px_rgba(0,0,0,0.06)] backdrop-blur-sm ${className}`}
+      className={`rounded-2xl border border-gray-200 bg-white/95 shadow-[0_8px_28px_rgba(15,23,42,0.06)] backdrop-blur-sm ${className}`}
     >
       {children}
     </div>
