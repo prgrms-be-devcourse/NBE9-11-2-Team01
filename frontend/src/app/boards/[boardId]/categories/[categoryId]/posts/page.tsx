@@ -74,6 +74,7 @@ export default function CategoryPostListPage() {
   const [postPage, setPostPage] = useState<PostPage | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [categories, setCategories] = useState<Category[]>([]);
 
   const updateQuery = useCallback(
     (next: { page?: number; keyword?: string; sort?: string }) => {
@@ -101,22 +102,16 @@ export default function CategoryPostListPage() {
         method: "GET",
         credentials: "include",
       });
-
-      if (!res.ok) {
-        return;
-      }
-
+      if (!res.ok) return;
       const json = (await res.json()) as ApiResponse<Category[]>;
-      if (!json.success) {
-        return;
-      }
+      if (!json.success) return;
+
+      setCategories(json.data);
 
       const selected = json.data.find((category) => String(category.id) === categoryId);
-      if (selected) {
-        setCategoryName(selected.name);
-      }
+      if (selected) setCategoryName(selected.name);
     } catch {
-      // 카테고리명 조회 실패는 목록 렌더링에 영향이 없으므로 무시
+      // 무시
     }
   }, [boardId, categoryId]);
 
@@ -263,21 +258,28 @@ export default function CategoryPostListPage() {
         <section className="grid gap-5 md:grid-cols-[200px_1fr]">
 
             <aside className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">카테고리</p>
-            <div className="flex flex-col gap-1">
+              <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-gray-400">카테고리</p>
+              <div className="flex flex-col gap-1">
                 <Link
-                href={`/boards/${boardId}/posts`}
-                className="rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-blue-50"
+                  href={`/boards/${boardId}/posts`}
+                  className="rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-blue-50"
                 >
-                전체
+                  전체
                 </Link>
-                <button
-                type="button"
-                className="rounded-xl bg-black px-3 py-2 text-left text-sm font-medium text-white"
-                >
-                {categoryName || `카테고리 #${categoryId}`}
-                </button>
-            </div>
+                {categories.map((category) => (
+                  <Link
+                    key={category.id}
+                    href={`/boards/${boardId}/categories/${category.id}/posts`}
+                    className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
+                      String(category.id) === categoryId
+                        ? "bg-black text-white"
+                        : "text-gray-600 hover:bg-blue-50"
+                    }`}
+                  >
+                    {category.name}
+                  </Link>
+                ))}
+              </div>
             </aside>
 
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm">

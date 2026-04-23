@@ -189,18 +189,23 @@ export default function PostListPage() {
     return Array.from({ length: end - start + 1 }, (_, idx) => start + idx);
   }, [postPage]);
 
-  const categories = useMemo(() => {
-    const source = postPage?.posts ?? [];
-    const dedup = new Map<number, string>();
+  const [categories, setCategories] = useState<{ id: number; name: string }[]>([]);
 
-    source.forEach((post) => {
-      if (!dedup.has(post.categoryId)) {
-        dedup.set(post.categoryId, post.categoryName);
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/categories`, {
+          credentials: "include",
+        });
+        if (!res.ok) return;
+        const json = (await res.json()) as ApiResponse<{ id: number; name: string }[]>;
+        if (json.success) setCategories(json.data);
+      } catch {
+        // 카테고리 조회 실패는 무시
       }
-    });
-
-    return Array.from(dedup.entries()).map(([id, name]) => ({ id, name }));
-  }, [postPage]);
+    };
+    fetchCategories();
+  }, [boardId]);
 
   const hasPosts = !!postPage && postPage.posts.length > 0;
 
