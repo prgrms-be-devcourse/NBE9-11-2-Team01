@@ -2,6 +2,8 @@ package com.team01.backend.domain.notification.controller;
 
 import com.team01.backend.domain.notification.repository.SseEmitterRepository;
 import com.team01.backend.domain.user.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-
+@Tag(name = "실시간 알림", description = "실시간 알림 연결 관련 API")
 @RestController
 @RequiredArgsConstructor
 public class SseController {
@@ -18,6 +20,7 @@ public class SseController {
     private final SseEmitterRepository sseEmitterRepository;
     private final UserService userService;
 
+    @Operation(summary = "실시간 알림 연결", description = "실시간 알림을 보내기 위해 클라이언트와 최초 연결합니다. 로그인한 상태에서만 가능합니다.")
     @GetMapping("/subscribe")
     public SseEmitter subscribe(@AuthenticationPrincipal UserDetails user) { // 연결 생성하는 역할, 실시간 알림 받기 위해 일단 연결하는 역할
 
