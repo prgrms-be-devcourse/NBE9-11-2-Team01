@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { apiGet, apiPostJson, apiPutJson, apiDelete } from '@/lib/api';
 
-const ITEMS_PER_PAGE = 4; // 카테고리 페이지당 노출 개수
+const ITEMS_PER_PAGE = 4;
 
 export default function CategoryManagementPage() {
   const [boards, setBoards] = useState<any[]>([]);
@@ -11,7 +11,6 @@ export default function CategoryManagementPage() {
   const [selectedBoardId, setSelectedBoardId] = useState<number | null>(null);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
 
-  // 카테고리용 페이징 상태
   const [categoryPage, setCategoryPage] = useState(1);
   
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -30,7 +29,6 @@ export default function CategoryManagementPage() {
     try {
       if (!isSilent) setIsInitialLoading(true);
       
-      // apiGet을 사용하여 인증 정보 포함 및 자동 리프레시 대응
       const [boardRes, catRes] = await Promise.all([
         apiGet<any>("/admin/boards"),
         apiGet<any[]>("/admin/categories")
@@ -55,7 +53,6 @@ export default function CategoryManagementPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // 선택된 게시판 정보 및 필터링/페이징 로직
   const currentBoard = boards.find(b => b.id === selectedBoardId);
   const isBoardDeleted = currentBoard?.isDeleted;
   
@@ -64,11 +61,21 @@ export default function CategoryManagementPage() {
   const startIndex = (categoryPage - 1) * ITEMS_PER_PAGE;
   const visibleCategories = filteredCategories.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // 핸들러
+  // 수정 시작 핸들러
+  const startEdit = (cat: any) => {
+    setEditingId(cat.id);
+    setEditingName(cat.name);
+  };
+
+  // 수정 취소 핸들러 (추가됨)
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName('');
+  };
+
   const handleRegister = async () => {
     if (!validateCategoryInput(newName.trim()) || !selectedBoardId || isBoardDeleted) return;
     try {
-      // apiPostJson 사용
       await apiPostJson("/admin/categories", { name: newName, boardId: selectedBoardId });
       setNewName('');
       fetchData(true);
@@ -78,20 +85,10 @@ export default function CategoryManagementPage() {
   const handleUpdate = async (id: number) => {
     if (isBoardDeleted || !validateCategoryInput(editingName.trim())) return;
     try {
-      // apiPutJson 사용
       await apiPutJson(`/admin/categories/${id}`, { name: editingName, boardId: selectedBoardId });
-      setEditingId(null);
+      cancelEdit(); // 취소 로직과 동일하게 초기화
       fetchData(true);
     } catch (error) { alert('수정 실패'); }
-  };
-
-  const handleDelete = async (id: number) => {
-    if (!confirm('카테고리를 삭제하시겠습니까?') || isBoardDeleted) return;
-    try {
-      // apiDelete 사용
-      await apiDelete(`/admin/categories/${id}`);
-      fetchData(true);
-    } catch (error) { alert('삭제 실패'); }
   };
 
   if (isInitialLoading) return <div className="p-10 text-center text-gray-500">데이터를 불러오는 중...</div>;
@@ -108,7 +105,7 @@ export default function CategoryManagementPage() {
               onClick={() => {
                 setSelectedBoardId(board.id);
                 setCategoryPage(1);
-                setEditingId(null);
+                cancelEdit(); // 게시판 변경 시 수정 모드 종료
               }}
               className={`w-full text-left p-4 rounded-xl transition-all border ${
                 selectedBoardId === board.id 
@@ -157,9 +154,27 @@ export default function CategoryManagementPage() {
                 {!isBoardDeleted && (
                   <div className="flex gap-2">
                     {editingId === cat.id ? (
-                      <button onClick={() => handleUpdate(cat.id)} className="px-3 py-1.5 bg-black text-white rounded-xl text-xs font-semibold border border-black">저장</button>
+                      <>
+                        <button 
+                          onClick={() => handleUpdate(cat.id)} 
+                          className="px-3 py-1.5 bg-black text-white rounded-xl text-xs font-semibold border border-black"
+                        >
+                          저장
+                        </button>
+                        <button 
+                          onClick={cancelEdit} 
+                          className="px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold hover:bg-gray-50"
+                        >
+                          취소
+                        </button>
+                      </>
                     ) : (
-                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="px-3 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-xs font-semibold">수정</button>
+                      <button 
+                        onClick={() => startEdit(cat)} 
+                        className="px-3 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-xs font-semibold"
+                      >
+                        수정
+                      </button>
                     )}
                   </div>
                 )}
