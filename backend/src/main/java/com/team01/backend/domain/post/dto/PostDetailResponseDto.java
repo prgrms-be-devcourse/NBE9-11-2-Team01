@@ -20,6 +20,7 @@ public record PostDetailResponseDto(
         String author,
         String profileImage,
         int likeCount,
+        boolean isLiked,
 
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
@@ -30,7 +31,7 @@ public record PostDetailResponseDto(
         boolean isOwner
 ) {
     public static PostDetailResponseDto of(Post post, Board board, Category category,
-                                           List<CommentReadResponseDto> comments, boolean isOwner) {
+                                           List<CommentReadResponseDto> comments, boolean isOwner, boolean isLiked) {
         return new PostDetailResponseDto(
                 post.getId(),
                 board.getId(),
@@ -42,6 +43,7 @@ public record PostDetailResponseDto(
                 post.getAuthor().getNickname(),
                 post.getAuthor().getProfileImage(),
                 post.getLikeCount(),
+                isLiked,
                 post.getCreatedAt(),
                 post.getModifiedAt(),
                 comments,

@@ -127,14 +127,13 @@ export default function CategoryPostListPage() {
     try {
       const query = new URLSearchParams();
       query.set("page", String(page));
-      query.set("categoryId", categoryId);
       if (keyword) {
         query.set("keyword", keyword);
       }
 
       query.set("sort", sort);
 
-      const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/posts?${query.toString()}`, {
+      const res = await fetch(`${getApiBaseUrl()}/boards/${boardId}/categories/${categoryId}/posts?${query.toString()}`, {
         method: "GET",
         credentials: "include",
       });

@@ -6,6 +6,8 @@ import com.team01.backend.domain.comment.dto.CommentReadResponseDto;
 import com.team01.backend.domain.comment.dto.CommentRequestDto;
 import com.team01.backend.domain.comment.dto.CommentResponseDto;
 import com.team01.backend.domain.comment.service.CommentService;
+import com.team01.backend.domain.user.entity.User;
+import com.team01.backend.domain.user.repository.UserRepository;
 import com.team01.backend.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,8 +30,11 @@ public class CommentController {
     // COMMENT-02 댓글(답글) 조회
     @Operation(summary = "댓글 조회", description = "특정 게시글의 댓글/대댓글 목록을 조회합니다.")
     @GetMapping("/posts/{postId}/comments")
-    public ResponseEntity<ApiResponse<List<CommentReadResponseDto>>> getComments(@PathVariable Long postId) {
-        List<CommentReadResponseDto> list = commentService.getCommentsByPostId(postId);
+    public ResponseEntity<ApiResponse<List<CommentReadResponseDto>>> getComments(
+            @PathVariable Long postId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+        String email = userDetails != null ? userDetails.getUsername() : null;
+        List<CommentReadResponseDto> list = commentService.getCommentsByPostId(postId, email);
         return ResponseEntity.ok(ApiResponse.ofSuccess(list));
     }
 

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> {
@@ -25,4 +26,7 @@ public interface CommentLikeRepository extends JpaRepository<CommentLike, Long> 
     int deleteByComment_IdAndUser_Id(Long commentId, Long userId);
 
     long countByComment_Id(Long commentId);
+
+    @Query("SELECT cl.comment.id FROM CommentLike cl WHERE cl.user.id = :userId AND cl.comment.id IN :commentIds")
+    List<Long> findLikedCommentIdsByUserId(@Param("userId") Long userId, @Param("commentIds") List<Long> commentIds);
 }
