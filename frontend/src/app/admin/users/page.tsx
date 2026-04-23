@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+// 공통 API 함수 임포트
+import { apiGet } from '@/lib/api';
 
-const USER_API_URL = "http://localhost:8080/admin/users";
 const ITEMS_PER_PAGE = 7;
 
 interface UserResponseDto {
@@ -20,14 +21,14 @@ export default function UserManagementPage() {
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // 1. fetchData의 의존성을 비워 버튼 클릭 시 함수가 바뀌지 않도록 설정
+  // apiGet을 사용하여 인증 정보 포함 및 자동 리프레시 대응
   const fetchUsers = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent) setIsInitialLoading(true);
       else setIsUpdating(true);
 
-      const response = await fetch(USER_API_URL, { credentials: 'include' });
-      const responseData = await response.json();
+      // 상대 경로 사용 및 apiGet 호출
+      const responseData = await apiGet<UserResponseDto[]>("/admin/users");
       setAllUsers(responseData.data || []);
     } catch (error) {
       console.error("Fetch Error:", error);
@@ -35,13 +36,13 @@ export default function UserManagementPage() {
       setIsInitialLoading(false);
       setIsUpdating(false);
     }
-  }, []); // 의존성 배열을 비워둠으로써 함수 참조값 고정
+  }, []);
 
   useEffect(() => {
     fetchUsers();
   }, [fetchUsers]);
 
-  // 계산 로직 (렌더링 시 수행)
+  // 계산 로직 (필터링 및 페이징)
   const filteredUsers = allUsers.filter(user => 
     selectedRole === 'ALL' ? true : user.role === selectedRole
   );
@@ -56,13 +57,12 @@ export default function UserManagementPage() {
         <h2 className="text-2xl font-bold text-gray-900">사용자 관리</h2>
         <p className="text-sm text-gray-500 mt-1">회원 목록을 조회하고 권한을 확인할 수 있습니다.</p>
         
-        {/* 가로형 필터: 로딩 중일 때도 버튼 클릭이 막히지 않도록 유지 */}
         <div className="flex gap-2 mt-6 pb-2">
           {['ALL', 'USER', 'MANAGER', 'ADMIN'].map((role) => (
             <button
               key={role}
               type="button"
-              disabled={isUpdating} // 업데이트 중에만 잠시 비활성화 (선택 사항)
+              disabled={isUpdating}
               onClick={() => {
                 setSelectedRole(role);
                 setCurrentPage(1);
@@ -80,7 +80,6 @@ export default function UserManagementPage() {
       </div>
 
       <div className="h-[600px] flex flex-col justify-between relative">
-        {/* 테이블 업데이트 시 살짝 흐리게 처리 (번쩍임 대신 부드러운 효과) */}
         <div className={`overflow-hidden border border-gray-200 rounded-2xl shadow-sm bg-white transition-opacity ${isUpdating ? 'opacity-50' : 'opacity-100'}`}>
           <table className="w-full text-left border-collapse table-fixed">
             <thead>
@@ -114,7 +113,6 @@ export default function UserManagementPage() {
                   </tr>
                 ))
               ) : null}
-              {/* 공백 노드 방지를 위해 tr로만 채움 */}
               {Array.from({ length: ITEMS_PER_PAGE - visibleUsers.length }).map((_, i) => (
                 <tr key={`empty-${i}`} className="h-[62px] border-none"><td colSpan={4} /></tr>
               ))}

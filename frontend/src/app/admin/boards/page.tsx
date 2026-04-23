@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+// 공통 API 함수들 임포트
+import { apiGet, apiPostJson, apiPutJson, apiDelete } from '@/lib/api';
 
 const ITEMS_PER_PAGE = 4;
-const baseUrl = "http://localhost:8080/admin/boards";
 
 export default function BoardManagementPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -20,17 +21,15 @@ export default function BoardManagementPage() {
   const fetchBoards = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(baseUrl,{
-        credentials:'include'
-      });
-      if (!response.ok) throw new Error('데이터 로드 실패');
-      const responseData:AdminBoardResponseDto = await response.json();
-      const data: AdminBoardListDto = responseData.data;
+      // 직접 fetch 대신 apiGet 사용 (주소는 /admin/boards 로 상대 경로 사용)
+      const responseData = await apiGet<AdminBoardListDto>("/admin/boards");
       
-      // exist와 deleted를 합쳐서 하나의 리스트로 관리
-      // (순서는 exist 우선, 그 다음 deleted가 오도록 배치)
-      const combinedBoards = [...(data.exist || []), ...(data.deleted || [])];
-      setBoards(combinedBoards);
+      const data = responseData.data;
+      if (data) {
+        // exist와 deleted를 합쳐서 하나의 리스트로 관리
+        const combinedBoards = [...(data.exist || []), ...(data.deleted || [])];
+        setBoards(combinedBoards);
+      }
     } catch (error) {
       console.error("Fetch Error:", error);
       alert("데이터를 가져오는 중 오류가 발생했습니다.");
@@ -59,54 +58,42 @@ export default function BoardManagementPage() {
     return true;
   };
 
-  const startEdit = (board: Board) => { //수정 폼 작성 중 
-    if (board.isDeleted) return; // 삭제된 게시판은 수정, 삭제 불가
+  const startEdit = (board: Board) => {
+    if (board.isDeleted) return; 
     setEditingBoardId(board.id);
     setEditingName(board.boardName);
     setEditingDescription(board.description ?? '');
   };
 
-  const cancelEdit = () => { //현재 수정하고 있는 게시판 없음 (종료)
+  const cancelEdit = () => {
     setEditingBoardId(null);
     setEditingName('');
     setEditingDescription('');
   };
 
   // 수정 핸들러
-  const handleEdit = async (id: number) => { //실제 수정 요청 
+  const handleEdit = async (id: number) => {
     const name = editingName.trim();
     const description = editingDescription.trim();
     if (!validateBoardInput(name, description)) return;
 
     try {
-      await fetch(`${baseUrl}/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, description }),
-      });
+      // apiPutJson 사용
+      await apiPutJson(`/admin/boards/${id}`, { name, description });
       fetchBoards();
-
       cancelEdit();
     } catch (error) {
       alert('수정 실패');
     }
   };
 
-  // 삭제 핸들러 (실제 삭제가 아닌 isDeleted를 true로 변경하는 로직)
+  // 삭제 핸들러
   const softDelete = async (id: number) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
 
     try {
-      await fetch(`${baseUrl}/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      // apiDelete 사용
+      await apiDelete(`/admin/boards/${id}`);
       fetchBoards();
     } catch (error) {
       alert('삭제 실패');
@@ -119,17 +106,12 @@ export default function BoardManagementPage() {
     if (!validateBoardInput(name, description)) return;
 
     try {
-      await fetch(baseUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, description }),
-      });
-    
+      // apiPostJson 사용
+      await apiPostJson("/admin/boards", { name, description });
+      
+      setNewBoardName('');
+      setNewBoardDescription('');
       fetchBoards();
-
     } catch (error) {
       alert('등록 실패');
     }
@@ -192,20 +174,17 @@ export default function BoardManagementPage() {
                     <button onClick={() => softDelete(board.id)} className="px-4 py-1.5 bg-black text-white rounded-xl text-sm hover:bg-gray-800">삭제</button>
                   </>
                 )}
-                
               </div>
             </div>
           ))}
         </div>
 
-        {/* 페이지네이션 */}
         <div className="mb-4 flex items-center justify-center gap-3">
           <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Prev</button>
           <span className="text-sm text-gray-600">{currentPage} / {totalPages}</span>
           <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Next</button>
         </div>
 
-        {/* 추가 섹션 */}
         <div>
           <h2 className="text-md font-medium text-gray-700 mb-2">게시판 추가</h2>
           <div className="w-full space-y-2">

@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { apiGet, apiPostJson, apiPutJson, apiDelete } from '@/lib/api';
 
-const CATEGORY_URL = "http://localhost:8080/admin/categories";
-const BOARD_URL = "http://localhost:8080/admin/boards";
 const ITEMS_PER_PAGE = 4; // 카테고리 페이지당 노출 개수
 
 export default function CategoryManagementPage() {
@@ -30,16 +29,19 @@ export default function CategoryManagementPage() {
   const fetchData = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent) setIsInitialLoading(true);
+      
+      // apiGet을 사용하여 인증 정보 포함 및 자동 리프레시 대응
       const [boardRes, catRes] = await Promise.all([
-        fetch(BOARD_URL, { credentials: 'include' }),
-        fetch(CATEGORY_URL, { credentials: 'include' })
+        apiGet<any>("/admin/boards"),
+        apiGet<any[]>("/admin/categories")
       ]);
-      const boardData = await boardRes.json();
-      const catData = await catRes.json();
 
-      const combinedBoards = [...(boardData.data.exist || []), ...(boardData.data.deleted || [])];
+      const boardData = boardRes.data;
+      const catData = catRes.data;
+
+      const combinedBoards = [...(boardData.exist || []), ...(boardData.deleted || [])];
       setBoards(combinedBoards);
-      setAllCategories(catData.data || []);
+      setAllCategories(catData || []);
 
       if (combinedBoards.length > 0 && selectedBoardId === null) {
         setSelectedBoardId(combinedBoards[0].id);
@@ -51,7 +53,7 @@ export default function CategoryManagementPage() {
     }
   }, [selectedBoardId]);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
   // 선택된 게시판 정보 및 필터링/페이징 로직
   const currentBoard = boards.find(b => b.id === selectedBoardId);
@@ -66,12 +68,8 @@ export default function CategoryManagementPage() {
   const handleRegister = async () => {
     if (!validateCategoryInput(newName.trim()) || !selectedBoardId || isBoardDeleted) return;
     try {
-      await fetch(CATEGORY_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newName, boardId: selectedBoardId }),
-        credentials: 'include'
-      });
+      // apiPostJson 사용
+      await apiPostJson("/admin/categories", { name: newName, boardId: selectedBoardId });
       setNewName('');
       fetchData(true);
     } catch (error) { alert('등록 실패'); }
@@ -80,12 +78,8 @@ export default function CategoryManagementPage() {
   const handleUpdate = async (id: number) => {
     if (isBoardDeleted || !validateCategoryInput(editingName.trim())) return;
     try {
-      await fetch(`${CATEGORY_URL}/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: editingName, boardId: selectedBoardId }),
-        credentials: 'include'
-      });
+      // apiPutJson 사용
+      await apiPutJson(`/admin/categories/${id}`, { name: editingName, boardId: selectedBoardId });
       setEditingId(null);
       fetchData(true);
     } catch (error) { alert('수정 실패'); }
@@ -93,15 +87,18 @@ export default function CategoryManagementPage() {
 
   const handleDelete = async (id: number) => {
     if (!confirm('카테고리를 삭제하시겠습니까?') || isBoardDeleted) return;
-    await fetch(`${CATEGORY_URL}/${id}`, { method: 'DELETE', credentials: 'include' });
-    fetchData(true);
+    try {
+      // apiDelete 사용
+      await apiDelete(`/admin/categories/${id}`);
+      fetchData(true);
+    } catch (error) { alert('삭제 실패'); }
   };
 
   if (isInitialLoading) return <div className="p-10 text-center text-gray-500">데이터를 불러오는 중...</div>;
 
   return (
     <main className="max-w-6xl mx-auto p-10 flex gap-8 bg-white min-h-screen rounded-2xl border border-gray-200">
-      {/* 왼쪽: 게시판 목록 - 고정 높이 지정 */}
+      {/* 왼쪽: 게시판 목록 */}
       <div className="w-1/3 border-r pr-6 sticky top-10 h-fit">
         <h2 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-wider">게시판</h2>
         <div className="space-y-2 h-[500px] overflow-y-auto pr-2 custom-scrollbar">
@@ -110,7 +107,7 @@ export default function CategoryManagementPage() {
               key={board.id}
               onClick={() => {
                 setSelectedBoardId(board.id);
-                setCategoryPage(1); // 게시판 변경 시 페이징 초기화
+                setCategoryPage(1);
                 setEditingId(null);
               }}
               className={`w-full text-left p-4 rounded-xl transition-all border ${
@@ -140,7 +137,6 @@ export default function CategoryManagementPage() {
           </p>
         </div>
 
-        {/* 카테고리 목록 - 고정 높이(h-[450px]) 지정 */}
         <div className="h-[450px] flex flex-col justify-between">
           <div className={`space-y-3 transition-opacity ${isBoardDeleted ? 'pointer-events-none opacity-40' : 'opacity-100'}`}>
             {visibleCategories.map((cat) => (
@@ -165,7 +161,6 @@ export default function CategoryManagementPage() {
                     ) : (
                       <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="px-3 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-xs font-semibold">수정</button>
                     )}
-                    {/* <button onClick={() => handleDelete(cat.id)} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100">삭제</button> */}
                   </div>
                 )}
               </div>
@@ -200,28 +195,28 @@ export default function CategoryManagementPage() {
           )}
         </div>
 
-        {/* 하단 고정: 추가 섹션 */}
+        {/* 하단 추가 섹션 */}
         <div className="mt-4">
-        {!isBoardDeleted && (
-          <div className="mt-8 p-6 bg-blue-50/50 rounded-2xl border border-gray-200">
-            <h3 className="text-sm font-bold mb-3 text-gray-700">새 카테고리 추가</h3>
-            <div className="flex gap-2">
-              <input
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="카테고리 이름을 입력하세요"
-                className="flex-1 p-3 rounded-xl border border-gray-200 outline-none bg-white text-sm"
-                onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
-              />
-              <button 
-                onClick={handleRegister}
-                className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all text-sm border border-black"
-              >
-                등록
-              </button>
+          {!isBoardDeleted && (
+            <div className="mt-8 p-6 bg-blue-50/50 rounded-2xl border border-gray-200">
+              <h3 className="text-sm font-bold mb-3 text-gray-700">새 카테고리 추가</h3>
+              <div className="flex gap-2">
+                <input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="카테고리 이름을 입력하세요"
+                  className="flex-1 p-3 rounded-xl border border-gray-200 outline-none bg-white text-sm"
+                  onKeyDown={(e) => e.key === 'Enter' && handleRegister()}
+                />
+                <button 
+                  onClick={handleRegister}
+                  className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all text-sm border border-black"
+                >
+                  등록
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </div>
       </div>
     </main>
