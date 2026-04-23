@@ -3,7 +3,7 @@ export type MyPageUser = {
   nickname: string;
   profileImage: string | null;
   role: string;
-  joinedAt?: string | null;
+  createdAt?: string | null;
 };
 
 export type Board = {
