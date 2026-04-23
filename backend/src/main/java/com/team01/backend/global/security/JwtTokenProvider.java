@@ -20,10 +20,10 @@ public class JwtTokenProvider {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // 액세스 토큰 만료 시간: 1시간
-    private final long accessTokenValidTime = 60 * 60 * 1000L;
-    // 리프레시 토큰 만료 시간: 14일
-    private final long refreshTokenValidTime = 14 * 24 * 60 * 60 * 1000L;
+    // 액세스 토큰 만료 시간: 15분(1시간에서 보안 강화를 위해 단축)
+    private final long accessTokenValidTime = 15 * 60 * 1000L;
+    // 리프레시 토큰 만료 시간: 7일(기존 14일에서 운영 효율성을 위해 조정)
+    private final long refreshTokenValidTime = 7 * 24 * 60 * 60 * 1000L;
 
     private final UserDetailsService userDetailsService;
 
