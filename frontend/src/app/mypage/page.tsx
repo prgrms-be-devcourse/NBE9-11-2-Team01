@@ -226,7 +226,7 @@ export default function MyPage() {
                   </label>
                   <input
                     readOnly
-                    value={user.joinedAt ?? "—"}
+                    value={user.createdAt ?? "—"}
                     className="w-full cursor-not-allowed rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-600"
                   />
                 </div>
