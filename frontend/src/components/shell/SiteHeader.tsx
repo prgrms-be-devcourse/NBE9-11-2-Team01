@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
-import { Bell, ChevronDown, LogOut, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, Menu, X, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { SignalLogo } from "@/components/brand/SignalLogo";
 import { Avatar } from "@/components/profile/Avatar";
@@ -18,6 +18,9 @@ export function SiteHeader() {
   const { user, loading, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const [boards, setBoards] = useState<Board[]>([]);
+
+  // 관리자 권한 확인 (ADMIN일 때만 true)
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     let cancelled = false;
@@ -53,6 +56,7 @@ export function SiteHeader() {
           <span>합격시그널</span>
         </Link>
 
+        {/* 데스크탑 메인 네비게이션 */}
         <nav className="hidden items-center gap-7 md:flex">
           <Link
             href="/"
@@ -106,10 +110,11 @@ export function SiteHeader() {
           ))}
         </nav>
 
+        {/* 우측 사용자 메뉴 및 아이콘 세트 */}
         <div className="hidden items-center gap-3 md:flex">
           {!loading && user ? (
             <>
-              <div className="flex max-w-[200px] items-center gap-2">
+              <div className="flex max-w-[200px] items-center gap-2 mr-2">
                 <Avatar
                   src={user.profileImage}
                   alt={user.nickname}
@@ -122,26 +127,41 @@ export function SiteHeader() {
               </div>
               <Link
                 href="/mypage"
-                className="inline-flex h-10 items-center rounded-xl border border-gray-200 bg-white px-4 text-sm font-medium text-black transition hover:bg-blue-50"
+                className="text-sm font-medium text-neutral-600 transition hover:text-neutral-900"
               >
                 마이페이지
               </Link>
               <button
                 type="button"
                 onClick={() => void logout()}
-                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-4 text-sm text-gray-700 transition hover:border-gray-300 hover:text-black"
+                className="text-sm font-medium text-neutral-600 transition hover:text-neutral-900"
               >
-                <LogOut className="h-4 w-4" />
                 로그아웃
               </button>
-              <Link
-                href="/notifications"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 transition hover:border-gray-300 hover:bg-blue-50 hover:text-black"
-                aria-label="알림 페이지로 이동"
-                title="알림"
-              >
-                <Bell className="h-5 w-5" />
-              </Link>
+
+              {/* 아이콘 그룹 (구분선 추가) */}
+              <div className="flex items-center gap-2 ml-2 pl-4 border-l border-gray-200">
+                <Link
+                  href="/notifications"
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-gray-200 bg-white text-gray-700 transition hover:border-gray-300 hover:bg-gray-50 hover:text-black"
+                  aria-label="알림"
+                  title="알림"
+                >
+                  <Bell className="h-5 w-5" />
+                </Link>
+
+                {/* 관리자 버튼: 최우측 배치, 블랙 스타일 */}
+                {isAdmin && (
+                  <Link
+                    href="/admin/boards"
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-black bg-black text-white transition hover:bg-neutral-800 shadow-sm"
+                    aria-label="관리자 페이지"
+                    title="관리자 설정"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Link>
+                )}
+              </div>
             </>
           ) : (
             <>
@@ -161,6 +181,7 @@ export function SiteHeader() {
           )}
         </div>
 
+        {/* 모바일 햄버거 메뉴 버튼 */}
         <button
           type="button"
           className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-neutral-200 text-neutral-900 md:hidden"
@@ -171,6 +192,7 @@ export function SiteHeader() {
         </button>
       </div>
 
+      {/* 모바일 메뉴 오버레이 */}
       <AnimatePresence>
         {open && (
           <m.div
@@ -218,7 +240,9 @@ export function SiteHeader() {
                   {item.label}
                 </Link>
               ))}
+              
               <hr className="my-2 border-neutral-200" />
+              
               {!loading && user ? (
                 <>
                   <Link
@@ -230,11 +254,24 @@ export function SiteHeader() {
                   </Link>
                   <Link
                     href="/mypage"
-                    className="rounded-xl px-3 py-2.5 font-medium text-neutral-900"
+                    className="rounded-xl px-3 py-2.5 text-neutral-700"
                     onClick={() => setOpen(false)}
                   >
                     마이페이지
                   </Link>
+                  
+                  {/* 모바일에서도 관리자 메뉴 노출 */}
+                  {isAdmin && (
+                    <Link
+                      href="/admin/boards"
+                      className="rounded-xl px-3 py-2.5 font-bold text-black bg-neutral-50 flex items-center gap-2"
+                      onClick={() => setOpen(false)}
+                    >
+                      <Settings className="h-4 w-4" />
+                      관리자 설정
+                    </Link>
+                  )}
+
                   <button
                     type="button"
                     className="rounded-xl px-3 py-2.5 text-left text-neutral-600"
