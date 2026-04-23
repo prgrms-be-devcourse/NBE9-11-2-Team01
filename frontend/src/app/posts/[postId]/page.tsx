@@ -769,7 +769,7 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen bg-blue-50/40 px-4 py-8">
       <main className="mx-auto flex w-full max-w-4xl flex-col gap-5">
 
         <header className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
@@ -789,14 +789,14 @@ export default function PostDetailPage() {
             <div className="mt-4 flex gap-2">
               <Link
                 href={loginHref}
-                className="inline-flex rounded-xl bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                className="inline-flex rounded-xl border border-black bg-black px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-gray-800"
               >
                 로그인 하러 가기
               </Link>
               <button
                 type="button"
                 onClick={fetchPost}
-                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-blue-50"
               >
                 다시 시도
               </button>
@@ -819,7 +819,7 @@ export default function PostDetailPage() {
             <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
               <div className="mb-5 flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600">
+                  <span className="inline-flex rounded-xl bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
                     {post.categoryName}
                   </span>
 
@@ -842,7 +842,7 @@ export default function PostDetailPage() {
                           type="button"
                           onClick={handleSavePostEdit}
                           disabled={isSavingPostEdit}
-                          className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                          className="rounded-xl border border-black bg-black px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           {isSavingPostEdit ? "저장 중..." : "저장"}
                         </button>
@@ -853,7 +853,7 @@ export default function PostDetailPage() {
                             setEditingTitle(post.title);
                             setEditingContent(post.content);
                           }}
-                          className="rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-600 transition-colors hover:bg-gray-100"
+                          className="rounded-xl border border-gray-200 px-4 py-2 text-xs text-gray-600 transition-colors hover:bg-blue-50"
                         >
                           취소
                         </button>
@@ -888,7 +888,7 @@ export default function PostDetailPage() {
                     className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
                       postLiked
                         ? "border-red-200 bg-red-50 text-red-500"
-                        : "border-gray-200 text-gray-600 hover:bg-gray-100"
+                        : "border-gray-200 text-gray-600 hover:bg-blue-50"
                     }`}
                   >
                     <span>{postLiked ? "❤️" : "🤍"}</span>
@@ -900,7 +900,7 @@ export default function PostDetailPage() {
                       <button
                         type="button"
                         onClick={() => setIsPostMenuOpen((prev) => !prev)}
-                        className="rounded-full p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                        className="rounded-xl p-1.5 text-gray-400 transition-colors hover:bg-blue-50 hover:text-black"
                       >
                         <MoreHorizontal className="h-5 w-5" />
                       </button>
@@ -965,7 +965,7 @@ export default function PostDetailPage() {
                 <button
                   type="submit"
                   disabled={isCommentSubmitting}
-                  className="rounded-xl bg-gray-900 px-4 text-sm font-medium text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-xl border border-black bg-black px-4 text-sm font-medium text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isCommentSubmitting ? "작성 중..." : "작성"}
                 </button>
@@ -1027,7 +1027,7 @@ export default function PostDetailPage() {
             <div>
               <Link
                 href={`/boards/${post.boardId}/posts`}
-                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+                className="inline-flex rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-600 transition-colors hover:bg-blue-50"
               >
                 ← 목록으로
               </Link>

@@ -9,13 +9,13 @@ export default function Sidebar() {
   ];
 
   return (
-    <aside className="w-64 min-h-[500px] bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+    <aside className="w-64 min-h-[500px] bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
       <nav className="space-y-6">
         {menus.map((menu) => (
           <Link 
             key={menu.name} 
             href={menu.href}
-            className="block text-gray-600 hover:text-black transition-colors"
+            className="block rounded-xl px-3 py-2 text-gray-600 transition-colors hover:bg-blue-50 hover:text-black"
           >
             {menu.name}
           </Link>

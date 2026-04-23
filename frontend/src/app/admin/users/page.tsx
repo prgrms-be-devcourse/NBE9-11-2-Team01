@@ -51,7 +51,7 @@ export default function UserManagementPage() {
   if (isInitialLoading) return <div className="p-10 text-center text-gray-500">로딩 중...</div>;
 
   return (
-    <main className="max-w-6xl mx-auto p-10 bg-white min-h-screen">
+    <main className="max-w-6xl mx-auto p-10 bg-white min-h-screen rounded-2xl border border-gray-200">
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-gray-900">사용자 관리</h2>
         <p className="text-sm text-gray-500 mt-1">회원 목록을 조회하고 권한을 확인할 수 있습니다.</p>
@@ -67,10 +67,10 @@ export default function UserManagementPage() {
                 setSelectedRole(role);
                 setCurrentPage(1);
               }}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
+              className={`px-4 py-1.5 rounded-xl text-xs font-bold transition-all border ${
                 selectedRole === role 
-                ? 'bg-[#2D2D2D] text-white border-[#2D2D2D]' 
-                : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400'
+                ? 'bg-black text-white border-black' 
+                : 'bg-white text-gray-500 border-gray-200 hover:bg-blue-50'
               } ${isUpdating ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {role} ({allUsers.filter(u => role === 'ALL' ? true : u.role === role).length})
@@ -145,7 +145,7 @@ export default function UserManagementPage() {
                 type="button"
                 onClick={() => setCurrentPage(num)}
                 className={`w-8 h-8 rounded-lg text-xs font-bold ${
-                  currentPage === num ? 'bg-gray-900 text-white' : 'text-gray-400 hover:bg-gray-100'
+                  currentPage === num ? 'bg-black text-white' : 'text-gray-500 hover:bg-blue-50'
                 }`}
               >
                 {num}

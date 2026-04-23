@@ -100,7 +100,7 @@ export default function CategoryManagementPage() {
   if (isInitialLoading) return <div className="p-10 text-center text-gray-500">데이터를 불러오는 중...</div>;
 
   return (
-    <main className="max-w-6xl mx-auto p-10 flex gap-8 bg-white min-h-screen">
+    <main className="max-w-6xl mx-auto p-10 flex gap-8 bg-white min-h-screen rounded-2xl border border-gray-200">
       {/* 왼쪽: 게시판 목록 - 고정 높이 지정 */}
       <div className="w-1/3 border-r pr-6 sticky top-10 h-fit">
         <h2 className="text-sm font-bold text-gray-400 mb-4 uppercase tracking-wider">게시판</h2>
@@ -115,10 +115,10 @@ export default function CategoryManagementPage() {
               }}
               className={`w-full text-left p-4 rounded-xl transition-all border ${
                 selectedBoardId === board.id 
-                ? 'bg-[#2D2D2D] text-white border-[#2D2D2D]' 
+                ? 'bg-black text-white border-black' 
                 : board.isDeleted 
                   ? 'bg-gray-100 text-gray-400 border-gray-200 opacity-60 grayscale' 
-                  : 'bg-gray-50 text-gray-600 border-transparent hover:bg-gray-100'
+                  : 'bg-blue-50 text-gray-600 border-gray-200 hover:bg-blue-100'
               }`}
             >
               <div className="flex justify-between items-center">
@@ -161,9 +161,9 @@ export default function CategoryManagementPage() {
                 {!isBoardDeleted && (
                   <div className="flex gap-2">
                     {editingId === cat.id ? (
-                      <button onClick={() => handleUpdate(cat.id)} className="px-3 py-1.5 bg-gray-900 text-white rounded-lg text-xs font-semibold">저장</button>
+                      <button onClick={() => handleUpdate(cat.id)} className="px-3 py-1.5 bg-black text-white rounded-xl text-xs font-semibold border border-black">저장</button>
                     ) : (
-                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="px-3 py-1.5 bg-gray-100 rounded-lg text-xs font-semibold">수정</button>
+                      <button onClick={() => { setEditingId(cat.id); setEditingName(cat.name); }} className="px-3 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-xs font-semibold">수정</button>
                     )}
                     {/* <button onClick={() => handleDelete(cat.id)} className="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-xs font-semibold hover:bg-red-100">삭제</button> */}
                   </div>
@@ -203,7 +203,7 @@ export default function CategoryManagementPage() {
         {/* 하단 고정: 추가 섹션 */}
         <div className="mt-4">
         {!isBoardDeleted && (
-          <div className="mt-8 p-6 bg-gray-50 rounded-2xl border border-gray-100">
+          <div className="mt-8 p-6 bg-blue-50/50 rounded-2xl border border-gray-200">
             <h3 className="text-sm font-bold mb-3 text-gray-700">새 카테고리 추가</h3>
             <div className="flex gap-2">
               <input
@@ -215,7 +215,7 @@ export default function CategoryManagementPage() {
               />
               <button 
                 onClick={handleRegister}
-                className="px-6 py-3 bg-[#2D2D2D] text-white rounded-xl font-bold hover:bg-black transition-all text-sm"
+                className="px-6 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all text-sm border border-black"
               >
                 등록
               </button>

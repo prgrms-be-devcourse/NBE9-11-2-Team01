@@ -196,7 +196,7 @@ export default function CategoryPostListPage() {
   };
 
     return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen bg-blue-50/40 px-4 py-8">
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-5">
 
         <header className="rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
@@ -206,7 +206,7 @@ export default function CategoryPostListPage() {
             </div>
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
-                <div className="flex h-10 items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-4 shadow-inner">
+                <div className="flex h-10 items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 shadow-inner">
                 <svg className="h-4 w-4 shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" />
                 </svg>
@@ -222,7 +222,7 @@ export default function CategoryPostListPage() {
                 <button
                 type="button"
                 onClick={() => updateQuery({ page: 1, keyword: searchInput.trim() })}
-                className="h-10 rounded-full bg-gray-900 px-5 text-sm font-medium text-white transition-colors hover:bg-gray-700"
+                className="h-10 rounded-xl border border-black bg-black px-5 text-sm font-medium text-white transition-colors hover:bg-gray-800"
                 >
                 검색
                 </button>
@@ -230,18 +230,18 @@ export default function CategoryPostListPage() {
                 <button
                     type="button"
                     onClick={() => updateQuery({ page: 1, keyword: "" })}
-                    className="h-10 rounded-full border border-gray-200 px-4 text-sm text-gray-500 transition-colors hover:bg-gray-100"
+                    className="h-10 rounded-xl border border-gray-200 px-4 text-sm text-gray-500 transition-colors hover:bg-blue-50"
                 >
                     초기화
                 </button>
                 )}
             </div>
 
-            <div className="flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 p-1">
+            <div className="flex items-center gap-1 rounded-xl border border-gray-200 bg-blue-50/70 p-1">
                 <button
                 type="button"
                 onClick={() => updateQuery({ page: 1, sort: "latest" })}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-all ${
                     sort === "latest" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
                 >
@@ -250,7 +250,7 @@ export default function CategoryPostListPage() {
                 <button
                 type="button"
                 onClick={() => updateQuery({ page: 1, sort: "likes" })}
-                className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
+                className={`rounded-xl px-4 py-1.5 text-sm font-medium transition-all ${
                     sort === "likes" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-700"
                 }`}
                 >
@@ -267,13 +267,13 @@ export default function CategoryPostListPage() {
             <div className="flex flex-col gap-1">
                 <Link
                 href={`/boards/${boardId}/posts`}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100"
+                className="rounded-xl px-3 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-blue-50"
                 >
                 전체
                 </Link>
                 <button
                 type="button"
-                className="rounded-lg bg-gray-900 px-3 py-2 text-left text-sm font-medium text-white"
+                className="rounded-xl bg-black px-3 py-2 text-left text-sm font-medium text-white"
                 >
                 {categoryName || `카테고리 #${categoryId}`}
                 </button>
@@ -303,7 +303,7 @@ export default function CategoryPostListPage() {
             ) : (
                 <ul className="divide-y divide-gray-100">
                 {postPage.posts.map((post) => (
-                    <li key={post.id} className="group transition-colors hover:bg-gray-50">
+                    <li key={post.id} className="group transition-colors hover:bg-blue-50/50">
                     <Link href={`/posts/${post.id}`} className="flex items-center justify-between gap-4 px-5 py-4">
                         <div className="min-w-0 flex-1">
                         <p className="truncate font-semibold text-gray-900 transition-colors group-hover:text-gray-600">
@@ -341,7 +341,7 @@ export default function CategoryPostListPage() {
                     type="button"
                     disabled={!postPage || postPage.currentPage <= 1}
                     onClick={() => updateQuery({ page: Math.max(1, page - 1) })}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     이전
                 </button>
@@ -352,8 +352,8 @@ export default function CategoryPostListPage() {
                         key={number}
                         type="button"
                         onClick={() => updateQuery({ page: number })}
-                        className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                        active ? "bg-gray-900 text-white" : "border border-gray-200 text-gray-600 hover:bg-gray-100"
+                        className={`rounded-xl px-3 py-1.5 text-sm font-medium transition-colors ${
+                        active ? "bg-black text-white" : "border border-gray-200 text-gray-600 hover:bg-blue-50"
                         }`}
                     >
                         {number}
@@ -364,7 +364,7 @@ export default function CategoryPostListPage() {
                     type="button"
                     disabled={!postPage || !postPage.hasNext}
                     onClick={() => updateQuery({ page: page + 1 })}
-                    className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-40"
+                    className="rounded-xl border border-gray-200 px-3 py-1.5 text-sm text-gray-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                     다음
                 </button>
@@ -372,7 +372,7 @@ export default function CategoryPostListPage() {
 
                 <Link
                 href={`/posts/write?boardId=${boardId}&categoryId=${categoryId}`}
-                className="rounded-xl bg-gray-900 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-700"
+                className="rounded-xl border border-black bg-black px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-gray-800"
                 >
                 ✏️ 글쓰기
                 </Link>

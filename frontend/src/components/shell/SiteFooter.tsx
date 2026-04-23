@@ -14,14 +14,14 @@ const teamMemberNames =
 
 export function SiteFooter() {
   return (
-    <footer className="relative z-10 mt-auto border-t border-neutral-200 bg-white/90">
+    <footer className="relative z-10 mt-auto border-t border-gray-200 bg-white/95">
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6">
           <div>
-            <h2 className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-gray-500">
               취업·코딩 참고 사이트
             </h2>
-            <p className="mt-1 text-sm text-neutral-600">
+            <p className="mt-1 text-sm text-gray-600">
               채용 공고·대외활동·코딩 테스트 준비 등에 활용할 수 있는 외부
               사이트입니다.
             </p>
@@ -32,11 +32,11 @@ export function SiteFooter() {
                     href={site.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm font-medium text-neutral-700 underline-offset-4 transition hover:text-neutral-900 hover:underline"
+                    className="inline-flex items-center gap-1 text-sm font-medium text-gray-700 underline-offset-4 transition hover:text-black hover:underline"
                   >
                     {site.name}
                     <ExternalLink
-                      className="h-3.5 w-3.5 shrink-0 text-neutral-400"
+                      className="h-3.5 w-3.5 shrink-0 text-gray-400"
                       aria-hidden
                     />
                   </a>
@@ -45,16 +45,16 @@ export function SiteFooter() {
             </ul>
           </div>
 
-          <div className="flex flex-col gap-3 border-t border-neutral-100 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+          <div className="flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
             <div className="flex min-w-0 flex-col gap-1">
-              <span className="text-sm text-neutral-500">
+              <span className="text-sm text-gray-500">
                 2026년 2차 팀프로젝트 &apos;1팀: 준비된사람들&apos;
               </span>
               <p className="text-xs text-black">{teamMemberNames}</p>
             </div>
             <Link
               href="/"
-              className="shrink-0 text-sm text-neutral-600 transition hover:text-neutral-900"
+              className="shrink-0 text-sm text-gray-600 transition hover:text-black"
             >
               홈으로
             </Link>

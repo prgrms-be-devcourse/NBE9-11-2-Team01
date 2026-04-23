@@ -149,7 +149,7 @@ export default function PostWritePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 px-4 py-8">
+    <div className="min-h-screen bg-blue-50/40 px-4 py-8">
       <main className="mx-auto w-full max-w-3xl">
         <header className="mb-6 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">게시글 작성</p>
@@ -208,7 +208,7 @@ export default function PostWritePage() {
                 maxLength={100}
                 placeholder="제목을 입력하세요"
                 disabled={isLoadingMeta || isSubmitting}
-                className="h-11 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 disabled:bg-gray-50 disabled:opacity-60"
+                className="h-11 rounded-xl border border-gray-200 px-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-300 disabled:bg-gray-50 disabled:opacity-60"
               />
             </div>
 
@@ -219,7 +219,7 @@ export default function PostWritePage() {
                 onChange={(e) => setContent(e.target.value)}
                 placeholder="내용을 입력하세요"
                 disabled={isLoadingMeta || isSubmitting}
-                className="min-h-64 rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-gray-400 disabled:bg-gray-50 disabled:opacity-60"
+                className="min-h-64 rounded-xl border border-gray-200 px-3 py-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-blue-300 disabled:bg-gray-50 disabled:opacity-60"
               />
             </div>
 
@@ -228,14 +228,14 @@ export default function PostWritePage() {
                 type="button"
                 onClick={() => router.back()}
                 disabled={isSubmitting}
-                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm text-gray-600 transition-colors hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 취소
               </button>
               <button
                 type="submit"
                 disabled={isLoadingMeta || isSubmitting}
-                className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl border border-black bg-black px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? "등록 중..." : "✏️ 등록"}
               </button>
@@ -244,5 +244,6 @@ export default function PostWritePage() {
         </div>
       </main>
     </div>
+
   );
 }
