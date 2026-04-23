@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { apiGet, apiPostJson, apiPutJson, apiDelete } from '@/lib/api';
 
 const ITEMS_PER_PAGE = 4;
-const baseUrl = "http://localhost:8080/admin/boards";
 
 export default function BoardManagementPage() {
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [boards, setBoards] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
   const [currentPage, setCurrentPage] = useState(1);
@@ -16,21 +16,15 @@ export default function BoardManagementPage() {
   const [newBoardName, setNewBoardName] = useState('');
   const [newBoardDescription, setNewBoardDescription] = useState('');
 
-  // 게시판 목록 조회
   const fetchBoards = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch(baseUrl,{
-        credentials:'include'
-      });
-      if (!response.ok) throw new Error('데이터 로드 실패');
-      const responseData:AdminBoardResponseDto = await response.json();
-      const data: AdminBoardListDto = responseData.data;
-      
-      // exist와 deleted를 합쳐서 하나의 리스트로 관리
-      // (순서는 exist 우선, 그 다음 deleted가 오도록 배치)
-      const combinedBoards = [...(data.exist || []), ...(data.deleted || [])];
-      setBoards(combinedBoards);
+      const responseData = await apiGet<any>("/admin/boards");
+      const data = responseData.data;
+      if (data) {
+        const combinedBoards = [...(data.exist || []), ...(data.deleted || [])];
+        setBoards(combinedBoards);
+      }
     } catch (error) {
       console.error("Fetch Error:", error);
       alert("데이터를 가져오는 중 오류가 발생했습니다.");
@@ -59,54 +53,37 @@ export default function BoardManagementPage() {
     return true;
   };
 
-  const startEdit = (board: Board) => { //수정 폼 작성 중 
-    if (board.isDeleted) return; // 삭제된 게시판은 수정, 삭제 불가
+  const startEdit = (board: any) => {
+    if (board.isDeleted) return; 
     setEditingBoardId(board.id);
     setEditingName(board.boardName);
     setEditingDescription(board.description ?? '');
   };
 
-  const cancelEdit = () => { //현재 수정하고 있는 게시판 없음 (종료)
+  const cancelEdit = () => {
     setEditingBoardId(null);
     setEditingName('');
     setEditingDescription('');
   };
 
-  // 수정 핸들러
-  const handleEdit = async (id: number) => { //실제 수정 요청 
+  const handleEdit = async (id: number) => {
     const name = editingName.trim();
     const description = editingDescription.trim();
     if (!validateBoardInput(name, description)) return;
 
     try {
-      await fetch(`${baseUrl}/${id}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, description }),
-      });
+      await apiPutJson(`/admin/boards/${id}`, { name, description });
       fetchBoards();
-
       cancelEdit();
     } catch (error) {
       alert('수정 실패');
     }
   };
 
-  // 삭제 핸들러 (실제 삭제가 아닌 isDeleted를 true로 변경하는 로직)
   const softDelete = async (id: number) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
-
     try {
-      await fetch(`${baseUrl}/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      await apiDelete(`/admin/boards/${id}`);
       fetchBoards();
     } catch (error) {
       alert('삭제 실패');
@@ -119,17 +96,10 @@ export default function BoardManagementPage() {
     if (!validateBoardInput(name, description)) return;
 
     try {
-      await fetch(baseUrl, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, description }),
-      });
-    
+      await apiPostJson("/admin/boards", { name, description });
+      setNewBoardName('');
+      setNewBoardDescription('');
       fetchBoards();
-
     } catch (error) {
       alert('등록 실패');
     }
@@ -138,29 +108,36 @@ export default function BoardManagementPage() {
   if (loading) return <div className="p-10 text-center text-gray-500">데이터를 불러오는 중입니다...</div>;
 
   return (
-    <main>
-      <div className="max-w-5xl mx-auto p-10 flex gap-10 bg-white min-h-screen flex-col pt-0 rounded-2xl border border-gray-200"> 
-        <div className="mb-2 h-[470px] space-y-4">
+    <main className="max-w-5xl mx-auto p-10 bg-white min-h-screen rounded-2xl border border-gray-200">
+      {/* 상단 제목 섹션 (카테고리 관리와 통일) */}
+      <div className="mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">게시판 관리</h2>
+        <p className="text-sm text-gray-500 mt-1">
+          서비스의 전체 게시판 목록을 조회하고 수정하거나 새 게시판을 생성합니다.
+        </p>
+      </div>
+
+      {/* 게시판 목록 영역 */}
+      <div className="mb-2 h-[480px] flex flex-col justify-between">
+        <div className="space-y-4">
           {visibleBoards.map((board) => (
             <div 
               key={board.id} 
               className={`flex items-center justify-between p-5 border rounded-xl shadow-sm transition-all
                 ${board.isDeleted ? 'bg-gray-50 border-gray-100 opacity-60 grayscale' : 'bg-white border-gray-200 hover:shadow-md'}`}
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1 mr-4">
                 {editingBoardId === board.id ? (
-                  <div className="flex w-full max-w-md flex-col gap-2">
+                  <div className="flex flex-col gap-2">
                     <input
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
-                      placeholder="게시판 이름"
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-200"
+                      className="w-full max-w-md rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold outline-none focus:ring-2 focus:ring-blue-200"
                     />
                     <input
                       value={editingDescription}
                       onChange={(e) => setEditingDescription(e.target.value)}
-                      placeholder="게시판 설명"
-                      className="w-full rounded-xl border border-gray-200 px-3 py-2 text-xs text-gray-600 outline-none focus:ring-2 focus:ring-blue-100"
+                      className="w-full max-w-md rounded-lg border border-gray-200 px-3 py-2 text-xs text-gray-600 outline-none focus:ring-2 focus:ring-blue-100"
                     />
                   </div>
                 ) : (
@@ -178,52 +155,66 @@ export default function BoardManagementPage() {
                 )}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-shrink-0">
                 {!board.isDeleted && (
                   <>
                     {editingBoardId === board.id ? (
                       <>
-                        <button onClick={() => handleEdit(board.id)} className="px-4 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-sm hover:bg-blue-100">저장</button>
-                        <button onClick={cancelEdit} className="px-4 py-1.5 bg-white border border-gray-200 rounded-xl text-sm hover:bg-blue-50">취소</button>
+                        <button onClick={() => handleEdit(board.id)} className="px-4 py-1.5 bg-black text-white rounded-xl text-sm font-semibold">저장</button>
+                        <button onClick={cancelEdit} className="px-4 py-1.5 bg-white border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50">취소</button>
                       </>
                     ) : (
-                      <button onClick={() => startEdit(board)} className="px-4 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-sm hover:bg-blue-100">수정</button>
+                      <button onClick={() => startEdit(board)} className="px-4 py-1.5 bg-blue-50 border border-gray-200 rounded-xl text-sm font-semibold">수정</button>
                     )}
-                    <button onClick={() => softDelete(board.id)} className="px-4 py-1.5 bg-black text-white rounded-xl text-sm hover:bg-gray-800">삭제</button>
+                    <button onClick={() => softDelete(board.id)} className="px-4 py-1.5 bg-black text-white rounded-xl text-sm font-semibold hover:bg-gray-800">삭제</button>
                   </>
                 )}
-                
               </div>
             </div>
           ))}
+          
+          {boards.length === 0 && (
+            <div className="h-[300px] flex items-center justify-center border-2 border-dashed border-gray-100 rounded-2xl text-gray-400">
+              등록된 게시판이 없습니다.
+            </div>
+          )}
         </div>
 
         {/* 페이지네이션 */}
-        <div className="mb-4 flex items-center justify-center gap-3">
-          <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Prev</button>
-          <span className="text-sm text-gray-600">{currentPage} / {totalPages}</span>
-          <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="rounded-xl border border-gray-200 px-4 py-2 text-sm disabled:opacity-40">Next</button>
+        <div className="flex items-center justify-center gap-4 py-4">
+          <button onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))} disabled={currentPage === 1} className="p-2 text-sm disabled:opacity-30 font-bold hover:text-black">
+            &lt; Prev
+          </button>
+          <span className="text-sm font-medium text-gray-600">{currentPage} / {totalPages}</span>
+          <button onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="p-2 text-sm disabled:opacity-30 font-bold hover:text-black">
+            Next &gt;
+          </button>
         </div>
+      </div>
 
-        {/* 추가 섹션 */}
-        <div>
-          <h2 className="text-md font-medium text-gray-700 mb-2">게시판 추가</h2>
-          <div className="w-full space-y-2">
-            <input
-              value={newBoardName}
-              onChange={(e) => setNewBoardName(e.target.value)}
-              placeholder="게시판 이름을 입력하세요."
-              className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm font-medium outline-none focus:ring-1 focus:ring-gray-300"
-            />
-            <textarea
-              value={newBoardDescription}
-              onChange={(e) => setNewBoardDescription(e.target.value)}
-              placeholder="게시판 설명을 입력하세요."
-              className="w-full h-20 resize-none rounded-xl border border-gray-200 bg-gray-50 p-3 text-sm outline-none focus:ring-1 focus:ring-gray-300"
-            />
-            <div className="flex justify-end">
-              <button onClick={handleRegister} className="w-20 px-3 py-2.5 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors border border-black">등록</button>
-            </div>
+      {/* 하단 추가 섹션 (간격 및 디자인 조정) */}
+      <div className="mt-12 p-8 bg-blue-50/50 rounded-2xl border border-gray-200">
+        <h3 className="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">새 게시판 추가</h3>
+        <div className="space-y-3">
+          <input
+            value={newBoardName}
+            onChange={(e) => setNewBoardName(e.target.value)}
+            placeholder="게시판 이름을 입력하세요 (예: 자유게시판)"
+            className="w-full rounded-xl border border-gray-200 bg-white p-3 text-sm font-medium outline-none focus:ring-2 focus:ring-blue-100"
+          />
+          <textarea
+            value={newBoardDescription}
+            onChange={(e) => setNewBoardDescription(e.target.value)}
+            placeholder="게시판에 대한 간단한 설명을 입력하세요."
+            className="w-full h-24 resize-none rounded-xl border border-gray-200 bg-white p-3 text-sm outline-none focus:ring-2 focus:ring-blue-100"
+          />
+          <div className="flex justify-end pt-2">
+            <button 
+              onClick={handleRegister} 
+              className="px-8 py-3 bg-black text-white rounded-xl font-bold hover:bg-gray-800 transition-all text-sm border border-black"
+            >
+              게시판 등록
+            </button>
           </div>
         </div>
       </div>
