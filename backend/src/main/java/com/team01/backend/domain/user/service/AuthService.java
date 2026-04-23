@@ -51,6 +51,7 @@ public class AuthService {
         }
 
         // 3. 사용자 엔티티 생성 및 저장
+		// profileImage를 넘기지 않아도 엔티티의 @PrePersist가 기본값을 할당함
         User user = User.builder()
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))

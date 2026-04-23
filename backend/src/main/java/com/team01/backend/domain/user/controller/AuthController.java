@@ -82,22 +82,22 @@ public class AuthController {
         setCookie(response, "refreshToken", "", 0);
         return ResponseEntity.ok(new ApiResponse<>(true, null, "회원 탈퇴 완료", null));
     }
-
+	
 	@PostMapping("/refresh")
     public ResponseEntity<ApiResponse<Void>> refresh(
             @CookieValue(name = "refreshToken", required = false) String refreshToken, 
             HttpServletResponse response) {
-        
+
         // [신규] 리프레시 토큰 쿠키가 없을 경우에 대한 방어 로직
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new IllegalArgumentException("리프레시 토큰이 존재하지 않습니다. 다시 로그인하십시오.");
         }
-        
+
         String newAccessToken = authService.reissue(refreshToken);
         setCookie(response, "accessToken", newAccessToken, 3600);
         return ResponseEntity.ok(new ApiResponse<>(true, null, "토큰 갱신 성공", null));
 	}
-	
+
 	@PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(Authentication authentication, HttpServletResponse response) {
         authService.logout(authentication.getName());
