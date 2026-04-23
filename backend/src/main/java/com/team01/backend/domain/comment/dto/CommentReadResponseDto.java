@@ -9,6 +9,7 @@ import com.team01.backend.domain.comment.entity.Comment;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 // 게시글 상세 조회 테스트 결과 답글 응답에 replies 빈 배열이 불필요하게 포함되는 문제가 있어서 추가
 // 답글의 replies는 항상 빈 배열이라 응답에 불필요 — NON_EMPTY로 빈 배열 필드 제외
@@ -19,6 +20,8 @@ public record CommentReadResponseDto(
         String author,
         String profileImage,
         int likeCount,
+        boolean isDeleted,
+        boolean isLiked,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime createdAt,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -26,10 +29,10 @@ public record CommentReadResponseDto(
         List<CommentReadResponseDto> replies
 ) {
     // COMMENT-02 댓글(답글) 조회 — 루트 + 답글 엔티티 목록 → 트리 DTO
-    public static CommentReadResponseDto from(Comment root, List<Comment> replyEntities) {
+    public static CommentReadResponseDto from(Comment root, List<Comment> replyEntities, Set<Long> likedCommentIds) {
         List<CommentReadResponseDto> replyDtos = replyEntities.stream()
                 .sorted(Comparator.comparing(Comment::getCreatedAt))
-                .map(CommentReadResponseDto::fromReply)
+                .map(reply -> CommentReadResponseDto.fromReply(reply, likedCommentIds))
                 .toList();
         return new CommentReadResponseDto(
                 root.getId(),
@@ -37,6 +40,8 @@ public record CommentReadResponseDto(
                 root.getUser().getNickname(),
                 root.getUser().getProfileImage(),
                 root.getLikeCount(),
+                root.isDeleted(),
+                likedCommentIds.contains(root.getId()),  // isLiked
                 root.getCreatedAt(),
                 root.getModifiedAt(),
                 replyDtos
@@ -44,13 +49,15 @@ public record CommentReadResponseDto(
     }
 
     // COMMENT-02 댓글(답글) 조회 — 답글 1건(하위 replies 없음)
-    private static CommentReadResponseDto fromReply(Comment reply) {
+    private static CommentReadResponseDto fromReply(Comment reply, Set<Long> likedCommentIds) {
         return new CommentReadResponseDto(
                 reply.getId(),
                 CommentDeleteResponseDto.contentForRead(reply),
                 reply.getUser().getNickname(),
                 reply.getUser().getProfileImage(),
                 reply.getLikeCount(),
+                reply.isDeleted(),
+                likedCommentIds.contains(reply.getId()),  // isLiked
                 reply.getCreatedAt(),
                 reply.getModifiedAt(),
                 List.of()
