@@ -208,13 +208,13 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostPageResponseDto getPostsByBoardAndCategory(Long boardId, Long categoryId, int page, String keyword) {
+    public PostPageResponseDto getPostsByBoardAndCategory(Long boardId, Long categoryId, int page, String keyword, String sort) {
         validateCategoryInBoard(categoryId, boardId);
         Pageable pageable = toPageable(page);
 
         // categoryId 고정, keyword 검색 포함하여 QueryDSL로 조회
         Page<PostResponseDto> postPage = postRepository
-                .searchByBoardId(boardId, keyword, categoryId, pageable, "latest")
+                .searchByBoardId(boardId, keyword, categoryId, pageable, sort)
                 .map(PostResponseDto::new);
 
         return PostPageResponseDto.from(postPage);
