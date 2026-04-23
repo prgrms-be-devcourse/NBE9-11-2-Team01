@@ -26,6 +26,7 @@ public class CommentController {
     private final CommentService commentService;
 
     // COMMENT-02 댓글(답글) 조회
+    @Operation(summary = "댓글 조회", description = "특정 게시글의 댓글/대댓글 목록을 조회합니다.")
     @GetMapping("/posts/{postId}/comments")
     public ResponseEntity<ApiResponse<List<CommentReadResponseDto>>> getComments(@PathVariable Long postId) {
         List<CommentReadResponseDto> list = commentService.getCommentsByPostId(postId);
@@ -59,6 +60,7 @@ public class CommentController {
     }
 
     /** 댓글 좋아요 토글 — 한 번 호출 시 좋아요, 한 번 더 호출 시 취소 */
+    @Operation(summary = "댓글 좋아요 토글", description = "댓글 좋아요를 등록/취소합니다.")
     @PostMapping("/comments/{commentId}/likes")
     public ResponseEntity<ApiResponse<CommentLikeToggleResponseDto>> toggleCommentLike(
             @PathVariable Long commentId,
@@ -70,6 +72,7 @@ public class CommentController {
 
 
     // COMMENT-04 댓글(답글) 삭제 — DELETE, 소프트 딜리트(서비스에서 isDeleted 처리)
+    @Operation(summary = "댓글 삭제", description = "작성한 댓글을 소프트 삭제합니다. 본인 댓글만 삭제 가능합니다.")
     @DeleteMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<CommentDeleteResponseDto>> deleteComment(
             @PathVariable Long commentId,
