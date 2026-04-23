@@ -15,6 +15,8 @@ type Comment = {
   author: string;
   profileImage: string | null;
   likeCount: number;
+  isDeleted: boolean;
+  isLiked: boolean;
   createdAt: string;
   modifiedAt: string;
   replies?: Comment[];
@@ -94,6 +96,13 @@ type CommentItemProps = {
   onCancelCommentEdit: () => void;
   onSubmitCommentEdit: (commentId: number) => void;
   onDeleteComment: (commentId: number) => void;
+  replyingToCommentId: number | null;
+  replyContent: string;
+  setReplyContent: (value: string) => void;
+  onStartReply: (commentId: number) => void;
+  onCancelReply: () => void;
+  onSubmitReply: (parentId: number) => void;
+  isReplySubmitting: boolean;
 };
 
 function CommentItem({
@@ -109,6 +118,13 @@ function CommentItem({
   onCancelCommentEdit,
   onSubmitCommentEdit,
   onDeleteComment,
+  replyingToCommentId,   // 추가
+  replyContent,          // 추가
+  setReplyContent,       // 추가
+  onStartReply,          // 추가
+  onCancelReply,         // 추가
+  onSubmitReply,         // 추가
+  isReplySubmitting,     // 추가
 }: CommentItemProps) {
   const replies = comment.replies ?? [];
   const [isRepliesOpen, setIsRepliesOpen] = useState(false);
@@ -129,10 +145,21 @@ function CommentItem({
     onCancelCommentEdit,
     onSubmitCommentEdit,
     onDeleteComment,
+    replyingToCommentId,
+    replyContent,
+    setReplyContent,
+    onStartReply,
+    onCancelReply,
+    onSubmitReply,
+    isReplySubmitting,
   };
 
   return (
-    <li className={`rounded-2xl border border-gray-200 bg-white p-4 shadow-sm ${depth > 0 ? "ml-6" : ""}`}>
+    <li className={`rounded-2xl border p-4 shadow-sm ${depth > 0 ? "ml-6" : ""} ${
+        comment.isDeleted
+          ? "border-gray-200 bg-gray-100 opacity-60"
+          : "border-gray-200 bg-white"
+      }`}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           {/* 프로필 + 작성자 + 날짜 */}
@@ -146,9 +173,11 @@ function CommentItem({
               <p className="text-sm font-semibold text-gray-900">{comment.author}</p>
               <div className="flex items-center gap-1.5 text-xs text-gray-400">
                 <span>{formatDate(comment.createdAt)}</span>
-                {comment.createdAt !== comment.modifiedAt && (
+                {comment.isDeleted ? (
+                  <span className="text-red-400">(삭제됨)</span>
+                ) : comment.createdAt !== comment.modifiedAt ? (
                   <span>(수정됨)</span>
-                )}
+                ) : null}
               </div>
 
               {isEditing ? (
@@ -157,7 +186,7 @@ function CommentItem({
                     type="text"
                     value={editingCommentContent}
                     onChange={(event) => setEditingCommentContent(event.target.value)}
-                    className="h-9 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                    className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
                   />
                   <button
                     type="button"
@@ -177,27 +206,45 @@ function CommentItem({
               ) : (
                 <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-gray-700">{comment.content}</p>
               )}
+              {!comment.isDeleted && (
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onToggleCommentLike(comment.id)}
+                    className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
+                      likeUi.liked
+                        ? "border-red-200 bg-red-50 text-red-500"
+                        : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
+                    }`}
+                  >
+                    <span>{likeUi.liked ? "❤️" : "🤍"}</span>
+                    <span>좋아요 {likeUi.likeCount}</span>
+                  </button>
 
-              <div className="mt-2">
-                <button
-                  type="button"
-                  onClick={() => onToggleCommentLike(comment.id)}
-                  className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs transition-colors ${
-                    likeUi.liked
-                      ? "border-red-200 bg-red-50 text-red-500"
-                      : "border-gray-200 text-gray-400 hover:border-gray-300 hover:text-gray-600"
-                  }`}
-                >
-                  <span>{likeUi.liked ? "❤️" : "🤍"}</span>
-                  <span>좋아요 {likeUi.likeCount}</span>
-                </button>
-              </div>
+                  {depth === 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (replyingToCommentId === comment.id) {
+                          onCancelReply();
+                        } else {
+                          onStartReply(comment.id);
+                          setIsRepliesOpen(true);
+                        }
+                      }}
+                      className="flex items-center gap-1 rounded-full border border-gray-200 px-2 py-0.5 text-xs text-gray-400 transition-colors hover:border-gray-300 hover:text-gray-600"
+                    >
+                      💬 {replyingToCommentId === comment.id ? "취소" : "답글"}
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* 더보기 버튼 */}
-        {isOwner && !isEditing && (
+        {isOwner && !isEditing && !comment.isDeleted &&(
           <div className="relative">
             <button
               type="button"
@@ -235,7 +282,12 @@ function CommentItem({
       {replies.length > 0 && (
         <button
           type="button"
-          onClick={() => setIsRepliesOpen((prev) => !prev)}
+          onClick={() => {
+            setIsRepliesOpen((prev) => !prev);
+            if (isRepliesOpen) {
+              onCancelReply();  // 접을 때 답글 입력창도 닫기
+            }
+          }}
           className="mt-3 flex items-center gap-1.5 text-sm text-gray-500 transition-colors hover:text-gray-700"
           >
           {isRepliesOpen ? (
@@ -258,6 +310,26 @@ function CommentItem({
           ))}
         </ul>
       )}
+      {/* 답글 입력창 — 대댓글 목록 아래로 이동 */}
+      {depth === 0 && replyingToCommentId === comment.id && (
+        <div className="mt-2 ml-6 flex gap-2">
+          <input
+            type="text"
+            value={replyContent}
+            onChange={(e) => setReplyContent(e.target.value)}
+            placeholder="답글을 입력해 주세요."
+            className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+          />
+          <button
+            type="button"
+            onClick={() => onSubmitReply(comment.id)}
+            disabled={isReplySubmitting}
+            className="rounded-xl bg-gray-900 px-3 text-xs text-white hover:bg-gray-700 disabled:opacity-60"
+          >
+            {isReplySubmitting ? "작성 중..." : "작성"}
+          </button>
+        </div>
+      )}
     </li>
   );
 }
@@ -277,6 +349,9 @@ export default function PostDetailPage() {
 
   const [commentContent, setCommentContent] = useState("");
   const [isCommentSubmitting, setIsCommentSubmitting] = useState(false);
+  const [replyingToCommentId, setReplyingToCommentId] = useState<number | null>(null);
+  const [replyContent, setReplyContent] = useState("");
+  const [isReplySubmitting, setIsReplySubmitting] = useState(false);
 
   const [isDeletingPost, setIsDeletingPost] = useState(false);
   const [isPostLikeLoading, setIsPostLikeLoading] = useState(false);
@@ -487,9 +562,48 @@ export default function PostDetailPage() {
     }
   }
 
-  function getCommentLikeUi(comment: Comment) {
-    return commentLikeUi[comment.id] ?? { liked: false, likeCount: comment.likeCount };
+  async function handleCreateReply(parentId: number) {
+    const content = replyContent.trim();
+    if (!content) {
+      setErrorMessage("답글 내용을 입력해 주세요.");
+      return;
+    }
+
+    setIsReplySubmitting(true);
+    setErrorMessage("");
+
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ content, parentId }),
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          setIsAuthRequired(true);
+          throw new Error("로그인 후 답글을 작성할 수 있습니다.");
+        }
+        throw new Error(`답글 작성에 실패했습니다. (${res.status})`);
+      }
+
+      const json = (await res.json()) as ApiResponse<unknown>;
+      if (!json.success) throw new Error(json.message ?? "답글 작성에 실패했습니다.");
+
+      setReplyingToCommentId(null);
+      setReplyContent("");
+      await fetchPost();
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다.");
+    } finally {
+      setIsReplySubmitting(false);
+    }
   }
+
+  function getCommentLikeUi(comment: Comment) {
+  return commentLikeUi[comment.id] ?? { liked: comment.isLiked, likeCount: comment.likeCount };
+}
 
   function startEditComment(comment: Comment) {
     setEditingCommentId(comment.id);
@@ -846,7 +960,7 @@ export default function PostDetailPage() {
                   value={commentContent}
                   onChange={(event) => setCommentContent(event.target.value)}
                   placeholder="댓글을 입력해 주세요."
-                  className="h-10 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
+                  className="h-12 flex-1 rounded-xl border border-gray-200 px-3 text-sm outline-none focus:border-gray-400"
                 />
                 <button
                   type="submit"
@@ -876,6 +990,13 @@ export default function PostDetailPage() {
                         onCancelCommentEdit={cancelEditComment}
                         onSubmitCommentEdit={submitEditComment}
                         onDeleteComment={handleDeleteComment}
+                        replyingToCommentId={replyingToCommentId}
+                        replyContent={replyContent}
+                        setReplyContent={setReplyContent}
+                        onStartReply={(id) => { setReplyingToCommentId(id); setReplyContent(""); }}
+                        onCancelReply={() => { setReplyingToCommentId(null); setReplyContent(""); }}
+                        onSubmitReply={handleCreateReply}
+                        isReplySubmitting={isReplySubmitting}
                       />
                     ))}
                   </ul>
