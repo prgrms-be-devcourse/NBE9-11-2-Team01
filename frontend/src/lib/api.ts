@@ -50,6 +50,15 @@ export async function apiPostJson<T, B>(
   return handleResponse<T>(res);
 }
 
+/** 본문 없는 POST (쿼리스트링만 있는 엔드포인트용) */
+export async function apiPostEmpty<T>(path: string): Promise<ApiResponse<T>> {
+  const res = await fetch(apiUrl(path), {
+    method: "POST",
+    credentials: "include",
+  });
+  return handleResponse<T>(res);
+}
+
 export async function apiPutJson<T, B>(
   path: string,
   body: B,

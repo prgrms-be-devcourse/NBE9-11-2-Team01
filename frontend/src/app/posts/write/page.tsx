@@ -57,7 +57,7 @@ export default function PostWritePage() {
       }
 
     // 로그인 여부 확인
-    const meRes = await fetch(`${getApiBaseUrl()}/api/users/me`, {
+    const meRes = await fetch(`${getApiBaseUrl()}/users/me`, {
       method: "GET",
       credentials: "include",
     });

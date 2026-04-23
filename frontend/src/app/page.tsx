@@ -86,6 +86,7 @@ const boardShortcutCards: readonly {
 export default function HomePage() {
   const { user, loading: authLoading } = useAuth();
   const [boards, setBoards] = useState<Board[]>([]);
+  const [boardsReady, setBoardsReady] = useState(false);
   const [err, setErr] = useState("");
 
   useEffect(() => {
@@ -97,6 +98,8 @@ export default function HomePage() {
       } catch (e) {
         if (!cancelled)
           setErr(e instanceof Error ? e.message : "게시판을 불러오지 못했습니다.");
+      } finally {
+        if (!cancelled) setBoardsReady(true);
       }
     })();
     return () => {
@@ -135,21 +138,23 @@ export default function HomePage() {
               채용 공고·자소서·면접·멘토링까지 한곳에서. 질문하고 답하고, 합격
               기록을 남기며 다음 목표까지 함께 가져가요.
             </p>
-            <div className="mt-10 flex flex-wrap gap-3">
-              <Link
-                href="/signup"
-                className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-900 px-7 text-sm font-semibold text-white shadow-md transition hover:bg-neutral-800"
-              >
-                무료로 시작하기
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex h-12 items-center rounded-full border border-neutral-300 bg-white px-7 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
-              >
-                로그인
-              </Link>
-            </div>
+            {!authLoading && !user && (
+              <div className="mt-10 flex flex-wrap gap-3">
+                <Link
+                  href="/signup"
+                  className="inline-flex h-12 items-center gap-2 rounded-full bg-neutral-900 px-7 text-sm font-semibold text-white shadow-md transition hover:bg-neutral-800"
+                >
+                  무료로 시작하기
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex h-12 items-center rounded-full border border-neutral-300 bg-white px-7 text-sm font-semibold text-neutral-900 transition hover:bg-neutral-50"
+                >
+                  로그인
+                </Link>
+              </div>
+            )}
           </m.div>
 
           {!authLoading && (
@@ -279,50 +284,67 @@ export default function HomePage() {
             variants={container}
             className="mt-12 grid gap-6 sm:grid-cols-2 lg:gap-8"
           >
-            {boardShortcutCards.map((card, idx) => (
-              <m.div key={card.title} variants={item}>
-                <article
-                  className="group relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-neutral-200/90 bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[0_12px_40px_-24px_rgba(15,23,42,0.18)]"
-                >
-                  <div
-                    className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${card.wash} via-transparent to-transparent opacity-90`}
-                    aria-hidden
-                  />
-                  <div className="relative flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 items-start gap-4">
-                      <span
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${card.iconWrap}`}
-                        aria-hidden
-                      >
-                        <card.Icon className="h-5 w-5" strokeWidth={2} />
-                      </span>
-                      <div className="min-w-0 pt-0.5">
-                        <p className="text-[11px] font-semibold tabular-nums text-neutral-400">
-                          {String(idx + 1).padStart(2, "0")}
-                        </p>
-                        <h3 className="mt-1 text-xl font-bold leading-snug tracking-tight text-neutral-900">
-                          {card.title}
-                        </h3>
+            {boardShortcutCards.map((card, idx) => {
+              const linkedBoard = boards[idx];
+              const canLink =
+                boardsReady && !err && linkedBoard !== undefined;
+
+              return (
+                <m.div key={card.title} variants={item}>
+                  <article
+                    className="group relative flex h-full min-h-[280px] flex-col overflow-hidden rounded-2xl border border-neutral-200/90 bg-white p-7 shadow-[0_1px_0_rgba(15,23,42,0.04)] transition duration-300 hover:-translate-y-0.5 hover:border-neutral-300 hover:shadow-[0_12px_40px_-24px_rgba(15,23,42,0.18)]"
+                  >
+                    <div
+                      className={`pointer-events-none absolute inset-0 bg-gradient-to-b ${card.wash} via-transparent to-transparent opacity-90`}
+                      aria-hidden
+                    />
+                    <div className="relative flex items-start justify-between gap-4">
+                      <div className="flex min-w-0 flex-1 items-start gap-4">
+                        <span
+                          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${card.iconWrap}`}
+                          aria-hidden
+                        >
+                          <card.Icon className="h-5 w-5" strokeWidth={2} />
+                        </span>
+                        <div className="min-w-0 pt-0.5">
+                          <p className="text-[11px] font-semibold tabular-nums text-neutral-400">
+                            {String(idx + 1).padStart(2, "0")}
+                          </p>
+                          <h3 className="mt-1 text-xl font-bold leading-snug tracking-tight text-neutral-900">
+                            {card.title}
+                          </h3>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                  <p className="relative mt-5 flex-1 text-[15px] leading-[1.65] text-neutral-600">
-                    {card.description}
-                  </p>
-                  <div className="relative mt-6 flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="inline-flex h-10 items-center rounded-full border border-neutral-200 bg-neutral-50 px-5 text-sm font-semibold text-neutral-800 transition group-hover:border-neutral-300 group-hover:bg-white"
-                    >
-                      Button
-                    </button>
-                    <span className="text-xs font-medium text-neutral-400">
-                      연동 예정
-                    </span>
-                  </div>
-                </article>
-              </m.div>
-            ))}
+                    <p className="relative mt-5 flex-1 text-[15px] leading-[1.65] text-neutral-600">
+                      {card.description}
+                    </p>
+                    <div className="relative mt-6">
+                      {canLink ? (
+                        <Link
+                          href={`/boards/${linkedBoard.id}/posts`}
+                          className="inline-flex h-10 items-center rounded-full border border-neutral-200 bg-neutral-50 px-5 text-sm font-semibold text-neutral-800 transition group-hover:border-neutral-300 group-hover:bg-white"
+                        >
+                          바로가기
+                          <ArrowRight className="ml-1.5 h-4 w-4" />
+                        </Link>
+                      ) : (
+                        <span
+                          className="inline-flex h-10 items-center rounded-full border border-neutral-200 bg-neutral-100 px-5 text-sm font-semibold text-neutral-400"
+                          aria-disabled
+                        >
+                          {!boardsReady && !err
+                            ? "연결 중…"
+                            : err
+                              ? "연결 불가"
+                              : "준비 중"}
+                        </span>
+                      )}
+                    </div>
+                  </article>
+                </m.div>
+              );
+            })}
           </m.div>
         </div>
       </section>
